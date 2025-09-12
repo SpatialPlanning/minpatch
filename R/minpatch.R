@@ -4,21 +4,17 @@
 #' from prioritizr to ensure all protected areas meet user-defined minimum size
 #' thresholds, following the methodology described in Smith et al. (2010).
 #'
-#' @docType package
-#' @name minpatch
-#' @author Your Name
-#' @references Smith, R.J., Di Minin, E., Linke, S., Segan, D.B., Possingham, H.P. (2010).
-#'   An approach for ensuring minimum protected area size in systematic conservation planning.
-#'   Biological Conservation, 143(10), 2525-2531.
-NULL
+"_PACKAGE"
 
 #' Run MinPatch algorithm on prioritizr solution
 #'
 #' This is the main function that applies the MinPatch algorithm to a prioritizr
 #' solution to ensure all protected areas meet minimum size thresholds.
-#' The function automatically extracts all necessary data from the prioritizr solution object.
+#' The function uses prioritizr summary functions where possible to reduce code
+#' duplication and ensure consistency with prioritizr calculations.
 #'
-#' @param prioritizr_solution A solved prioritizr problem object
+#' @param prioritizr_problem A prioritizr problem object
+#' @param prioritizr_solution A solved prioritizr solution object
 #' @param min_patch_size Minimum patch size threshold
 #' @param patch_radius Radius for adding new patches
 #' @param boundary_penalty Boundary length modifier (default = 0)
@@ -28,7 +24,21 @@ NULL
 #' @param solution_column Name of solution column (default = "solution_1")
 #' @param verbose Logical, whether to print progress (default = TRUE)
 #'
-#' @return MinPatch result object
+#' @details
+#' The MinPatch algorithm consists of three stages:
+#' \enumerate{
+#'   \item Remove small patches: Removes patches smaller than min_patch_size
+#'   \item Add new patches: Adds patches to meet conservation targets
+#'   \item Whittle patches: Removes unnecessary planning units
+#' }
+#'
+#' **Important**: If you set \code{remove_small_patches = TRUE} but
+#' \code{add_patches = FALSE}, the algorithm may remove patches without
+#' compensating, potentially violating conservation targets. In such cases,
+#' a warning will be issued. Consider using \code{add_patches = TRUE} or
+#' a smaller \code{min_patch_size} to maintain target achievement.
+#'
+#' @return MinPatch result object with enhanced reporting using prioritizr functions
 #' @export
 #'
 #' @examples
@@ -93,12 +103,9 @@ run_minpatch <- function(prioritizr_problem,
 
   solution <- prioritizr_solution[[solution_column]]
 
-  # Extract planning units (remove solution columns)
-  planning_units <- prioritizr_solution
-  solution_cols <- grep("^solution_", names(planning_units))
-  if (length(solution_cols) > 0) {
-    planning_units <- planning_units[, -solution_cols]
-  }
+  # Extract planning units and rename the selected solution column to "prioritizr"
+  planning_units <- prioritizr_solution %>%
+    dplyr::rename(prioritizr = !!solution_column)
 
   # Extract feature data from planning units
   feature_cols <- grep("^feature_", names(planning_units))
@@ -129,7 +136,7 @@ run_minpatch <- function(prioritizr_problem,
   # Extract data from prioritizr problem object
   targets_raw <- prioritizr_problem$targets$data
   costs <- prioritizr_problem$planning_unit_costs()
-  
+
   # Convert targets to data.frame format required by downstream functions
   if (is.data.frame(targets_raw)) {
     targets <- targets_raw
@@ -142,13 +149,13 @@ run_minpatch <- function(prioritizr_problem,
     if ("targets" %in% names(targets_raw) && is.data.frame(targets_raw$targets)) {
       # Extract the targets tibble
       targets_df <- targets_raw$targets
-      
+
       # Convert relative targets to absolute targets
       targets <- data.frame(
         feature_id = seq_len(nrow(targets_df)),
         target = numeric(nrow(targets_df))
       )
-      
+
       for (i in seq_len(nrow(targets_df))) {
         if (targets_df$type[i] == "relative") {
           # Calculate total amount of this feature
@@ -186,18 +193,7 @@ run_minpatch <- function(prioritizr_problem,
       target = as.numeric(targets_raw)
     )
   }
-  
-  # Debug: print targets and features structure
-  if (verbose) {
-    cat("Targets structure:\n")
-    cat("  Class:", class(targets), "\n")
-    cat("  Columns:", paste(names(targets), collapse = ", "), "\n")
-    cat("  Dimensions:", nrow(targets), "x", ncol(targets), "\n")
-    cat("  Target feature IDs:", paste(targets$feature_id, collapse = ", "), "\n")
-    cat("Features data structure:\n")
-    cat("  Unique feature IDs:", paste(sort(unique(features_data$feature_id)), collapse = ", "), "\n")
-    cat("  Total feature records:", nrow(features_data), "\n")
-  }
+
 
   # Input validation
   if (verbose) cat("Validating inputs...\n")
@@ -208,12 +204,13 @@ run_minpatch <- function(prioritizr_problem,
   if (verbose) cat("Initializing data structures...\n")
   minpatch_data <- initialize_minpatch_data(
     solution, planning_units, features_data, targets, costs,
-    min_patch_size, patch_radius, boundary_penalty
+    min_patch_size, patch_radius, boundary_penalty,
+    prioritizr_problem, prioritizr_solution
   )
 
   # Create initial patch dictionary
   if (verbose) cat("Identifying initial patches...\n")
-  patch_dict <- make_patch_dict(minpatch_data$unit_dict, minpatch_data$boundary_matrix)
+  patch_dict <- make_patch_dict(minpatch_data)
 
   # Store initial patch statistics
   initial_patch_stats <- NULL
@@ -227,20 +224,48 @@ run_minpatch <- function(prioritizr_problem,
     minpatch_data <- remove_small_patches_from_solution(
       minpatch_data, patch_dict, min_patch_size
     )
+    
+    # Check if targets are still met after removing small patches
+    if (!add_patches) {
+      unmet_after_removal <- identify_unmet_targets(minpatch_data)
+      
+      if (length(unmet_after_removal) > 0) {
+        warning(paste("After removing small patches,", length(unmet_after_removal),
+                     "conservation targets are no longer met. Consider setting add_patches = TRUE",
+                     "to automatically add patches to meet targets, or use a smaller min_patch_size."))
+        if (verbose) {
+          cat("  Warning:", length(unmet_after_removal), "targets are no longer met after removing small patches\n")
+          cat("  Unmet feature IDs:", paste(unmet_after_removal, collapse = ", "), "\n")
+        }
+      }
+    }
   } else {
     if (verbose) cat("Stage 1: Skipping removal of small patches...\n")
+    # Still need to create the initial minpatch column
+    minpatch_data$prioritizr_solution$minpatch <- create_solution_vector(minpatch_data$unit_dict)
   }
 
   # Stage 2: Add new patches to meet targets (conditional)
   unmet_targets <- character(0)
   if (add_patches) {
     if (verbose) cat("Stage 2: Adding new patches...\n")
-    result <- add_new_patches(minpatch_data, patch_radius, verbose)
-    minpatch_data$unit_dict <- result$unit_dict
-    unmet_targets <- result$unmet_targets
+    
+    
+    minpatch_data <- add_new_patches(
+      minpatch_data,
+      patch_radius,
+      verbose
+    )
+    
+
+    # Check final unmet targets
+    unmet_targets <- identify_unmet_targets(minpatch_data)
 
     if (length(unmet_targets) > 0) {
       warning(paste("Could not meet targets for", length(unmet_targets), "features"))
+      if (verbose) cat("  Unmet targets:", paste(unmet_targets, collapse = ", "), "\n")
+    } else {
+      if (verbose) cat("  All conservation targets are now met!\n")
     }
   } else {
     if (verbose) cat("Stage 2: Skipping addition of new patches...\n")
@@ -249,27 +274,38 @@ run_minpatch <- function(prioritizr_problem,
   # Stage 3: Simulated whittling (conditional)
   if (whittle_patches) {
     if (verbose) cat("Stage 3: Removing unnecessary planning units...\n")
-    minpatch_data$unit_dict <- simulated_whittling(
-      minpatch_data$unit_dict, minpatch_data, min_patch_size, verbose
-    )
+    minpatch_data <- simulated_whittling(minpatch_data, verbose)
   } else {
     if (verbose) cat("Stage 3: Skipping simulated whittling...\n")
   }
 
   # Calculate final statistics
   if (verbose) cat("Calculating final statistics...\n")
-  final_patch_dict <- make_patch_dict(minpatch_data$unit_dict, minpatch_data$boundary_matrix)
+  final_patch_dict <- make_patch_dict(minpatch_data)
   final_patch_stats <- calculate_patch_stats(final_patch_dict, minpatch_data$area_dict, min_patch_size)
-  cost_summary <- calculate_cost_summary(minpatch_data$unit_dict, minpatch_data$cost_dict,
-                                         minpatch_data$boundary_matrix, boundary_penalty)
 
   # Create output solution vector
   solution_vector <- create_solution_vector(minpatch_data$unit_dict)
 
+  # Create the output sf object with both prioritizr and minpatch columns
+  result_sf <- planning_units  # This already has the "prioritizr" column
+  result_sf$minpatch <- solution_vector
+
+  # Create solution data for prioritizr functions using the minpatch column
+  solution_data_for_prioritizr <- result_sf[c("minpatch")]
+  names(solution_data_for_prioritizr)[names(solution_data_for_prioritizr) == "minpatch"] <- solution_column
+
+  # Use prioritizr functions for cost summary
+  cost_summary <- calculate_cost_summary(
+    prioritizr_problem = prioritizr_problem,
+    solution_data = solution_data_for_prioritizr,
+    boundary_penalty = boundary_penalty
+  )
+
   if (verbose) cat("MinPatch processing complete!\n")
 
   return(list(
-    solution = solution_vector,
+    solution = result_sf,  # Return the sf object with minpatch column
     patch_stats = list(
       initial = initial_patch_stats,
       final = final_patch_stats

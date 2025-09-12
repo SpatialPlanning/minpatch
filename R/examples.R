@@ -10,7 +10,6 @@
 #' Creates a comprehensive comparison of key metrics between original and MinPatch solutions,
 #' including overall statistics and detailed feature-level analysis
 #'
-#' @param original_solution Original binary solution vector
 #' @param minpatch_result Result from run_minpatch function
 #'
 #' @return List containing:
@@ -22,25 +21,28 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' # Create example data
 #' example_data <- create_example_data(n_units = 25, n_features = 3)
 #'
-#' # Create original solution
-#' set.seed(123)
-#' original_solution <- sample(c(0, 1), 25, replace = TRUE, prob = c(0.7, 0.3))
+#' # Create prioritizr problem and solve
+#' library(prioritizr)
+#' p <- problem(example_data$planning_units, cost_column = "cost") %>%
+#'   add_min_set_objective() %>%
+#'   add_manual_targets(example_data$targets) %>%
+#'   add_binary_decisions()
+#' s <- solve(p)
 #'
 #' # Run MinPatch
 #' result <- run_minpatch(
-#'   solution = original_solution,
-#'   planning_units = example_data$planning_units,
-#'   features = example_data$features,
-#'   targets = example_data$targets,
+#'   prioritizr_problem = p,
+#'   prioritizr_solution = s,
 #'   min_patch_size = 2.0,
 #'   patch_radius = 1.5
 #' )
 #'
 #' # Compare solutions
-#' comparison <- compare_solutions(original_solution, result)
+#' comparison <- compare_solutions(result)
 #'
 #' # Print overall comparison
 #' print(comparison$overall)
@@ -51,10 +53,12 @@
 #' # Print summary statistics
 #' cat("Features improved:", comparison$summary$features_improved, "\n")
 #' cat("Targets gained:", comparison$summary$targets_gained, "\n")
-compare_solutions <- function(original_solution, minpatch_result) {
+#' }
+compare_solutions <- function(minpatch_result) {
 
   # Extract data
-  minpatch_solution <- minpatch_result$solution
+  minpatch_solution <- minpatch_result$solution$minpatch
+  original_solution <- minpatch_result$solution$prioritizr
   initial_stats <- minpatch_result$patch_stats$initial
   final_stats <- minpatch_result$patch_stats$final
   cost_summary <- minpatch_result$cost_summary
@@ -68,16 +72,17 @@ compare_solutions <- function(original_solution, minpatch_result) {
   }
 
   # Calculate original solution patch statistics
-  original_patch_dict <- make_patch_dict(original_unit_dict, minpatch_result$minpatch_data$boundary_matrix)
+  temp_minpatch_data <- minpatch_result$minpatch_data
+  temp_minpatch_data$unit_dict <- original_unit_dict
+  original_patch_dict <- make_patch_dict(temp_minpatch_data)
   original_patch_stats <- calculate_patch_stats(original_patch_dict,
-                                               minpatch_result$minpatch_data$area_dict,
-                                               minpatch_result$minpatch_data$min_patch_size)
+                                                minpatch_result$minpatch_data$area_dict,
+                                                minpatch_result$minpatch_data$min_patch_size)
 
+  # Calculate original cost using unit_dict fallback
   original_cost <- calculate_cost_summary(
-    original_unit_dict,
-    minpatch_result$minpatch_data$cost_dict,
-    minpatch_result$minpatch_data$boundary_matrix,
-    minpatch_result$minpatch_data$boundary_penalty
+    unit_dict = original_unit_dict,
+    boundary_penalty = minpatch_result$minpatch_data$boundary_penalty
   )
 
   # Create overall comparison data frame
@@ -118,20 +123,21 @@ compare_solutions <- function(original_solution, minpatch_result) {
   # Calculate changes
   overall_comparison$Change <- overall_comparison$MinPatch - overall_comparison$Original
   overall_comparison$Percent_Change <- ifelse(overall_comparison$Original != 0,
-                                             (overall_comparison$Change / overall_comparison$Original) * 100,
-                                             NA)
+                                              (overall_comparison$Change / overall_comparison$Original) * 100,
+                                              NA)
 
   # Calculate feature-level comparisons
   abundance_matrix <- minpatch_result$minpatch_data$abundance_matrix
   target_dict <- minpatch_result$minpatch_data$target_dict
-  
+
   # Calculate original feature conservation
-  original_feature_amounts <- calculate_feature_conservation(original_unit_dict, abundance_matrix, target_dict)
-  
+  temp_original_data <- minpatch_result$minpatch_data
+  temp_original_data$unit_dict <- original_unit_dict
+  original_feature_amounts <- calculate_feature_conservation(temp_original_data)
+
   # Calculate MinPatch feature conservation
-  minpatch_unit_dict <- minpatch_result$minpatch_data$unit_dict
-  minpatch_feature_amounts <- calculate_feature_conservation(minpatch_unit_dict, abundance_matrix, target_dict)
-  
+  minpatch_feature_amounts <- calculate_feature_conservation(minpatch_result$minpatch_data)
+
   # Create feature comparison data frame
   feature_ids <- names(target_dict)
   feature_comparison <- data.frame(
@@ -141,13 +147,13 @@ compare_solutions <- function(original_solution, minpatch_result) {
     MinPatch_Area = minpatch_feature_amounts[feature_ids],
     stringsAsFactors = FALSE
   )
-  
+
   # Calculate feature changes
   feature_comparison$Area_Change <- feature_comparison$MinPatch_Area - feature_comparison$Original_Area
   feature_comparison$Percent_Change <- ifelse(feature_comparison$Original_Area != 0,
-                                             (feature_comparison$Area_Change / feature_comparison$Original_Area) * 100,
-                                             NA)
-  
+                                              (feature_comparison$Area_Change / feature_comparison$Original_Area) * 100,
+                                              NA)
+
   # Calculate target achievement
   feature_comparison$Original_Target_Met <- feature_comparison$Original_Area >= feature_comparison$Target
   feature_comparison$MinPatch_Target_Met <- feature_comparison$MinPatch_Area >= feature_comparison$Target
@@ -155,8 +161,8 @@ compare_solutions <- function(original_solution, minpatch_result) {
                                                    feature_comparison$Original_Area / feature_comparison$Target,
                                                    NA)
   feature_comparison$MinPatch_Proportion <- ifelse(feature_comparison$Target > 0,
-                                                  feature_comparison$MinPatch_Area / feature_comparison$Target,
-                                                  NA)
+                                                   feature_comparison$MinPatch_Area / feature_comparison$Target,
+                                                   NA)
 
   # Return both comparisons
   return(list(
@@ -177,7 +183,6 @@ compare_solutions <- function(original_solution, minpatch_result) {
 #' Creates a simple visualization of the MinPatch results showing
 #' original vs. modified solutions
 #'
-#' @param original_solution Original binary solution vector
 #' @param minpatch_result Result from run_minpatch function
 #' @param title Plot title (optional)
 #'
@@ -192,25 +197,27 @@ compare_solutions <- function(original_solution, minpatch_result) {
 #' # Create example data
 #' example_data <- create_example_data(n_units = 25, n_features = 3)
 #'
-#' # Create original solution
-#' set.seed(123)
-#' original_solution <- sample(c(0, 1), 25, replace = TRUE, prob = c(0.7, 0.3))
+#' # Create prioritizr problem and solve
+#' library(prioritizr)
+#' p <- problem(example_data$planning_units, cost_column = "cost") %>%
+#'   add_min_set_objective() %>%
+#'   add_manual_targets(example_data$targets) %>%
+#'   add_binary_decisions()
+#' s <- solve(p)
 #'
 #' # Run MinPatch
 #' result <- run_minpatch(
-#'   solution = original_solution,
-#'   planning_units = example_data$planning_units,
-#'   features = example_data$features,
-#'   targets = example_data$targets,
+#'   prioritizr_problem = p,
+#'   prioritizr_solution = s,
 #'   min_patch_size = 2.0,
 #'   patch_radius = 1.5
 #' )
 #'
 #' # Visualize results
-#' plot <- visualize_minpatch_results(original_solution, result)
+#' plot <- visualize_minpatch_results(result)
 #' print(plot)
 #' }
-visualize_minpatch_results <- function(original_solution, minpatch_result, title = "MinPatch Results") {
+visualize_minpatch_results <- function(minpatch_result, title = "MinPatch Results") {
 
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop("ggplot2 package is required for visualization")
@@ -218,7 +225,8 @@ visualize_minpatch_results <- function(original_solution, minpatch_result, title
 
   # Extract planning units and solutions
   planning_units <- minpatch_result$planning_units
-  minpatch_solution <- minpatch_result$solution
+  original_solution <- minpatch_result$solution$prioritizr
+  minpatch_solution <- minpatch_result$solution$minpatch
 
   # Create plotting data
   plot_data <- planning_units
@@ -232,16 +240,16 @@ visualize_minpatch_results <- function(original_solution, minpatch_result, title
   plot_data$change[original_solution == 1 & minpatch_solution == 1] <- "Retained"
 
   plot_data$change <- factor(plot_data$change,
-                            levels = c("No Change", "Added", "Removed", "Retained"))
+                             levels = c("No Change", "Added", "Removed", "Retained"))
 
   # Create the plot
-  p <- ggplot2::ggplot(plot_data) +
-    ggplot2::geom_sf(ggplot2::aes(fill = change), color = "white", size = 0.2) +
+  ggplot2::ggplot(plot_data) +
+    ggplot2::geom_sf(ggplot2::aes(fill = .data$change), color = "white", size = 0.2) +
     ggplot2::scale_fill_manual(
       values = c("No Change" = "lightgray",
-                "Added" = "darkgreen",
-                "Removed" = "red",
-                "Retained" = "lightgreen"),
+                 "Added" = "darkgreen",
+                 "Removed" = "red",
+                 "Retained" = "lightgreen"),
       name = "Change"
     ) +
     ggplot2::theme_void() +
@@ -251,6 +259,5 @@ visualize_minpatch_results <- function(original_solution, minpatch_result, title
       legend.position = "bottom"
     )
 
-  return(p)
 }
 

@@ -84,11 +84,14 @@ validate_inputs <- function(solution, planning_units, features, targets, costs,
 #' @param min_patch_size minimum patch size
 #' @param patch_radius patch radius
 #' @param boundary_penalty boundary length modifier
+#' @param prioritizr_problem A prioritizr problem object
+#' @param prioritizr_solution A solved prioritizr solution object
 #'
 #' @return List containing all necessary data structures
 #' @keywords internal
 initialize_minpatch_data <- function(solution, planning_units, features, targets, costs,
-                                    min_patch_size, patch_radius, boundary_penalty) {
+                                    min_patch_size, patch_radius, boundary_penalty,
+                                    prioritizr_problem, prioritizr_solution) {
   
   n_units <- length(solution)
   
@@ -150,7 +153,8 @@ initialize_minpatch_data <- function(solution, planning_units, features, targets
     min_patch_size = min_patch_size,
     patch_radius = patch_radius,
     boundary_penalty = boundary_penalty,
-    initial_solution = solution
+    prioritizr_problem = prioritizr_problem,
+    prioritizr_solution = prioritizr_solution
   ))
 }
 
@@ -179,8 +183,21 @@ create_boundary_matrix <- function(planning_units) {
   
   cat("Calculating boundary matrix (this may take a while)...\n")
   
-  # Get adjacency matrix
-  touches <- sf::st_touches(planning_units, sparse = FALSE)
+  # Check for invalid geometries and repair if needed
+  if (any(!sf::st_is_valid(planning_units))) {
+    cat("Warning: Invalid geometries detected, attempting to repair...\n")
+    planning_units <- sf::st_make_valid(planning_units)
+  }
+  
+  # Get adjacency matrix using a more robust method
+  # sf::st_touches() can be unreliable due to precision issues
+  # Use st_intersects() with boundaries instead
+  boundaries <- sf::st_boundary(planning_units)
+  touches <- sf::st_intersects(boundaries, boundaries, sparse = FALSE)
+  
+  # Remove self-intersections (diagonal)
+  diag(touches) <- FALSE
+  
   
   # Calculate shared boundaries
   for (i in seq_len(n_units)) {
@@ -194,8 +211,12 @@ create_boundary_matrix <- function(planning_units) {
         
         if (nrow(intersection) > 0) {
           shared_length <- sum(as.numeric(sf::st_length(intersection)))
-          if (shared_length > 0) {
+          # Use tolerance for very small shared lengths (floating-point precision issues)
+          if (shared_length > 1e-10) {
             boundary_matrix[[i]][[as.character(j)]] <- shared_length
+          } else if (shared_length > 0) {
+            # For very small but non-zero lengths, use a minimal positive value
+            boundary_matrix[[i]][[as.character(j)]] <- 1e-6
           }
         }
       }

@@ -3,20 +3,20 @@
 #' Stage 3 of MinPatch: Remove planning units that are not needed to meet targets,
 #' reduce fragmentation, or meet minimum patch size requirements
 #'
-#' @param unit_dict Named list containing cost and status for each planning unit
-#' @param minpatch_data List containing all MinPatch data structures
-#' @param min_patch_size Minimum patch size threshold
+#' @param minpatch_data List containing all MinPatch data structures (including prioritizr objects)
 #' @param verbose Logical, whether to print progress
 #'
-#' @return Updated unit_dict with unnecessary units removed
+#' @return Updated minpatch_data with unnecessary units removed
 #' @keywords internal
-simulated_whittling <- function(unit_dict, minpatch_data, min_patch_size, verbose = TRUE) {
+simulated_whittling <- function(minpatch_data, verbose = TRUE) {
   
+  unit_dict <- minpatch_data$unit_dict
   boundary_matrix <- minpatch_data$boundary_matrix
   abundance_matrix <- minpatch_data$abundance_matrix
   target_dict <- minpatch_data$target_dict
   area_dict <- minpatch_data$area_dict
   boundary_penalty <- minpatch_data$boundary_penalty
+  min_patch_size <- minpatch_data$min_patch_size
   
   iteration <- 0
   max_iterations <- 10000  # Prevent infinite loops
@@ -30,7 +30,7 @@ simulated_whittling <- function(unit_dict, minpatch_data, min_patch_size, verbos
     }
     
     # Find edge planning units (units on the boundary of selected areas)
-    edge_units <- find_edge_units(unit_dict, boundary_matrix)
+    edge_units <- find_edge_units(minpatch_data)
     
     # Remove keystone units from edge units
     edge_units <- setdiff(edge_units, keystone_pu_id_set)
@@ -46,9 +46,7 @@ simulated_whittling <- function(unit_dict, minpatch_data, min_patch_size, verbos
     }
     
     # Calculate whittling scores for edge units
-    whittle_scores_raw <- calculate_whittle_scores(
-      edge_units, unit_dict, abundance_matrix, target_dict, minpatch_data
-    )
+    whittle_scores_raw <- calculate_whittle_scores(edge_units, minpatch_data)
     
     # Separate keystone units (needed for targets) from scoreable units
     whittle_scores <- list()
@@ -77,7 +75,7 @@ simulated_whittling <- function(unit_dict, minpatch_data, min_patch_size, verbos
     candidate_unit <- names(whittle_scores)[which.min(unlist(whittle_scores))]
     
     # Check if removing this unit is acceptable
-    removal_result <- can_remove_unit(candidate_unit, unit_dict, minpatch_data, min_patch_size)
+    removal_result <- can_remove_unit(candidate_unit, minpatch_data)
     if (removal_result) {
       # Remove the unit
       unit_dict[[candidate_unit]]$status <- 0
@@ -99,7 +97,11 @@ simulated_whittling <- function(unit_dict, minpatch_data, min_patch_size, verbos
     warning("Maximum iterations reached in simulated_whittling")
   }
   
-  return(unit_dict)
+  # Update minpatch_data with final unit_dict and minpatch column
+  minpatch_data$unit_dict <- unit_dict
+  minpatch_data$prioritizr_solution$minpatch <- create_solution_vector(unit_dict)
+  
+  return(minpatch_data)
 }
 
 #' Find edge planning units
@@ -107,17 +109,19 @@ simulated_whittling <- function(unit_dict, minpatch_data, min_patch_size, verbos
 #' Identifies planning units that are on the edge of selected areas
 #' (have at least one unselected neighbor)
 #'
-#' @param unit_dict Named list containing cost and status for each planning unit
-#' @param boundary_matrix Named list containing adjacency information
+#' @param minpatch_data List containing all MinPatch data structures
 #'
 #' @return Character vector of edge unit IDs
 #' @keywords internal
-find_edge_units <- function(unit_dict, boundary_matrix) {
+find_edge_units <- function(minpatch_data) {
+  
+  unit_dict <- minpatch_data$unit_dict
+  boundary_matrix <- minpatch_data$boundary_matrix
   
   edge_units <- character(0)
   
   for (unit_id in names(unit_dict)) {
-    if (unit_dict[[unit_id]]$status == 1) {  # Only consider selected units
+    if (unit_dict[[unit_id]]$status %in% c(1, 2)) {  # Consider both selected (1) and conserved (2) units
       
       # Check if this unit has any unselected neighbors
       neighbors <- names(boundary_matrix[[unit_id]])
@@ -149,18 +153,18 @@ find_edge_units <- function(unit_dict, boundary_matrix) {
 #' feature importance (Equation A2 from the original paper)
 #'
 #' @param edge_units Character vector of edge unit IDs
-#' @param unit_dict Named list containing cost and status for each planning unit
-#' @param abundance_matrix Named list containing feature abundances
-#' @param target_dict Named list containing feature targets
 #' @param minpatch_data List containing all MinPatch data structures
 #'
 #' @return Named vector of whittling scores
 #' @keywords internal
-calculate_whittle_scores <- function(edge_units, unit_dict, abundance_matrix,
-                                   target_dict, minpatch_data) {
+calculate_whittle_scores <- function(edge_units, minpatch_data) {
+  
+  unit_dict <- minpatch_data$unit_dict
+  abundance_matrix <- minpatch_data$abundance_matrix
+  target_dict <- minpatch_data$target_dict
   
   # Calculate current feature conservation amounts
-  feature_amounts <- calculate_feature_conservation(unit_dict, abundance_matrix, target_dict)
+  feature_amounts <- calculate_feature_conservation(minpatch_data)
   
   scores <- list()
   
@@ -219,13 +223,14 @@ calculate_whittle_scores <- function(edge_units, unit_dict, abundance_matrix,
 #' 4. Doesn't split patches into non-viable pieces
 #'
 #' @param unit_id ID of unit to potentially remove
-#' @param unit_dict Named list containing cost and status for each planning unit
 #' @param minpatch_data List containing all MinPatch data structures
-#' @param min_patch_size Minimum patch size threshold
 #'
 #' @return Logical indicating if unit can be removed
 #' @keywords internal
-can_remove_unit <- function(unit_id, unit_dict, minpatch_data, min_patch_size) {
+can_remove_unit <- function(unit_id, minpatch_data) {
+  
+  unit_dict <- minpatch_data$unit_dict
+  min_patch_size <- minpatch_data$min_patch_size
   
   # Don't remove conserved units (status 2)
   if (unit_dict[[unit_id]]$status == 2) {
@@ -233,22 +238,22 @@ can_remove_unit <- function(unit_id, unit_dict, minpatch_data, min_patch_size) {
   }
   
   # Check if removal would violate conservation targets
-  if (removal_violates_targets(unit_id, unit_dict, minpatch_data)) {
+  if (removal_violates_targets(unit_id, minpatch_data)) {
     return(FALSE)
   }
   
   # Check if removal would make patch too small
-  if (removal_makes_patch_too_small(unit_id, unit_dict, minpatch_data, min_patch_size)) {
+  if (removal_makes_patch_too_small(unit_id, minpatch_data)) {
     return(FALSE)
   }
   
   # Check if removal would increase Marxan cost
-  if (removal_increases_marxan_cost(unit_id, unit_dict, minpatch_data)) {
+  if (removal_increases_marxan_cost(unit_id, minpatch_data)) {
     return(FALSE)
   }
   
   # Check if removal would split patch into non-viable pieces
-  if (removal_splits_patch_nonviably(unit_id, unit_dict, minpatch_data, min_patch_size)) {
+  if (removal_splits_patch_nonviably(unit_id, minpatch_data)) {
     return(FALSE)
   }
   
@@ -258,18 +263,18 @@ can_remove_unit <- function(unit_id, unit_dict, minpatch_data, min_patch_size) {
 #' Check if removing unit would violate conservation targets
 #'
 #' @param unit_id ID of unit to potentially remove
-#' @param unit_dict Named list containing cost and status for each planning unit
 #' @param minpatch_data List containing all MinPatch data structures
 #'
 #' @return Logical indicating if removal would violate targets
 #' @keywords internal
-removal_violates_targets <- function(unit_id, unit_dict, minpatch_data) {
+removal_violates_targets <- function(unit_id, minpatch_data) {
   
+  unit_dict <- minpatch_data$unit_dict
   abundance_matrix <- minpatch_data$abundance_matrix
   target_dict <- minpatch_data$target_dict
   
   # Calculate current feature amounts
-  feature_amounts <- calculate_feature_conservation(unit_dict, abundance_matrix, target_dict)
+  feature_amounts <- calculate_feature_conservation(minpatch_data)
   
   # Get features in this unit
   unit_abundances <- abundance_matrix[[unit_id]]
@@ -293,19 +298,19 @@ removal_violates_targets <- function(unit_id, unit_dict, minpatch_data) {
 #' Check if removing unit would make its patch too small
 #'
 #' @param unit_id ID of unit to potentially remove
-#' @param unit_dict Named list containing cost and status for each planning unit
 #' @param minpatch_data List containing all MinPatch data structures
-#' @param min_patch_size Minimum patch size threshold
 #'
 #' @return Logical indicating if removal would make patch too small
 #' @keywords internal
-removal_makes_patch_too_small <- function(unit_id, unit_dict, minpatch_data, min_patch_size) {
+removal_makes_patch_too_small <- function(unit_id, minpatch_data) {
   
+  unit_dict <- minpatch_data$unit_dict
   area_dict <- minpatch_data$area_dict
   boundary_matrix <- minpatch_data$boundary_matrix
+  min_patch_size <- minpatch_data$min_patch_size
   
   # Find the patch this unit belongs to
-  patch_dict <- make_patch_dict(unit_dict, boundary_matrix)
+  patch_dict <- make_patch_dict(minpatch_data)
   
   # Find which patch contains this unit
   unit_patch_id <- NULL
@@ -330,13 +335,13 @@ removal_makes_patch_too_small <- function(unit_id, unit_dict, minpatch_data, min
 #' Check if removing unit would increase Marxan cost
 #'
 #' @param unit_id ID of unit to potentially remove
-#' @param unit_dict Named list containing cost and status for each planning unit
 #' @param minpatch_data List containing all MinPatch data structures
 #'
 #' @return Logical indicating if removal would increase cost
 #' @keywords internal
-removal_increases_marxan_cost <- function(unit_id, unit_dict, minpatch_data) {
+removal_increases_marxan_cost <- function(unit_id, minpatch_data) {
   
+  unit_dict <- minpatch_data$unit_dict
   boundary_matrix <- minpatch_data$boundary_matrix
   boundary_penalty <- minpatch_data$boundary_penalty
   
@@ -374,23 +379,24 @@ removal_increases_marxan_cost <- function(unit_id, unit_dict, minpatch_data) {
 #' Check if removing unit would split patch into non-viable pieces
 #'
 #' @param unit_id ID of unit to potentially remove
-#' @param unit_dict Named list containing cost and status for each planning unit
 #' @param minpatch_data List containing all MinPatch data structures
-#' @param min_patch_size Minimum patch size threshold
 #'
 #' @return Logical indicating if removal would create non-viable patches
 #' @keywords internal
-removal_splits_patch_nonviably <- function(unit_id, unit_dict, minpatch_data, min_patch_size) {
+removal_splits_patch_nonviably <- function(unit_id, minpatch_data) {
   
+  unit_dict <- minpatch_data$unit_dict
   boundary_matrix <- minpatch_data$boundary_matrix
   area_dict <- minpatch_data$area_dict
+  min_patch_size <- minpatch_data$min_patch_size
   
-  # Create a temporary unit_dict without this unit
-  temp_unit_dict <- unit_dict
-  temp_unit_dict[[unit_id]]$status <- 0
+  # Create a temporary minpatch_data without this unit
+  temp_minpatch_data <- minpatch_data
+  temp_minpatch_data$unit_dict <- unit_dict
+  temp_minpatch_data$unit_dict[[unit_id]]$status <- 0
   
   # Find patches in the modified solution
-  new_patch_dict <- make_patch_dict(temp_unit_dict, boundary_matrix)
+  new_patch_dict <- make_patch_dict(temp_minpatch_data)
   
   # Check if any new patches are too small
   for (patch_id in names(new_patch_dict)) {

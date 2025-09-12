@@ -1,16 +1,28 @@
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
 # MinPatch for R
 
 [![R-CMD-check](https://github.com/yourusername/minpatch/workflows/R-CMD-check/badge.svg)](https://github.com/yourusername/minpatch/actions)
 
-An R implementation of the MinPatch algorithm for post-processing conservation planning solutions to ensure minimum protected area sizes.
+An R implementation of the MinPatch algorithm for post-processing
+conservation planning solutions to ensure minimum protected area sizes.
 
 ## Overview
 
-MinPatch is a post-processing tool for conservation planning solutions that ensures all protected areas meet user-defined minimum size thresholds. This R package implements the methodology described in Smith et al. (2010) and is designed to work with solutions from the `prioritizr` package, though it can work with any binary conservation solution.
+MinPatch is a post-processing tool for conservation planning solutions
+that ensures all protected areas meet user-defined minimum size
+thresholds. This R package implements the methodology described in Smith
+et al. (2010) and is designed to work with solutions from the
+`prioritizr` package, though it can work with any binary conservation
+solution.
 
 ### The Problem
 
-Conservation planning software like Marxan and prioritizr can produce solutions with many small, fragmented protected areas. While these solutions may be mathematically optimal, small protected areas are often:
+Conservation planning software like Marxan and prioritizr can produce
+solutions with many small, fragmented protected areas. While these
+solutions may be mathematically optimal, small protected areas are
+often:
 
 - Less ecologically viable
 - More expensive to manage
@@ -19,15 +31,19 @@ Conservation planning software like Marxan and prioritizr can produce solutions 
 
 ### The Solution
 
-MinPatch addresses this by post-processing conservation solutions through three stages:
+MinPatch addresses this by post-processing conservation solutions
+through three stages:
 
-1. **Remove Small Patches**: Eliminate protected areas smaller than a minimum size threshold
-2. **Add New Patches**: Add new areas to meet conservation targets using the BestPatch algorithm
-3. **Simulated Whittling**: Remove unnecessary planning units while maintaining constraints
+1.  **Remove Small Patches**: Eliminate protected areas smaller than a
+    minimum size threshold
+2.  **Add New Patches**: Add new areas to meet conservation targets
+    using the BestPatch algorithm
+3.  **Simulated Whittling**: Remove unnecessary planning units while
+    maintaining constraints
 
 ## Installation
 
-```r
+``` r
 # Install from GitHub (when available)
 # devtools::install_github("yourusername/minpatch")
 
@@ -37,7 +53,7 @@ install.packages(c("sf", "prioritizr"))
 
 ## Quick Start
 
-```r
+``` r
 library(minpatch)
 
 # Create example data
@@ -63,16 +79,19 @@ print_minpatch_summary(result)
 
 ## Key Features
 
-- **Full MinPatch Algorithm**: Complete implementation of all three stages
-- **prioritizr Integration**: Seamless workflow with prioritizr solutions
-- **Flexible Parameters**: Control minimum patch sizes, patch radius, and boundary penalties
+- **Full MinPatch Algorithm**: Complete implementation of all three
+  stages
+- **prioritizr Integration**: Seamless workflow with prioritizr
+  solutions
+- **Flexible Parameters**: Control minimum patch sizes, patch radius,
+  and boundary penalties
 - **Comprehensive Reporting**: Detailed statistics and comparisons
 - **Visualization Support**: Plot results with ggplot2 (optional)
 - **Well Documented**: Extensive documentation and examples
 
 ## Usage with prioritizr
 
-```r
+``` r
 library(prioritizr)
 library(minpatch)
 
@@ -98,40 +117,43 @@ print_minpatch_summary(result)
 
 ### Stage 1: Remove Small Patches
 
-Identifies connected components (patches) in the solution and removes those smaller than the minimum size threshold. Only removes patches that weren't originally designated as conserved areas.
+Identifies connected components (patches) in the solution and removes
+those smaller than the minimum size threshold. Only removes patches that
+weren’t originally designated as conserved areas.
 
 ### Stage 2: Add New Patches (BestPatch Algorithm)
 
 Uses the BestPatch scoring system to add new patches:
 
-1. Calculate current conservation levels for each feature
-2. Identify features with unmet targets
-3. Score potential patches based on their contribution to targets relative to cost
-4. Add the highest-scoring patch and repeat
+1.  Calculate current conservation levels for each feature
+2.  Identify features with unmet targets
+3.  Score potential patches based on their contribution to targets
+    relative to cost
+4.  Add the highest-scoring patch and repeat
 
 The BestPatch score is calculated as:
 
-```
-Score = Σ(feature_contribution / target_gap) / patch_cost
-```
+    Score = Σ(feature_contribution / target_gap) / patch_cost
 
 ### Stage 3: Simulated Whittling
 
 Removes unnecessary planning units through an iterative process:
 
-1. Identify edge units (on the boundary of selected areas)
-2. Calculate whittling scores based on feature importance
-3. Remove units that don't violate constraints:
-   - Must not cause targets to be unmet
-   - Must not make patches too small
-   - Must not increase total cost (if boundary penalty > 0)
-   - Must not split patches into non-viable pieces
+1.  Identify edge units (on the boundary of selected areas)
+2.  Calculate whittling scores based on feature importance
+3.  Remove units that don’t violate constraints:
+    - Must not cause targets to be unmet
+    - Must not make patches too small
+    - Must not increase total cost (if boundary penalty \> 0)
+    - Must not split patches into non-viable pieces
 
 ## Parameters
 
 - `min_patch_size`: Minimum area threshold for patches
-- `patch_radius`: Radius for adding new patches (allows elongated shapes)
-- `boundary_penalty`: Boundary length modifier (BLM) for cost calculations
+- `patch_radius`: Radius for adding new patches (allows elongated
+  shapes)
+- `boundary_penalty`: Boundary length modifier (BLM) for cost
+  calculations
 - `remove_small_patches`: Enable/disable Stage 1
 - `add_patches`: Enable/disable Stage 2  
 - `whittle_patches`: Enable/disable Stage 3
@@ -141,49 +163,56 @@ Removes unnecessary planning units through an iterative process:
 This R implementation:
 
 - ✅ Implements all three stages of the original algorithm
-- ✅ Uses the same mathematical formulations (BestPatch, whittling scores)
+- ✅ Uses the same mathematical formulations (BestPatch, whittling
+  scores)
 - ✅ Produces equivalent results for the same inputs
-- ✅ Includes comprehensive testing to validate against expected behaviors
-- ✅ Provides additional features like visualization and detailed reporting
+- ✅ Includes comprehensive testing to validate against expected
+  behaviors
+- ✅ Provides additional features like visualization and detailed
+  reporting
 
 ## Performance Considerations
 
 - Boundary matrix calculation can be slow for large datasets
-- Consider using simpler geometries or pre-computed adjacency matrices for very large problems
+- Consider using simpler geometries or pre-computed adjacency matrices
+  for very large problems
 - The algorithm scales roughly O(n²) with the number of planning units
 
 ## Contributing
 
 Contributions are welcome! Please:
 
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
+1.  Fork the repository
+2.  Create a feature branch
+3.  Add tests for new functionality
+4.  Ensure all tests pass
+5.  Submit a pull request
 
 ## Citation
 
-If you use this package, please cite both the original paper and this implementation:
+If you use this package, please cite both the original paper and this
+implementation:
 
-```
-Smith, R.J., Di Minin, E., Linke, S., Segan, D.B., Possingham, H.P. (2010). 
-An approach for ensuring minimum protected area size in systematic conservation planning. 
-Biological Conservation, 143(10), 2525-2531.
+    Smith, R.J., Di Minin, E., Linke, S., Segan, D.B., Possingham, H.P. (2010). 
+    An approach for ensuring minimum protected area size in systematic conservation planning. 
+    Biological Conservation, 143(10), 2525-2531.
 
-[Your citation for this R package]
-```
+    [Your citation for this R package]
 
 ## License
 
-GPL (>= 3)
+GPL (\>= 3)
 
 ## References
 
-Smith, R.J., Di Minin, E., Linke, S., Segan, D.B., Possingham, H.P. (2010). An approach for ensuring minimum protected area size in systematic conservation planning. *Biological Conservation*, 143(10), 2525-2531.
+Smith, R.J., Di Minin, E., Linke, S., Segan, D.B., Possingham, H.P.
+(2010). An approach for ensuring minimum protected area size in
+systematic conservation planning. *Biological Conservation*, 143(10),
+2525-2531.
 
 ## Getting Help
 
 - Check the package vignette: `vignette("minpatch-introduction")`
 - View function documentation: `?run_minpatch`
-- Report bugs: [GitHub Issues](https://github.com/yourusername/minpatch/issues)
+- Report bugs: [GitHub
+  Issues](https://github.com/yourusername/minpatch/issues)

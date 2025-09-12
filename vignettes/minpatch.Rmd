@@ -23,13 +23,25 @@ knitr::opts_chunk$set(
 
 This vignette demonstrates how to use MinPatch with real conservation planning data from prioritizr. We'll use the simulated dataset included with prioritizr to show a complete workflow from problem formulation through MinPatch post-processing.
 
+## Enhanced prioritizr Integration
+
+MinPatch now leverages prioritizr's summary functions to reduce code duplication and ensure consistency:
+
+- **Cost calculations**: Uses `prioritizr::eval_cost_summary()` and `prioritizr::eval_boundary_summary()`
+- **Feature representation**: Uses `prioritizr::eval_feature_representation_summary()` and `prioritizr::eval_target_coverage_summary()`
+- **Planning unit counts**: Uses `prioritizr::eval_n_summary()`
+
+This integration provides more accurate and consistent results while reducing the maintenance burden of duplicate functionality.
+
 
 ```{r setup}
-# library(minpatch)
-devtools::load_all()
+library(minpatch)
 library(prioritizr)
 library(sf)
 library(terra)
+library(dplyr)
+library(ggplot2)
+library(patchwork)
 ```
 
 ## Step 1: Load and Examine the Data
@@ -40,6 +52,8 @@ dat <- c(get_sim_pu_raster(), get_sim_features()) %>%
   as.polygons(dissolve = FALSE, values = TRUE) %>%
   sf::st_as_sf() %>% 
   dplyr::rename(cost = layer)
+
+st_crs(dat) <- NA
 
 features = colnames(dat) %>% 
   stringr::str_subset("feature_")
@@ -65,7 +79,8 @@ s <- solve(p)
 
 ```{r}
 # plot map of prioritization
-plot(s[,"solution_1"])
+ggplot(data = s) + 
+  geom_sf(aes(fill = as.logical(solution_1)))
 
 ```
 
@@ -89,13 +104,16 @@ cat("- Patch radius:", round(patch_radius,3), "meters\n")
 cat("- This means patches must be at least", round(min_patch_size/median_area, 3),
     "times the median planning unit size\n")
 ```
+Run MinPatch with automatic data extraction from prioritizr objects
 
 ```{r run-minpatch}
-cat("Running MinPatch (this may take several minutes)...\n")
 
-start_time <- Sys.time()
 
-# Run MinPatch with automatic data extraction from prioritizr objects
+#TODO Lets clean up the output here. I think result should be a list with the output
+# sf dataframe as the first object and then a 2nd object with all the debugging stuff. 
+# To the first dataframe, I want to add the sf coords, the original solution, what 
+# patches were identified, which ones were added, and then which ones were whittled. 
+
 result <- run_minpatch(
   prioritizr_problem = p,
   prioritizr_solution = s,
@@ -108,13 +126,6 @@ result <- run_minpatch(
   verbose = TRUE
 )
 
-end_time <- Sys.time()
-processing_time <- as.numeric(difftime(end_time, start_time, units = "mins"))
-
-cat("MinPatch completed in", round(processing_time, 2), "minutes\n")
-
-# Extract original solution for comparison
-original_solution <- s$solution_1
 ```
 
 ## Step 4: Analyze the Results
@@ -126,7 +137,7 @@ Let's examine what MinPatch accomplished:
 print_minpatch_summary(result)
 
 # Compare original vs MinPatch solutions
-comparison <- compare_solutions(original_solution, result)
+comparison <- compare_solutions(result)
 
 # Print overall comparison
 cat("=== Overall Solution Comparison ===\n")
@@ -150,25 +161,31 @@ print(comparison$summary)
 ### Feature Representation Analysis
 
 ```{r feature-analysis}
-# Analyze how well conservation targets are met
-feature_rep <- calculate_feature_representation(
-  result$minpatch_data$unit_dict,
-  result$minpatch_data$abundance_matrix,
-  result$minpatch_data$target_dict
-)
+# Analyze feature representation using prioritizr functions directly
+# Create solution data for prioritizr analysis
+minpatch_solution_data <- result$solution[c("minpatch")]
+
+# Use prioritizr functions for accurate feature representation analysis
+feature_rep <- prioritizr::eval_feature_representation_summary(p, minpatch_solution_data)
+target_coverage <- prioritizr::eval_target_coverage_summary(p, minpatch_solution_data)
 
 # Summary statistics
-targets_met <- sum(feature_rep$target_met)
-mean_achievement <- mean(feature_rep$proportion_met, na.rm = TRUE)
+targets_met <- sum(target_coverage$met)
+mean_achievement <- mean(feature_rep$relative_held, na.rm = TRUE)
 
 cat("Conservation Performance:\n")
 cat("- Targets met:", targets_met, "out of", nrow(feature_rep), "features\n")
 cat("- Mean target achievement:", round(mean_achievement * 100, 1), "%\n")
 
 # Show features with lowest achievement
-worst_features <- feature_rep[order(feature_rep$proportion_met), ][1:5, ]
+combined_results <- data.frame(
+  feature_id = seq_len(nrow(feature_rep)),
+  proportion_met = feature_rep$relative_held,
+  target_met = target_coverage$met
+)
+worst_features <- combined_results[order(combined_results$proportion_met), ][1:5, ]
 cat("\nFeatures with lowest target achievement:\n")
-print(worst_features[, c("feature_id", "proportion_met", "target_met")])
+print(worst_features)
 ```
 
 ### Spatial Configuration Improvements
@@ -194,53 +211,7 @@ cat("- Median patch size increase:",
 Let's create maps to visualize the changes MinPatch made:
 
 ```{r visualization}
-# Create a simple map showing the changes
-dat$original_solution <- original_solution
-dat$minpatch_solution <- result$solution
-
-# Create change categories
-dat$change <- "No Change"
-dat$change[original_solution == 0 & result$solution == 1] <- "Added by MinPatch"
-dat$change[original_solution == 1 & result$solution == 0] <- "Removed by MinPatch"
-dat$change[original_solution == 1 & result$solution == 1] <- "Retained"
-
-st_crs(dat) <- NA
-
-library(ggplot2)
-library(sf)
-
-# Plot original solution
-gg1 <- ggplot(data = dat) +
-  geom_sf(aes(fill = as.logical(original_solution)), colour = NA) +
-  scale_fill_manual(values = c("lightgray", "darkblue"),
-                    name = "Original Solution") +
-  labs(title = "Original prioritizr Solution") +
-  theme_void()
-
-# Plot MinPatch solution
-gg2 <- ggplot(data = dat) +
-  geom_sf(aes(fill = as.logical(minpatch_solution)), colour = NA) +
-  scale_fill_manual(values = c("lightgray", "darkgreen"),
-                    name = "MinPatch Solution") +
-  labs(title = "MinPatch Solution") +
-  theme_void()
-
-# Plot changes
-gg3 <- ggplot(data = dat) +
-  geom_sf(aes(fill = change), colour = NA) +
-  scale_fill_manual(
-    values =  c(
-      "No Change" = "lightgray",
-      "Added by MinPatch" = "darkred",
-      "Removed by MinPatch" = "darkblue",
-      "Retained" = "darkgreen"),
-    name = "Changes"
-  ) +
-  labs(title = "Changes Made by MinPatch") +
-  theme_void()
-
-patchwork::wrap_plots(gg1, gg2, gg3, ncol = 2)
-
+visualize_minpatch_results(result, title = "MinPatch Results")
 
 ```
 
@@ -301,6 +272,7 @@ You can run MinPatch with different parameters to explore trade-offs:
 ```{r multiple-scenarios, eval=FALSE}
 # Conservative scenario (larger patches)
 result_conservative <- run_minpatch(
+  prioritizr_problem = p,
   prioritizr_solution = s,
   min_patch_size = median_area * 10,  # Larger minimum size
   patch_radius = patch_radius * 1.5,
@@ -309,7 +281,7 @@ result_conservative <- run_minpatch(
 )
 
 # Compare scenarios
-comparison_conservative <- compare_solutions(original_solution, result_conservative)
+comparison_conservative <- compare_solutions(result_conservative)
 ```
 
 ## Conclusion

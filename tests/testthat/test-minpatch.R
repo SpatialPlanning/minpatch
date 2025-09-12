@@ -140,7 +140,7 @@ test_that("Patch identification works correctly", {
     test_data$targets, NULL, 1.0, 1.5, 0
   )
   
-  patch_dict <- make_patch_dict(minpatch_data$unit_dict, minpatch_data$boundary_matrix)
+  patch_dict <- make_patch_dict(minpatch_data)
   
   # Should identify connected components
   expect_true(length(patch_dict) >= 1)
@@ -191,7 +191,7 @@ test_that("Small patch removal works", {
     test_data$targets, NULL, 2.0, 1.5, 0  # min_patch_size = 2.0
   )
   
-  patch_dict <- make_patch_dict(minpatch_data$unit_dict, minpatch_data$boundary_matrix)
+  patch_dict <- make_patch_dict(minpatch_data)
   
   # Remove small patches
   updated_unit_dict <- remove_small_patches_from_solution(

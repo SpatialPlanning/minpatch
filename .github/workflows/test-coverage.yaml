@@ -47,6 +47,13 @@ jobs:
             any::lpsymphony
           pak-arguments: --upgrade
 
+      - name: Check covr version
+        run: |
+          print(packageVersion("covr"))
+          print(find.package("covr"))
+          sessionInfo()
+        shell: Rscript {0}
+
       - name: Run tests and generate coverage
         run: |
           cov <- covr::package_coverage()

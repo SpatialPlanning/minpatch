@@ -41,7 +41,7 @@
 </li>
       </ul>
 <ul class="navbar-nav">
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/yourusername/minpatch/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/SpatialPlanning/minpatch/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
@@ -57,7 +57,8 @@
 </h1></div>
 <!-- badges: start -->
 
-<!-- badges: end -->
+<p>** Note: This is still a work in progress and significant bugs may be present. Use with caution **</p>
+<p>More information on the original implemention of MinPatch for Marxan and QGIS is available here: <a href="https://cluz-systematic-conservation-planning.github.io" class="external-link uri">https://cluz-systematic-conservation-planning.github.io</a></p>
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
@@ -93,7 +94,7 @@
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Install from GitHub</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"SpatialPlanning/minpatch"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"SpatialPlanning/minpatch"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="key-features">Key Features<a class="anchor" aria-label="anchor" href="#key-features"></a>
@@ -153,34 +154,6 @@
 </div>
 </div>
 <div class="section level2">
-<h2 id="parameters">Parameters<a class="anchor" aria-label="anchor" href="#parameters"></a>
-</h2>
-<ul>
-<li>
-<code>min_patch_size</code>: Minimum area threshold for patches</li>
-<li>
-<code>patch_radius</code>: Radius for adding new patches (allows elongated shapes)</li>
-<li>
-<code>boundary_penalty</code>: Boundary penalty value for cost calculations</li>
-<li>
-<code>remove_small_patches</code>: Enable/disable Stage 1</li>
-<li>
-<code>add_patches</code>: Enable/disable Stage 2<br>
-</li>
-<li>
-<code>whittle_patches</code>: Enable/disable Stage 3</li>
-</ul>
-</div>
-<div class="section level2">
-<h2 id="performance-considerations">Performance Considerations<a class="anchor" aria-label="anchor" href="#performance-considerations"></a>
-</h2>
-<ul>
-<li>Boundary matrix calculation can be slow for large datasets</li>
-<li>Consider using simpler geometries or pre-computed adjacency matrices for very large problems</li>
-<li>The algorithm scales roughly O(n²) with the number of planning units</li>
-</ul>
-</div>
-<div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h2>
 <p>If you use this package, please cite both the original paper and this implementation:</p>
@@ -188,7 +161,8 @@
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>An approach <span class="cf">for</span> ensuring minimum protected area size <span class="cf">in</span> systematic conservation planning. </span>
 <span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>Biological Conservation, <span class="dv">143</span>(<span class="dv">10</span>), <span class="dv">2525</span><span class="fl">-2531.</span></span>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>[Your citation <span class="cf">for</span> this R package]</span></code></pre></div>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>Everett J.D., Richardson A.J., Smith <span class="fu">R.J.</span> (<span class="dv">2025</span>). _minpatch<span class="sc">:</span> Post<span class="sc">-</span>Processing <span class="cf">for</span> Conservation Planning Solutions to Ensure Minimum Patch</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  Sizes_. R package version <span class="dv">0</span>.<span class="fl">1.0</span>, <span class="sc">&lt;</span>https<span class="sc">:</span><span class="er">//</span>github.com<span class="sc">/</span>SpatialPlanning<span class="sc">/</span>minpatch<span class="sc">&gt;</span>.</span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
@@ -216,8 +190,8 @@
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/yourusername/minpatch/" class="external-link">Browse source code</a></li>
-<li><a href="https://github.com/yourusername/minpatch/issues" class="external-link">Report a bug</a></li>
+<li><a href="https://github.com/SpatialPlanning/minpatch/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/SpatialPlanning/minpatch/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 
@@ -250,6 +224,11 @@
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
 <li><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></li>
+<li><a href="https://github.com/SpatialPlanning/minpatch/actions/workflows/Windows.yaml" class="external-link"><img src="https://github.com/SpatialPlanning/minpatch/actions/workflows/Windows.yaml/badge.svg" alt="Windows"></a></li>
+<li><a href="https://github.com/SpatialPlanning/minpatch/actions/workflows/Ubuntu.yaml" class="external-link"><img src="https://github.com/SpatialPlanning/minpatch/actions/workflows/Ubuntu.yaml/badge.svg" alt="Ubuntu"></a></li>
+<li><a href="https://github.com/SpatialPlanning/minpatch/actions/workflows/MacOS.yaml" class="external-link"><img src="https://github.com/SpatialPlanning/minpatch/actions/workflows/MacOS.yaml/badge.svg" alt="MacOS"></a></li>
+<li><a href="https://github.com/SpatialPlanning/minpatch/issues" class="external-link"><img src="https://img.shields.io/github/issues/SpatialPlanning/minpatch" alt="issues - zoomss"></a></li>
+<li><a href="https://app.codecov.io/gh/SpatialPlanning/minpatch" class="external-link"><img src="https://codecov.io/gh/SpatialPlanning/minpatch/graph/badge.svg" alt="Codecov test coverage"></a></li>
 </ul>
 </div>
 

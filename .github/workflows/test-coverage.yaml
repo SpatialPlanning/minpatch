@@ -1,14 +1,16 @@
-# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
-# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+# R-focused test coverage workflow for GitHub Actions
+# Optimized for Codecov and modern R package testing
+
+name: test-coverage
+
 on:
   push:
     branches: [main, master]
   pull_request:
     branches: [main, master]
 
-name: test-coverage
-
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   test-coverage:
@@ -16,12 +18,13 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
-      PKG_SYSREQS: false
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: r-lib/actions/setup-r@v2
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
 
@@ -33,45 +36,38 @@ jobs:
             libudunits2-dev libgdal-dev libgeos-dev libproj-dev libglpk-dev \
             libgmp3-dev libmpfr-dev chromium-browser
 
-      - uses: r-lib/actions/setup-r-dependencies@v2
+      - name: Install R package dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          cache-version: 4
           extra-packages: |
             any::covr
+            any::testthat
             any::xml2
-            any::rcmdcheck
             any::remotes
             any::lpsymphony
-          needs: coverage
 
-      - name: Test coverage
+      - name: Run tests and generate coverage
         run: |
-          cov <- covr::package_coverage(
-            quiet = FALSE,
-            clean = FALSE,
-            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
-          )
-          covr::to_cobertura(cov)
+          cov <- covr::package_coverage()
+          covr::to_lcov(cov, file = "coverage.lcov")
         shell: Rscript {0}
 
-      - uses: codecov/codecov-action@v5
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
         with:
+          file: coverage.lcov
           fail_ci_if_error: ${{ github.event_name != 'pull_request' && true || false }}
-          file: ./cobertura.xml
-          plugin: noop
-          disable_search: true
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Show testthat output
         if: always()
         run: |
-          ## --------------------------------------------------------------------
-          find '${{ runner.temp }}/package' -name 'testthat.Rout*' -exec cat '{}' \; || true
+          find . -name 'testthat.Rout*' -exec cat '{}' \; || true
         shell: bash
 
-      - name: Upload test results
+      - name: Upload test results (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-test-failures
-          path: ${{ runner.temp }}/package
+          path: .

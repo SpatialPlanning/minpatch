@@ -45,33 +45,12 @@ jobs:
             any::xml2
             any::remotes
             any::lpsymphony
-          pak-arguments: --upgrade
-
-      - name: Check covr version
-        run: |
-          print(packageVersion("covr"))
-          print(find.package("covr"))
-          sessionInfo()
-        shell: Rscript {0}
-
-      - name: List covr exports
-        run: |
-          library(covr)
-          print(ls("package:covr"))
-        shell: Rscript {0}
 
       - name: Run tests and generate coverage
         run: |
           cov <- covr::package_coverage()
-          covr::to_lcov(cov, file = "coverage.lcov")
+          covr::codecov(cov)
         shell: Rscript {0}
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          file: coverage.lcov
-          fail_ci_if_error: ${{ github.event_name != 'pull_request' && true || false }}
-          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Show testthat output
         if: always()

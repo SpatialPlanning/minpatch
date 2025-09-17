@@ -24,7 +24,7 @@ knitr::opts_chunk$set(
 <!-- badges: end -->
 
 
-** Note: This is still a work in progress and significant bugs may be present. Use with caution **
+**Note: This is still a work in progress and significant bugs may be present. Use with caution**
 
 More information on the original implemention of MinPatch for Marxan and QGIS is available here:  https://cluz-systematic-conservation-planning.github.io
 

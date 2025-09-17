@@ -16,8 +16,8 @@ zoomss](https://img.shields.io/github/issues/SpatialPlanning/minpatch)](https://
 coverage](https://codecov.io/gh/SpatialPlanning/minpatch/graph/badge.svg)](https://app.codecov.io/gh/SpatialPlanning/minpatch)
 <!-- badges: end -->
 
-\*\* Note: This is still a work in progress and significant bugs may be
-present. Use with caution \*\*
+**Note: This is still a work in progress and significant bugs may be
+present. Use with caution**
 
 More information on the original implemention of MinPatch for Marxan and
 QGIS is available here:

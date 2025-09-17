@@ -54,6 +54,12 @@ jobs:
           sessionInfo()
         shell: Rscript {0}
 
+      - name: List covr exports
+        run: |
+          library(covr)
+          print(ls("package:covr"))
+        shell: Rscript {0}
+
       - name: Run tests and generate coverage
         run: |
           cov <- covr::package_coverage()

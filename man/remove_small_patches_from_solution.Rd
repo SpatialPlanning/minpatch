@@ -4,14 +4,10 @@
 \alias{remove_small_patches_from_solution}
 \title{Remove small patches from solution}
 \usage{
-remove_small_patches_from_solution(minpatch_data, patch_dict, min_patch_size)
+remove_small_patches_from_solution(minpatch_data)
 }
 \arguments{
 \item{minpatch_data}{List containing all MinPatch data structures}
-
-\item{patch_dict}{Named list of patches}
-
-\item{min_patch_size}{Minimum patch size threshold}
 }
 \value{
 Updated minpatch_data with small patches removed

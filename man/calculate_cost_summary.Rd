@@ -4,21 +4,10 @@
 \alias{calculate_cost_summary}
 \title{Calculate comprehensive cost summary for MinPatch solution}
 \usage{
-calculate_cost_summary(
-  prioritizr_problem = NULL,
-  solution_data = NULL,
-  unit_dict = NULL,
-  boundary_penalty = 0
-)
+calculate_cost_summary(minpatch_data)
 }
 \arguments{
-\item{prioritizr_problem}{A prioritizr problem object}
-
-\item{solution_data}{sf object with solution data}
-
-\item{unit_dict}{Named list containing cost and status for each planning unit (for compatibility)}
-
-\item{boundary_penalty}{Boundary length modifier (BLM) value}
+\item{minpatch_data}{List containing all MinPatch data structures}
 }
 \value{
 List containing detailed cost breakdown

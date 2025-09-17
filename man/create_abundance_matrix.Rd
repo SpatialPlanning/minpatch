@@ -2,19 +2,20 @@
 % Please edit documentation in R/data_structures.R
 \name{create_abundance_matrix}
 \alias{create_abundance_matrix}
-\title{Create abundance matrix from planning units and features}
+\title{Create abundance matrix from planning units}
 \usage{
-create_abundance_matrix(planning_units, features)
+create_abundance_matrix(planning_units, prioritizr_problem)
 }
 \arguments{
-\item{planning_units}{sf object with planning unit geometries}
+\item{planning_units}{sf object with planning unit geometries and feature columns}
 
-\item{features}{sf object or data.frame with conservation features}
+\item{prioritizr_problem}{A prioritizr problem object to get feature names}
 }
 \value{
 Named list where each planning unit contains feature abundances
 }
 \description{
 Creates a matrix showing the amount of each feature in each planning unit
+by extracting feature columns directly from planning_units using prioritizr problem
 }
 \keyword{internal}

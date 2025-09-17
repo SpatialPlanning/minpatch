@@ -1,0 +1,10 @@
+url: ~
+template:
+  bootstrap: 5
+  bslib:
+    toc: true
+    toc-expand: 3
+  bootswatch: cerulean
+navbar:
+  structure:
+    right: [github, search]

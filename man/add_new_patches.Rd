@@ -4,17 +4,15 @@
 \alias{add_new_patches}
 \title{Add new patches to meet conservation targets}
 \usage{
-add_new_patches(minpatch_data, patch_radius, verbose = TRUE)
+add_new_patches(minpatch_data, verbose = TRUE)
 }
 \arguments{
 \item{minpatch_data}{List containing all MinPatch data structures (including prioritizr objects)}
 
-\item{patch_radius}{Radius for adding new patches}
-
 \item{verbose}{Logical, whether to print progress}
 }
 \value{
-List containing updated unit_dict and unmet targets
+Updated minpatch_data with new patches added
 }
 \description{
 Stage 2 of MinPatch: Add new patches using BestPatch algorithm

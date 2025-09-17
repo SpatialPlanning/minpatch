@@ -7,22 +7,20 @@
 initialize_minpatch_data(
   solution,
   planning_units,
-  features,
   targets,
   costs,
   min_patch_size,
   patch_radius,
   boundary_penalty,
   prioritizr_problem,
-  prioritizr_solution
+  prioritizr_solution,
+  verbose = TRUE
 )
 }
 \arguments{
 \item{solution}{Binary solution vector}
 
 \item{planning_units}{sf object with planning units}
-
-\item{features}{sf object or data.frame with features}
 
 \item{targets}{data.frame with targets}
 
@@ -32,7 +30,7 @@ initialize_minpatch_data(
 
 \item{patch_radius}{patch radius}
 
-\item{boundary_penalty}{boundary length modifier}
+\item{boundary_penalty}{Boundary penalty value}
 
 \item{prioritizr_problem}{A prioritizr problem object}
 

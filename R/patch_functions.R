@@ -67,50 +67,59 @@ make_patch_dict <- function(minpatch_data) {
 #'
 #' Calculates summary statistics for patches including areas and counts
 #'
-#' @param patch_dict Named list of patches
-#' @param area_dict Named vector of planning unit areas
-#' @param min_patch_size Minimum patch size threshold
+#' @param minpatch_data List containing all MinPatch data structures
 #'
-#' @return List containing patch statistics
+#' @return Updated minpatch_data with patch statistics added
 #' @keywords internal
-calculate_patch_stats <- function(patch_dict, area_dict, min_patch_size) {
+calculate_patch_stats <- function(minpatch_data) {
+
+  # Get current patch dictionary
+  patch_dict <- make_patch_dict(minpatch_data)
+  area_dict <- minpatch_data$area_dict
+  min_patch_size <- minpatch_data$min_patch_size
 
   if (length(patch_dict) == 0) {
-    return(list(
+    patch_stats <- list(
       all_patch_count = 0,
       all_patch_area = 0,
       median_all_patch = 0,
       valid_patch_count = 0,
       valid_patch_area = 0,
       median_valid_patch = 0
-    ))
-  }
+    )
+  } else {
+    # Calculate patch areas
+    all_areas <- numeric(length(patch_dict))
+    valid_areas <- numeric(0)
 
-  # Calculate patch areas
-  all_areas <- numeric(length(patch_dict))
-  valid_areas <- numeric(0)
+    for (i in seq_along(patch_dict)) {
+      patch <- patch_dict[[i]]
+      patch_area <- sum(area_dict[patch$unit_ids])
+      all_areas[i] <- patch_area
 
-  for (i in seq_along(patch_dict)) {
-    patch <- patch_dict[[i]]
-    patch_area <- sum(area_dict[patch$unit_ids])
-    all_areas[i] <- patch_area
+      # Update patch_dict with calculated area
+      patch_dict[[i]]$area <- patch_area
 
-    # Update patch_dict with calculated area
-    patch_dict[[i]]$area <- patch_area
-
-    if (as.numeric(patch_area) >= as.numeric(min_patch_size)) {
-      valid_areas <- c(valid_areas, patch_area)
+      if (as.numeric(patch_area) >= as.numeric(min_patch_size)) {
+        valid_areas <- c(valid_areas, patch_area)
+      }
     }
+
+    patch_stats <- data.frame(
+      all_patch_count = length(all_areas),
+      all_patch_area = sum(all_areas),
+      median_all_patch = ifelse(length(all_areas) > 0, stats::median(all_areas), 0),
+      valid_patch_count = length(valid_areas),
+      valid_patch_area = sum(valid_areas),
+      median_valid_patch = ifelse(length(valid_areas) > 0, stats::median(valid_areas), 0)
+    )
   }
 
-  return(list(
-    all_patch_count = length(all_areas),
-    all_patch_area = sum(all_areas),
-    median_all_patch = ifelse(length(all_areas) > 0, stats::median(all_areas), 0),
-    valid_patch_count = length(valid_areas),
-    valid_patch_area = sum(valid_areas),
-    median_valid_patch = ifelse(length(valid_areas) > 0, stats::median(valid_areas), 0)
-  ))
+  # Add patch statistics to minpatch_data
+  minpatch_data$patch_stats <- patch_stats
+  minpatch_data$current_patch_dict <- patch_dict
+
+  return(minpatch_data)
 }
 
 #' Remove small patches from solution
@@ -118,15 +127,16 @@ calculate_patch_stats <- function(patch_dict, area_dict, min_patch_size) {
 #' Stage 1 of MinPatch: Remove patches smaller than minimum size threshold
 #'
 #' @param minpatch_data List containing all MinPatch data structures
-#' @param patch_dict Named list of patches
-#' @param min_patch_size Minimum patch size threshold
 #'
 #' @return Updated minpatch_data with small patches removed
 #' @keywords internal
-remove_small_patches_from_solution <- function(minpatch_data, patch_dict, min_patch_size) {
+remove_small_patches_from_solution <- function(minpatch_data) {
 
+  # Get current patch dictionary and parameters from minpatch_data
+  patch_dict <- make_patch_dict(minpatch_data)
   unit_dict <- minpatch_data$unit_dict
   area_dict <- minpatch_data$area_dict
+  min_patch_size <- minpatch_data$min_patch_size
 
   if (length(patch_dict) == 0) {
     return(minpatch_data)
@@ -171,12 +181,11 @@ remove_small_patches_from_solution <- function(minpatch_data, patch_dict, min_pa
 #' Stage 2 of MinPatch: Add new patches using BestPatch algorithm
 #'
 #' @param minpatch_data List containing all MinPatch data structures (including prioritizr objects)
-#' @param patch_radius Radius for adding new patches
 #' @param verbose Logical, whether to print progress
 #'
-#' @return List containing updated unit_dict and unmet targets
+#' @return Updated minpatch_data with new patches added
 #' @keywords internal
-add_new_patches <- function(minpatch_data, patch_radius, verbose = TRUE) {
+add_new_patches <- function(minpatch_data, verbose = TRUE) {
 
   unit_dict <- minpatch_data$unit_dict
   target_dict <- minpatch_data$target_dict

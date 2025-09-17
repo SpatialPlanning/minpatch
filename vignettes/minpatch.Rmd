@@ -23,18 +23,7 @@ knitr::opts_chunk$set(
 
 This vignette demonstrates how to use MinPatch with real conservation planning data from prioritizr. We'll use the simulated dataset included with prioritizr to show a complete workflow from problem formulation through MinPatch post-processing.
 
-## Enhanced prioritizr Integration
-
-MinPatch now leverages prioritizr's summary functions to reduce code duplication and ensure consistency:
-
-- **Cost calculations**: Uses `prioritizr::eval_cost_summary()` and `prioritizr::eval_boundary_summary()`
-- **Feature representation**: Uses `prioritizr::eval_feature_representation_summary()` and `prioritizr::eval_target_coverage_summary()`
-- **Planning unit counts**: Uses `prioritizr::eval_n_summary()`
-
-This integration provides more accurate and consistent results while reducing the maintenance burden of duplicate functionality.
-
-
-```{r setup}
+```{r setup, message=FALSE}
 library(minpatch)
 library(prioritizr)
 library(sf)
@@ -73,14 +62,12 @@ p <- problem(dat, features, cost_column = "cost") %>%
   add_default_solver(verbose = FALSE)
 
 # Solve the problem
-cat("Solving prioritizr problem...\n")
 s <- solve(p)
 ```
 
 ```{r}
 # plot map of prioritization
-ggplot(data = s) + 
-  geom_sf(aes(fill = as.logical(solution_1)))
+plot_prioritizr(s)
 
 ```
 
@@ -104,15 +91,10 @@ cat("- Patch radius:", round(patch_radius,3), "meters\n")
 cat("- This means patches must be at least", round(min_patch_size/median_area, 3),
     "times the median planning unit size\n")
 ```
+
 Run MinPatch with automatic data extraction from prioritizr objects
 
 ```{r run-minpatch}
-
-
-#TODO Lets clean up the output here. I think result should be a list with the output
-# sf dataframe as the first object and then a 2nd object with all the debugging stuff. 
-# To the first dataframe, I want to add the sf coords, the original solution, what 
-# patches were identified, which ones were added, and then which ones were whittled. 
 
 result <- run_minpatch(
   prioritizr_problem = p,
@@ -161,7 +143,7 @@ print(comparison$summary)
 ### Feature Representation Analysis
 
 ```{r feature-analysis}
-# Analyze feature representation using prioritizr functions directly
+
 # Create solution data for prioritizr analysis
 minpatch_solution_data <- result$solution[c("minpatch")]
 
@@ -183,7 +165,9 @@ combined_results <- data.frame(
   proportion_met = feature_rep$relative_held,
   target_met = target_coverage$met
 )
+
 worst_features <- combined_results[order(combined_results$proportion_met), ][1:5, ]
+
 cat("\nFeatures with lowest target achievement:\n")
 print(worst_features)
 ```
@@ -206,16 +190,71 @@ cat("- Median patch size increase:",
     round(final_stats$median_all_patch / initial_stats$median_all_patch, 1), "x\n")
 ```
 
-## Step 7: Visualize the Results
+## Step 5: Visualize the Results
 
 Let's create maps to visualize the changes MinPatch made:
 
 ```{r visualization}
-visualize_minpatch_results(result, title = "MinPatch Results")
+plot_minpatch(result, title = "MinPatch Results")
 
 ```
 
 ## Understanding the Results
+
+### Lets check the process
+
+```{r}
+# First remove small patches
+result_remove <- run_minpatch(
+  prioritizr_problem = p,
+  prioritizr_solution = s,
+  min_patch_size = min_patch_size,
+  patch_radius = patch_radius,
+  remove_small_patches = TRUE,
+  add_patches = FALSE,
+  whittle_patches = FALSE,
+  verbose = FALSE
+)
+
+# Next add to ensure patches meet minimum size
+result_add <- run_minpatch(
+  prioritizr_problem = p,
+  prioritizr_solution = s,
+  min_patch_size = min_patch_size,
+  patch_radius = patch_radius,
+  remove_small_patches = TRUE,
+  add_patches = TRUE,
+  whittle_patches = FALSE,
+  verbose = FALSE
+)
+
+# Finally, try and remove areas without degrading the solution
+result_whittle <- run_minpatch(
+  prioritizr_problem = p,
+  prioritizr_solution = s,
+  min_patch_size = min_patch_size,
+  patch_radius = patch_radius,
+  remove_small_patches = TRUE,
+  add_patches = TRUE,
+  whittle_patches = TRUE,
+  verbose = FALSE
+)
+
+```
+
+Plot the comparison
+
+```{r}
+patchwork::wrap_plots(
+  plot_minpatch(result_remove, title = "Remove Small Patches"),
+  plot_minpatch(result_add, title = "Add Patches"),
+  plot_minpatch(result_whittle, title = "Whittle Planning Units"), 
+  guides = "collect",
+  ncol = 3
+) & theme(legend.position = "bottom")
+
+
+```
 
 ### What MinPatch Accomplished
 
@@ -269,7 +308,7 @@ Always validate your results by:
 
 You can run MinPatch with different parameters to explore trade-offs:
 
-```{r multiple-scenarios, eval=FALSE}
+```{r multiple-scenarios, eval=TRUE}
 # Conservative scenario (larger patches)
 result_conservative <- run_minpatch(
   prioritizr_problem = p,
@@ -281,7 +320,7 @@ result_conservative <- run_minpatch(
 )
 
 # Compare scenarios
-comparison_conservative <- compare_solutions(result_conservative)
+compare_solutions(result_conservative)
 ```
 
 ## Conclusion

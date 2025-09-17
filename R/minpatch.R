@@ -17,7 +17,7 @@
 #' @param prioritizr_solution A solved prioritizr solution object
 #' @param min_patch_size Minimum patch size threshold
 #' @param patch_radius Radius for adding new patches
-#' @param boundary_penalty Boundary length modifier (default = 0)
+#' @param boundary_penalty Boundary penalty value (default = 0)
 #' @param remove_small_patches Logical, whether to remove small patches (Stage 1, default = TRUE)
 #' @param add_patches Logical, whether to add new patches to meet targets (Stage 2, default = TRUE)
 #' @param whittle_patches Logical, whether to remove unnecessary units (Stage 3, default = TRUE)
@@ -42,39 +42,52 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' library(prioritizr)
 #'
-#' # Create example data
-#' example_data <- create_example_data()
+#' library(prioritizr)
+#' library(sf)
+#' library(terra)
+#'
+#' # Get example data from prioritizr
+#' dat <- c(get_sim_pu_raster(), get_sim_features()) %>%
+#'   as.polygons(dissolve = FALSE, values = TRUE) %>%
+#'   sf::st_as_sf() %>%
+#'   dplyr::rename(cost = layer)
+#'
+#' st_crs(dat) <- NA
+#'
+#' features = colnames(dat) %>%
+#'   stringr::str_subset("feature_")
 #'
 #' # Create prioritizr problem
-#' p <- problem(example_data$planning_units,
-#'              cost_column = "cost") %>%
+#' p <- problem(dat, features, cost_column = "cost") %>%
 #'   add_min_set_objective() %>%
-#'   add_manual_targets(example_data$targets) %>%
-#'   add_binary_decisions()
+#'   add_relative_targets(0.17) %>%  # 17% of each feature
+#'   add_binary_decisions() %>%
+#'   add_default_solver(verbose = FALSE)
 #'
 #' # Solve problem
 #' s <- solve(p)
 #'
 #' # Apply MinPatch with all stages
 #' result <- run_minpatch(
-#'   s,
-#'   min_patch_size = 2.0,
-#'   patch_radius = 1.5
+#'   prioritizr_problem = p,
+#'   prioritizr_solution = s,
+#'   min_patch_size = 0.05,
+#'   patch_radius = 0.3,
 #' )
+
 #'
 #' # Apply MinPatch with only Stage 1 and 3 (skip adding patches)
 #' result2 <- run_minpatch(
-#'   s,
-#'   min_patch_size = 2.0,
-#'   patch_radius = 1.5,
+#'   prioritizr_problem = p,
+#'   prioritizr_solution = s,
+#'   min_patch_size = 0.05,
+#'   patch_radius = 0.3,
 #'   add_patches = FALSE
 #' )
 #'
 #' print_minpatch_summary(result)
-#' }
+#'
 run_minpatch <- function(prioritizr_problem,
                          prioritizr_solution,
                          min_patch_size,
@@ -107,32 +120,6 @@ run_minpatch <- function(prioritizr_problem,
   planning_units <- prioritizr_solution %>%
     dplyr::rename(prioritizr = !!solution_column)
 
-  # Extract feature data from planning units
-  feature_cols <- grep("^feature_", names(planning_units))
-  if (length(feature_cols) == 0) {
-    stop("No feature columns found in planning units. Feature columns should be named 'feature_1', 'feature_2', etc.")
-  }
-
-  # Create features data frame
-  features_data <- data.frame()
-  for (i in seq_along(feature_cols)) {
-    col_name <- names(planning_units)[feature_cols[i]]
-    feature_id <- as.numeric(gsub("feature_", "", col_name))
-
-    # Get non-zero abundances
-    abundances <- planning_units[[col_name]]
-    non_zero <- which(abundances > 0)
-
-    if (length(non_zero) > 0) {
-      feat_data <- data.frame(
-        pu_id = non_zero,
-        feature_id = feature_id,
-        amount = abundances[non_zero]
-      )
-      features_data <- rbind(features_data, feat_data)
-    }
-  }
-
   # Extract data from prioritizr problem object
   targets_raw <- prioritizr_problem$targets$data
   costs <- prioritizr_problem$planning_unit_costs()
@@ -156,10 +143,13 @@ run_minpatch <- function(prioritizr_problem,
         target = numeric(nrow(targets_df))
       )
 
+      # Get feature names from prioritizr problem
+      feature_names <- prioritizr::feature_names(prioritizr_problem)
+
       for (i in seq_len(nrow(targets_df))) {
         if (targets_df$type[i] == "relative") {
-          # Calculate total amount of this feature
-          feature_col <- paste0("feature_", i)
+          # Calculate total amount of this feature using actual feature name
+          feature_col <- feature_names[i]
           if (feature_col %in% names(planning_units)) {
             total_amount <- sum(planning_units[[feature_col]], na.rm = TRUE)
             targets$target[i] <- targets_df$target[i] * total_amount
@@ -197,42 +187,38 @@ run_minpatch <- function(prioritizr_problem,
 
   # Input validation
   if (verbose) cat("Validating inputs...\n")
-  validate_inputs(solution, planning_units, features_data, targets, costs,
+  validate_inputs(solution, planning_units, targets, costs,
                   min_patch_size, patch_radius, boundary_penalty)
 
   # Initialize data structures
   if (verbose) cat("Initializing data structures...\n")
   minpatch_data <- initialize_minpatch_data(
-    solution, planning_units, features_data, targets, costs,
+    solution, planning_units, targets, costs,
     min_patch_size, patch_radius, boundary_penalty,
-    prioritizr_problem, prioritizr_solution
+    prioritizr_problem, prioritizr_solution, verbose
   )
 
-  # Create initial patch dictionary
-  if (verbose) cat("Identifying initial patches...\n")
-  patch_dict <- make_patch_dict(minpatch_data)
+  # Create initial minpatch column in prioritizr_solution
+  minpatch_data$prioritizr_solution$minpatch <- create_solution_vector(minpatch_data$unit_dict)
 
   # Store initial patch statistics
-  initial_patch_stats <- NULL
-  if (length(patch_dict) > 0) {
-    initial_patch_stats <- calculate_patch_stats(patch_dict, minpatch_data$area_dict, min_patch_size)
-  }
+  if (verbose) cat("Calculating initial patch statistics...\n")
+  minpatch_data <- calculate_patch_stats(minpatch_data)
+  initial_patch_stats <- minpatch_data$patch_stats
 
   # Stage 1: Remove small patches (conditional)
   if (remove_small_patches) {
     if (verbose) cat("Stage 1: Removing small patches...\n")
-    minpatch_data <- remove_small_patches_from_solution(
-      minpatch_data, patch_dict, min_patch_size
-    )
-    
+    minpatch_data <- remove_small_patches_from_solution(minpatch_data)
+
     # Check if targets are still met after removing small patches
     if (!add_patches) {
       unmet_after_removal <- identify_unmet_targets(minpatch_data)
-      
+
       if (length(unmet_after_removal) > 0) {
         warning(paste("After removing small patches,", length(unmet_after_removal),
-                     "conservation targets are no longer met. Consider setting add_patches = TRUE",
-                     "to automatically add patches to meet targets, or use a smaller min_patch_size."))
+                      "conservation targets are no longer met. Consider setting add_patches = TRUE",
+                      "to automatically add patches to meet targets, or use a smaller min_patch_size."))
         if (verbose) {
           cat("  Warning:", length(unmet_after_removal), "targets are no longer met after removing small patches\n")
           cat("  Unmet feature IDs:", paste(unmet_after_removal, collapse = ", "), "\n")
@@ -249,14 +235,10 @@ run_minpatch <- function(prioritizr_problem,
   unmet_targets <- character(0)
   if (add_patches) {
     if (verbose) cat("Stage 2: Adding new patches...\n")
-    
-    
-    minpatch_data <- add_new_patches(
-      minpatch_data,
-      patch_radius,
-      verbose
-    )
-    
+
+
+    minpatch_data <- add_new_patches(minpatch_data, verbose)
+
 
     # Check final unmet targets
     unmet_targets <- identify_unmet_targets(minpatch_data)
@@ -281,8 +263,8 @@ run_minpatch <- function(prioritizr_problem,
 
   # Calculate final statistics
   if (verbose) cat("Calculating final statistics...\n")
-  final_patch_dict <- make_patch_dict(minpatch_data)
-  final_patch_stats <- calculate_patch_stats(final_patch_dict, minpatch_data$area_dict, min_patch_size)
+  minpatch_data <- calculate_patch_stats(minpatch_data)
+  final_patch_stats <- minpatch_data$patch_stats
 
   # Create output solution vector
   solution_vector <- create_solution_vector(minpatch_data$unit_dict)
@@ -296,11 +278,7 @@ run_minpatch <- function(prioritizr_problem,
   names(solution_data_for_prioritizr)[names(solution_data_for_prioritizr) == "minpatch"] <- solution_column
 
   # Use prioritizr functions for cost summary
-  cost_summary <- calculate_cost_summary(
-    prioritizr_problem = prioritizr_problem,
-    solution_data = solution_data_for_prioritizr,
-    boundary_penalty = boundary_penalty
-  )
+  cost_summary <- calculate_cost_summary(minpatch_data)
 
   if (verbose) cat("MinPatch processing complete!\n")
 

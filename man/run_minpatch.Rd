@@ -26,7 +26,7 @@ run_minpatch(
 
 \item{patch_radius}{Radius for adding new patches}
 
-\item{boundary_penalty}{Boundary length modifier (default = 0)}
+\item{boundary_penalty}{Boundary penalty value (default = 0)}
 
 \item{remove_small_patches}{Logical, whether to remove small patches (Stage 1, default = TRUE)}
 
@@ -62,37 +62,49 @@ a warning will be issued. Consider using \code{add_patches = TRUE} or
 a smaller \code{min_patch_size} to maintain target achievement.
 }
 \examples{
-\dontrun{
-library(prioritizr)
 
-# Create example data
-example_data <- create_example_data()
+library(prioritizr)
+library(sf)
+library(terra)
+
+# Get example data from prioritizr
+dat <- c(get_sim_pu_raster(), get_sim_features()) \%>\%
+  as.polygons(dissolve = FALSE, values = TRUE) \%>\%
+  sf::st_as_sf() \%>\%
+  dplyr::rename(cost = layer)
+
+st_crs(dat) <- NA
+
+features = colnames(dat) \%>\%
+  stringr::str_subset("feature_")
 
 # Create prioritizr problem
-p <- problem(example_data$planning_units,
-             cost_column = "cost") \%>\%
+p <- problem(dat, features, cost_column = "cost") \%>\%
   add_min_set_objective() \%>\%
-  add_manual_targets(example_data$targets) \%>\%
-  add_binary_decisions()
+  add_relative_targets(0.17) \%>\%  # 17\% of each feature
+  add_binary_decisions() \%>\%
+  add_default_solver(verbose = FALSE)
 
 # Solve problem
 s <- solve(p)
 
 # Apply MinPatch with all stages
 result <- run_minpatch(
-  s,
-  min_patch_size = 2.0,
-  patch_radius = 1.5
+  prioritizr_problem = p,
+  prioritizr_solution = s,
+  min_patch_size = 0.05,
+  patch_radius = 0.3,
 )
 
 # Apply MinPatch with only Stage 1 and 3 (skip adding patches)
 result2 <- run_minpatch(
-  s,
-  min_patch_size = 2.0,
-  patch_radius = 1.5,
+  prioritizr_problem = p,
+  prioritizr_solution = s,
+  min_patch_size = 0.05,
+  patch_radius = 0.3,
   add_patches = FALSE
 )
 
 print_minpatch_summary(result)
-}
+
 }

@@ -4,17 +4,13 @@
 \alias{calculate_patch_stats}
 \title{Calculate patch statistics}
 \usage{
-calculate_patch_stats(patch_dict, area_dict, min_patch_size)
+calculate_patch_stats(minpatch_data)
 }
 \arguments{
-\item{patch_dict}{Named list of patches}
-
-\item{area_dict}{Named vector of planning unit areas}
-
-\item{min_patch_size}{Minimum patch size threshold}
+\item{minpatch_data}{List containing all MinPatch data structures}
 }
 \value{
-List containing patch statistics
+Updated minpatch_data with patch statistics added
 }
 \description{
 Calculates summary statistics for patches including areas and counts

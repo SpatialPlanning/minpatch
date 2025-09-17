@@ -7,7 +7,6 @@
 validate_inputs(
   solution,
   planning_units,
-  features,
   targets,
   costs,
   min_patch_size,
@@ -20,8 +19,6 @@ validate_inputs(
 
 \item{planning_units}{sf object with planning units}
 
-\item{features}{sf object or data.frame with features}
-
 \item{targets}{data.frame with targets}
 
 \item{costs}{numeric vector of costs}
@@ -30,7 +27,7 @@ validate_inputs(
 
 \item{patch_radius}{patch radius for adding patches}
 
-\item{boundary_penalty}{boundary length modifier}
+\item{boundary_penalty}{Boundary penalty value}
 }
 \value{
 NULL (throws errors if validation fails)

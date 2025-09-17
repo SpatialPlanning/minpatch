@@ -3,12 +3,23 @@
 
 # MinPatch for R
 
-[![R-CMD-check](https://github.com/yourusername/minpatch/workflows/R-CMD-check/badge.svg)](https://github.com/yourusername/minpatch/actions)
+<!-- badges: start -->
+
+[![Lifecycle:
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![Windows](https://github.com/SpatialPlanning/minpatch/actions/workflows/Windows.yaml/badge.svg)](https://github.com/SpatialPlanning/minpatch/actions/workflows/Windows.yaml)
+[![Linux](https://github.com/SpatialPlanning/minpatch/actions/workflows/Linux.yaml/badge.svg)](https://github.com/SpatialPlanning/minpatch/actions/workflows/Linux.yaml)
+[![MacOS](https://github.com/SpatialPlanning/minpatch/actions/workflows/MacOS.yaml/badge.svg)](https://github.com/SpatialPlanning/minpatch/actions/workflows/MacOS.yaml)
+[![issues -
+zoomss](https://img.shields.io/github/issues/SpatialPlanning/minpatch)](https://github.com/SpatialPlanning/minpatch/issues)
+[![Codecov test
+coverage](https://codecov.io/gh/SpatialPlanning/minpatch/graph/badge.svg)](https://app.codecov.io/gh/SpatialPlanning/minpatch)
+<!-- badges: end -->
+
+## Overview
 
 An R implementation of the MinPatch algorithm for post-processing
 conservation planning solutions to ensure minimum protected area sizes.
-
-## Overview
 
 MinPatch is a post-processing tool for conservation planning solutions
 that ensures all protected areas meet user-defined minimum size
@@ -44,37 +55,8 @@ through three stages:
 ## Installation
 
 ``` r
-# Install from GitHub (when available)
-# devtools::install_github("yourusername/minpatch")
-
-# For development, install dependencies:
-install.packages(c("sf", "prioritizr"))
-```
-
-## Quick Start
-
-``` r
-library(minpatch)
-
-# Create example data
-example_data <- create_example_data(n_units = 25, n_features = 3)
-
-# Create an initial solution (e.g., from prioritizr)
-set.seed(123)
-initial_solution <- sample(c(0, 1), 25, replace = TRUE, prob = c(0.7, 0.3))
-
-# Apply MinPatch
-result <- run_minpatch(
-  solution = initial_solution,
-  planning_units = example_data$planning_units,
-  features = example_data$features,
-  targets = example_data$targets,
-  min_patch_size = 2.0,
-  patch_radius = 1.5
-)
-
-# View results
-print_minpatch_summary(result)
+# Install from GitHub
+devtools::install_github("SpatialPlanning/minpatch")
 ```
 
 ## Key Features
@@ -88,30 +70,6 @@ print_minpatch_summary(result)
 - **Comprehensive Reporting**: Detailed statistics and comparisons
 - **Visualization Support**: Plot results with ggplot2 (optional)
 - **Well Documented**: Extensive documentation and examples
-
-## Usage with prioritizr
-
-``` r
-library(prioritizr)
-library(minpatch)
-
-# Create and solve a prioritizr problem
-p <- problem(planning_units, features, cost_column = "cost") %>%
-  add_min_set_objective() %>%
-  add_relative_targets(0.2) %>%
-  add_binary_decisions()
-
-s <- solve(p)
-
-# Apply MinPatch
-result <- run_minpatch(
-  s,
-  min_patch_size = 1000,  # 1000 area units
-  patch_radius = 500      # 500 distance units
-)
-
-print_minpatch_summary(result)
-```
 
 ## Algorithm Details
 
@@ -152,24 +110,10 @@ Removes unnecessary planning units through an iterative process:
 - `min_patch_size`: Minimum area threshold for patches
 - `patch_radius`: Radius for adding new patches (allows elongated
   shapes)
-- `boundary_penalty`: Boundary length modifier (BLM) for cost
-  calculations
+- `boundary_penalty`: Boundary penalty value for cost calculations
 - `remove_small_patches`: Enable/disable Stage 1
 - `add_patches`: Enable/disable Stage 2  
 - `whittle_patches`: Enable/disable Stage 3
-
-## Comparison with Original Python Implementation
-
-This R implementation:
-
-- ✅ Implements all three stages of the original algorithm
-- ✅ Uses the same mathematical formulations (BestPatch, whittling
-  scores)
-- ✅ Produces equivalent results for the same inputs
-- ✅ Includes comprehensive testing to validate against expected
-  behaviors
-- ✅ Provides additional features like visualization and detailed
-  reporting
 
 ## Performance Considerations
 
@@ -177,16 +121,6 @@ This R implementation:
 - Consider using simpler geometries or pre-computed adjacency matrices
   for very large problems
 - The algorithm scales roughly O(n²) with the number of planning units
-
-## Contributing
-
-Contributions are welcome! Please:
-
-1.  Fork the repository
-2.  Create a feature branch
-3.  Add tests for new functionality
-4.  Ensure all tests pass
-5.  Submit a pull request
 
 ## Citation
 
@@ -212,7 +146,7 @@ systematic conservation planning. *Biological Conservation*, 143(10),
 
 ## Getting Help
 
-- Check the package vignette: `vignette("minpatch-introduction")`
+- Check the package vignette: `vignette("minpatch")`
 - View function documentation: `?run_minpatch`
 - Report bugs: [GitHub
-  Issues](https://github.com/yourusername/minpatch/issues)
+  Issues](https://github.com/SpatialPlanning/minpatch/issues)

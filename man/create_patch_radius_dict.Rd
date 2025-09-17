@@ -4,7 +4,7 @@
 \alias{create_patch_radius_dict}
 \title{Create patch radius dictionary}
 \usage{
-create_patch_radius_dict(planning_units, patch_radius)
+create_patch_radius_dict(planning_units, patch_radius, verbose = TRUE)
 }
 \arguments{
 \item{planning_units}{sf object with planning unit geometries}

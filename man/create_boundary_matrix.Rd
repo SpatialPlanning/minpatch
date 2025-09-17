@@ -4,7 +4,7 @@
 \alias{create_boundary_matrix}
 \title{Create boundary matrix from planning units}
 \usage{
-create_boundary_matrix(planning_units)
+create_boundary_matrix(planning_units, verbose = TRUE)
 }
 \arguments{
 \item{planning_units}{sf object with planning unit geometries}

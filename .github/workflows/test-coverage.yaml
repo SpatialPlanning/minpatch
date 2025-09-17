@@ -45,6 +45,7 @@ jobs:
             any::xml2
             any::remotes
             any::lpsymphony
+          pak-arguments: --upgrade
 
       - name: Run tests and generate coverage
         run: |

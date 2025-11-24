@@ -1,7 +1,5 @@
 ---
 title: "MinPatch with prioritizr"
-author: "MinPatch Package Authors"
-date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{MinPatch with prioritizr}
@@ -36,7 +34,6 @@ library(patchwork)
 ## Step 1: Load and Examine the Data
 
 ```{r load-data}
-
 dat <- c(get_sim_pu_raster(), get_sim_features()) %>% 
   as.polygons(dissolve = FALSE, values = TRUE) %>%
   sf::st_as_sf() %>% 
@@ -95,7 +92,6 @@ cat("- This means patches must be at least", round(min_patch_size/median_area, 3
 Run MinPatch with automatic data extraction from prioritizr objects
 
 ```{r run-minpatch}
-
 result <- run_minpatch(
   prioritizr_problem = p,
   prioritizr_solution = s,
@@ -143,7 +139,6 @@ print(comparison$summary)
 ### Feature Representation Analysis
 
 ```{r feature-analysis}
-
 # Create solution data for prioritizr analysis
 minpatch_solution_data <- result$solution[c("minpatch")]
 
@@ -196,7 +191,6 @@ Let's create maps to visualize the changes MinPatch made:
 
 ```{r visualization}
 plot_minpatch(result, title = "MinPatch Results")
-
 ```
 
 ## Understanding the Results

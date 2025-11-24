@@ -97,7 +97,6 @@ cat("- This means patches must be at least", round(min_patch_size/median_area, 3
 
 ``` r
 
-
 result <- run_minpatch(
   prioritizr_problem = p,
   prioritizr_solution = s,
@@ -400,7 +399,6 @@ areas.
 
 ``` r
 
-
 # Calculate reasonable parameters based on planning unit characteristics
 median_area <- median(st_area(tas))
 min_patch_size <- median_area * 10
@@ -469,7 +467,6 @@ different penalty values. Very small penalties (e.g., 1e-10) may be
 needed to see meaningful differences in such cases.
 
 ``` r
-
 
 # Calculate reasonable parameters based on planning unit characteristics
 median_area <- median(st_area(tas))

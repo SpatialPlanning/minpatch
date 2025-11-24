@@ -22,7 +22,6 @@ library(patchwork)
 
 ``` r
 
-
 dat <- c(get_sim_pu_raster(), get_sim_features()) %>% 
   as.polygons(dissolve = FALSE, values = TRUE) %>%
   sf::st_as_sf() %>% 
@@ -91,7 +90,6 @@ cat("- This means patches must be at least", round(min_patch_size/median_area, 3
 Run MinPatch with automatic data extraction from prioritizr objects
 
 ``` r
-
 
 result <- run_minpatch(
   prioritizr_problem = p,
@@ -250,7 +248,6 @@ print(comparison$summary)
 #### Feature Representation Analysis
 
 ``` r
-
 
 # Create solution data for prioritizr analysis
 minpatch_solution_data <- result$solution[c("minpatch")]

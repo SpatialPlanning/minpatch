@@ -57,10 +57,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>MinPatch with prioritizr</h1>
-                        <h4 data-toc-skip class="author">MinPatch
-Package Authors</h4>
             
-            <h4 data-toc-skip class="date">2025-11-24</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/SpatialPlanning/minpatch/blob/HEAD/vignettes/minpatch.Rmd" class="external-link"><code>vignettes/minpatch.Rmd</code></a></small>
       <div class="d-none name"><code>minpatch.Rmd</code></div>
@@ -87,8 +84,7 @@ through MinPatch post-processing.</p>
 <h3 id="step-1-load-and-examine-the-data">Step 1: Load and Examine the Data<a class="anchor" aria-label="anchor" href="#step-1-load-and-examine-the-data"></a>
 </h3>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="va">dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://prioritizr.net/reference/sim_data.html" class="external-link">get_sim_pu_raster</a></span><span class="op">(</span><span class="op">)</span>, <span class="fu"><a href="https://prioritizr.net/reference/sim_data.html" class="external-link">get_sim_features</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> </span>
+<code class="sourceCode R"><span><span class="va">dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://prioritizr.net/reference/sim_data.html" class="external-link">get_sim_pu_raster</a></span><span class="op">(</span><span class="op">)</span>, <span class="fu"><a href="https://prioritizr.net/reference/sim_data.html" class="external-link">get_sim_features</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> </span>
 <span>  <span class="fu"><a href="https://rspatial.github.io/terra/reference/as.polygons.html" class="external-link">as.polygons</a></span><span class="op">(</span>dissolve <span class="op">=</span> <span class="cn">FALSE</span>, values <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span>cost <span class="op">=</span> <span class="va">layer</span><span class="op">)</span></span>
@@ -146,8 +142,7 @@ necessary data from the prioritizr solution object:</p>
 <p>Run MinPatch with automatic data extraction from prioritizr
 objects</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_minpatch.html">run_minpatch</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_minpatch.html">run_minpatch</a></span><span class="op">(</span></span>
 <span>  prioritizr_problem <span class="op">=</span> <span class="va">p</span>,</span>
 <span>  prioritizr_solution <span class="op">=</span> <span class="va">s</span>,</span>
 <span>  min_patch_size <span class="op">=</span> <span class="va">min_patch_size</span>,</span>
@@ -301,8 +296,7 @@ objects</p>
 <h4 id="feature-representation-analysis">Feature Representation Analysis<a class="anchor" aria-label="anchor" href="#feature-representation-analysis"></a>
 </h4>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="co"># Create solution data for prioritizr analysis</span></span>
+<code class="sourceCode R"><span><span class="co"># Create solution data for prioritizr analysis</span></span>
 <span><span class="va">minpatch_solution_data</span> <span class="op">&lt;-</span> <span class="va">result</span><span class="op">$</span><span class="va">solution</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"minpatch"</span><span class="op">)</span><span class="op">]</span></span>
 <span></span>
 <span><span class="co"># Use prioritizr functions for accurate feature representation analysis</span></span>

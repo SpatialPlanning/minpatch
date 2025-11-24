@@ -13,8 +13,8 @@ thresholds, following the methodology described in Smith et al. (2010).
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/yourusername/minpatch}
-  \item Report bugs at \url{https://github.com/yourusername/minpatch/issues}
+  \item \url{https://github.com/SpatialPlanning/minpatch}
+  \item Report bugs at \url{https://github.com/SpatialPlanning/minpatch/issues}
 }
 
 }

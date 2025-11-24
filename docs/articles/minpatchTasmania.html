@@ -157,8 +157,7 @@
 <h3 id="run-minpatch">Run minpatch<a class="anchor" aria-label="anchor" href="#run-minpatch"></a>
 </h3>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_minpatch.html">run_minpatch</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_minpatch.html">run_minpatch</a></span><span class="op">(</span></span>
 <span>  prioritizr_problem <span class="op">=</span> <span class="va">p</span>,</span>
 <span>  prioritizr_solution <span class="op">=</span> <span class="va">s</span>,</span>
 <span>  min_patch_size <span class="op">=</span> <span class="va">min_patch_size</span>,</span>
@@ -456,8 +455,7 @@ reduce edge effects, while smaller patches may be acceptable in highly
 connected landscapes or for features that don’t require large contiguous
 areas.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="co"># Calculate reasonable parameters based on planning unit characteristics</span></span>
+<code class="sourceCode R"><span><span class="co"># Calculate reasonable parameters based on planning unit characteristics</span></span>
 <span><span class="va">median_area</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/summarize-generics.html" class="external-link">median</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_measures.html" class="external-link">st_area</a></span><span class="op">(</span><span class="va">tas</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">min_patch_size</span> <span class="op">&lt;-</span> <span class="va">median_area</span> <span class="op">*</span> <span class="fl">10</span></span>
 <span><span class="va">patch_radius</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">median_area</span> <span class="op">*</span> <span class="fl">10</span><span class="op">)</span></span>
@@ -523,8 +521,7 @@ similar solutions across different penalty values. Very small penalties
 (e.g., 1e-10) may be needed to see meaningful differences in such
 cases.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="co"># Calculate reasonable parameters based on planning unit characteristics</span></span>
+<code class="sourceCode R"><span><span class="co"># Calculate reasonable parameters based on planning unit characteristics</span></span>
 <span><span class="va">median_area</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/summarize-generics.html" class="external-link">median</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_measures.html" class="external-link">st_area</a></span><span class="op">(</span><span class="va">tas</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">min_patch_size</span> <span class="op">&lt;-</span> <span class="va">median_area</span> <span class="op">*</span> <span class="fl">5</span></span>
 <span><span class="va">patch_radius</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">median_area</span> <span class="op">*</span> <span class="fl">10</span><span class="op">)</span></span>

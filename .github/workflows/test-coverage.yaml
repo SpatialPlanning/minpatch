@@ -40,6 +40,7 @@ jobs:
             any::xml2
             any::remotes
             any::lpsymphony
+            any::slam
           needs: coverage
 
       - name: Test coverage

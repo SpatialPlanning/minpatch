@@ -41,7 +41,8 @@ Imports:
     prioritizr (>= 7.0.0),
     rlang,
     stats,
-    magrittr
+    magrittr,
+    igraph
 Suggests:
     dplyr,
     ggplot2,

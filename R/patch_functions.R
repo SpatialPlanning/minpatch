@@ -1,6 +1,8 @@
 #' Create patch dictionary from unit dictionary
 #'
-#' Identifies connected components (patches) in the current solution
+#' Identifies connected components (patches) in the current solution using igraph.
+#' This implementation uses graph theory algorithms (via igraph) for faster
+#' performance, especially with large planning problems.
 #'
 #' @param minpatch_data List containing all MinPatch data structures
 #'
@@ -14,50 +16,50 @@ make_patch_dict <- function(minpatch_data) {
   # Get all selected planning units (status = 1 or 2)
   selected_units <- names(unit_dict)[sapply(unit_dict, function(x) x$status %in% c(1, 2))]
 
-
   if (length(selected_units) == 0) {
     return(list())
   }
 
-  patch_dict <- list()
-  patch_id <- 1
-  remaining_units <- selected_units
+  # Create adjacency matrix for selected units
+  n_selected <- length(selected_units)
+  adj_matrix <- matrix(0, nrow = n_selected, ncol = n_selected)
+  rownames(adj_matrix) <- selected_units
+  colnames(adj_matrix) <- selected_units
 
-  while (length(remaining_units) > 0) {
-    # Start a new patch with the first remaining unit
-    current_patch <- character(0)
-    units_to_check <- remaining_units[1]
+  # Fill adjacency matrix based on boundary_matrix
+  for (i in seq_along(selected_units)) {
+    unit_i <- selected_units[i]
+    neighbors <- names(boundary_matrix[[unit_i]])
 
-
-    # Find all connected units using breadth-first search
-    while (length(units_to_check) > 0) {
-      current_unit <- units_to_check[1]
-      units_to_check <- units_to_check[-1]
-
-      if (!current_unit %in% current_patch) {
-        current_patch <- c(current_patch, current_unit)
-
-        # Find neighbors of current unit that are also selected
-        neighbors <- names(boundary_matrix[[current_unit]])
-        selected_neighbors <- intersect(neighbors, remaining_units)
-        selected_neighbors <- selected_neighbors[!selected_neighbors %in% current_patch]
-
-
-        units_to_check <- unique(c(units_to_check, selected_neighbors))
+    for (j in seq_along(selected_units)) {
+      unit_j <- selected_units[j]
+      if (unit_j %in% neighbors) {
+        adj_matrix[i, j] <- 1
       }
     }
+  }
 
+  # Set diagonal to 1 (self-connections)
+  diag(adj_matrix) <- 1
 
-    # Store patch information
+  # Create graph from adjacency matrix
+  g <- igraph::graph_from_adjacency_matrix(adj_matrix, mode = "undirected")
+
+  # Identify components (patches) using igraph
+  clu <- igraph::components(g)
+
+  # Create patch dictionary from component membership
+  patch_dict <- list()
+
+  for (patch_id in seq_len(clu$no)) {
+    # Get unit IDs in this component
+    unit_ids <- selected_units[clu$membership == patch_id]
+
     patch_dict[[as.character(patch_id)]] <- list(
       area = 0,  # Will be calculated later
-      unit_count = length(current_patch),
-      unit_ids = current_patch
+      unit_count = length(unit_ids),
+      unit_ids = unit_ids
     )
-
-    # Remove processed units from remaining units
-    remaining_units <- setdiff(remaining_units, current_patch)
-    patch_id <- patch_id + 1
   }
 
   return(patch_dict)

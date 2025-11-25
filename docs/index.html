@@ -105,6 +105,8 @@
 <li>
 <strong>prioritizr Integration</strong>: Seamless workflow with prioritizr solutions</li>
 <li>
+<strong>Locked Constraints Support</strong>: Automatically respects locked-in and locked-out constraints from prioritizr</li>
+<li>
 <strong>Flexible Parameters</strong>: Control minimum patch sizes, patch radius, and boundary penalties</li>
 <li>
 <strong>Comprehensive Reporting</strong>: Detailed statistics and comparisons</li>
@@ -116,9 +118,19 @@
 <h2 id="algorithm-details">Algorithm Details<a class="anchor" aria-label="anchor" href="#algorithm-details"></a>
 </h2>
 <div class="section level3">
+<h3 id="locked-constraints">Locked Constraints<a class="anchor" aria-label="anchor" href="#locked-constraints"></a>
+</h3>
+<p>MinPatch automatically respects locked-in and locked-out constraints from prioritizr problems:</p>
+<ul>
+<li><p><strong>Locked-in constraints</strong> (from <code>add_locked_in_constraints()</code>): Planning units that are locked-in will never be removed, regardless of patch size or during the whittling stage. These units are treated as “conserved” areas that must be retained in the final solution.</p></li>
+<li><p><strong>Locked-out constraints</strong> (from <code>add_locked_out_constraints()</code>): Planning units that are locked-out will never be selected, even when adding new patches to meet conservation targets. These units are completely excluded from consideration.</p></li>
+</ul>
+<p>If locked-in units form patches smaller than <code>min_patch_size</code>, a warning will be issued, but these units will still be preserved in the solution.</p>
+</div>
+<div class="section level3">
 <h3 id="stage-1-remove-small-patches">Stage 1: Remove Small Patches<a class="anchor" aria-label="anchor" href="#stage-1-remove-small-patches"></a>
 </h3>
-<p>Identifies connected components (patches) in the solution and removes those smaller than the minimum size threshold. Only removes patches that weren’t originally designated as conserved areas.</p>
+<p>Identifies connected components (patches) in the solution and removes those smaller than the minimum size threshold. Locked-in planning units are never removed, even if they form small patches.</p>
 </div>
 <div class="section level3">
 <h3 id="stage-2-add-new-patches-bestpatch-algorithm">Stage 2: Add New Patches (BestPatch Algorithm)<a class="anchor" aria-label="anchor" href="#stage-2-add-new-patches-bestpatch-algorithm"></a>

@@ -1,6 +1,7 @@
 #' Validate MinPatch inputs
 #'
-#' Internal function to validate all inputs to the MinPatch algorithm
+#' Internal function to validate all inputs to the MinPatch algorithm,
+#' including locked-in and locked-out constraints
 #'
 #' @param solution Binary solution vector
 #' @param planning_units sf object with planning units
@@ -9,11 +10,17 @@
 #' @param min_patch_size minimum patch size
 #' @param patch_radius patch radius for adding patches
 #' @param boundary_penalty Boundary penalty value
+#' @param locked_in_indices Optional indices of locked-in planning units
+#' @param locked_out_indices Optional indices of locked-out planning units
+#' @param area_dict Optional area dictionary for locked-in patch size validation
+#' @param verbose Logical, whether to print warnings
 #'
 #' @return NULL (throws errors if validation fails)
 #' @keywords internal
 validate_inputs <- function(solution, planning_units, targets, costs,
-                           min_patch_size, patch_radius, boundary_penalty) {
+                           min_patch_size, patch_radius, boundary_penalty,
+                           locked_in_indices = NULL, locked_out_indices = NULL,
+                           area_dict = NULL, verbose = TRUE) {
 
   # Check solution
   if (!is.numeric(solution) || !all(solution %in% c(0, 1))) {
@@ -69,11 +76,39 @@ validate_inputs <- function(solution, planning_units, targets, costs,
       stop("costs must be non-negative")
     }
   }
+
+  # Validate locked-in and locked-out constraints
+  if (!is.null(locked_in_indices) && !is.null(locked_out_indices)) {
+    # Check for conflicts between locked-in and locked-out
+    conflicts <- intersect(locked_in_indices, locked_out_indices)
+    if (length(conflicts) > 0) {
+      stop(paste("Conflict detected: Planning units", paste(conflicts, collapse = ", "),
+                 "are both locked-in and locked-out. This is not allowed."))
+    }
+  }
+
+  # Warn if locked-in units form patches smaller than min_patch_size
+  if (!is.null(locked_in_indices) && !is.null(area_dict) && length(locked_in_indices) > 0) {
+    locked_in_area <- sum(area_dict[as.character(locked_in_indices)])
+    if (as.numeric(locked_in_area) < as.numeric(min_patch_size_numeric)) {
+      if (verbose) {
+        warning(paste0("Locked-in planning units have total area (",
+                      round(as.numeric(locked_in_area), 4),
+                      ") smaller than min_patch_size (",
+                      min_patch_size_numeric,
+                      "). These units will be preserved regardless of patch size constraints."))
+      }
+    }
+  }
 }
 
 #' Initialize MinPatch data structures
 #'
-#' Creates the internal data structures needed for MinPatch processing
+#' Creates the internal data structures needed for MinPatch processing.
+#' This function extracts locked-in and locked-out constraints from the
+#' prioritizr problem and applies them as status codes:
+#' - Status 2 (conserved) for locked-in units
+#' - Status 3 (excluded) for locked-out units
 #'
 #' @param solution Binary solution vector
 #' @param planning_units sf object with planning units
@@ -84,6 +119,7 @@ validate_inputs <- function(solution, planning_units, targets, costs,
 #' @param boundary_penalty Boundary penalty value
 #' @param prioritizr_problem A prioritizr problem object
 #' @param prioritizr_solution A solved prioritizr solution object
+#' @param verbose Logical, whether to print progress
 #'
 #' @return List containing all necessary data structures
 #' @keywords internal
@@ -98,7 +134,7 @@ initialize_minpatch_data <- function(solution, planning_units, targets, costs,
     costs <- rep(1, n_units)  # Default unit costs
   }
 
-  # Status codes: 0 = available, 1 = selected, 2 = conserved, 3 = excluded
+  # Status codes: 0 = available, 1 = selected, 2 = conserved (locked-in), 3 = excluded (locked-out)
   # Convert solution to status (1 = selected, 0 = available)
   unit_dict <- vector("list", n_units)
   names(unit_dict) <- as.character(seq_len(n_units))
@@ -110,13 +146,46 @@ initialize_minpatch_data <- function(solution, planning_units, targets, costs,
     )
   }
 
-  # Calculate planning unit areas
+  # Extract locked-in and locked-out constraints from prioritizr problem
+  locked_in_indices <- extract_locked_in_constraints(prioritizr_problem, verbose)
+  locked_out_indices <- extract_locked_out_constraints(prioritizr_problem, verbose)
+
+  # Apply locked-in constraints (status = 2)
+  if (length(locked_in_indices) > 0) {
+    for (idx in locked_in_indices) {
+      if (idx <= n_units) {
+        unit_dict[[as.character(idx)]]$status <- 2L
+      }
+    }
+    if (verbose) {
+      cat("Applied", length(locked_in_indices), "locked-in constraints\n")
+    }
+  }
+
+  # Apply locked-out constraints (status = 3)
+  if (length(locked_out_indices) > 0) {
+    for (idx in locked_out_indices) {
+      if (idx <= n_units) {
+        unit_dict[[as.character(idx)]]$status <- 3L
+      }
+    }
+    if (verbose) {
+      cat("Applied", length(locked_out_indices), "locked-out constraints\n")
+    }
+  }
+
+  # Calculate planning unit areas (needed for validation)
   area_dict <- as.numeric(sf::st_area(planning_units))
   names(area_dict) <- as.character(seq_len(n_units))
 
   # Create cost dictionary
   cost_dict <- costs
   names(cost_dict) <- as.character(seq_len(n_units))
+
+  # Validate locked constraints after applying them
+  validate_inputs(solution, planning_units, targets, costs,
+                  min_patch_size, patch_radius, boundary_penalty,
+                  locked_in_indices, locked_out_indices, area_dict, verbose)
 
   # Create boundary matrix (adjacency with shared boundary lengths)
   boundary_matrix <- create_boundary_matrix(planning_units, verbose)
@@ -153,8 +222,60 @@ initialize_minpatch_data <- function(solution, planning_units, targets, costs,
     patch_radius = patch_radius,
     boundary_penalty = boundary_penalty,
     prioritizr_problem = prioritizr_problem,
-    prioritizr_solution = prioritizr_solution
+    prioritizr_solution = prioritizr_solution,
+    locked_in_indices = locked_in_indices,
+    locked_out_indices = locked_out_indices
   ))
+}
+
+#' Extract locked-in constraint indices from prioritizr problem
+#'
+#' @param prioritizr_problem A prioritizr problem object
+#' @param verbose Logical, whether to print messages
+#'
+#' @return Integer vector of locked-in planning unit indices
+#' @keywords internal
+extract_locked_in_constraints <- function(prioritizr_problem, verbose = TRUE) {
+  locked_in <- integer(0)
+  
+  if (!is.null(prioritizr_problem$constraints)) {
+    for (constraint in prioritizr_problem$constraints) {
+      # Check if this is a locked-in constraint
+      if (inherits(constraint, "LockedInConstraint")) {
+        # Extract indices using the constraint's data
+        if (!is.null(constraint$data) && "pu" %in% names(constraint$data)) {
+          locked_in <- unique(c(locked_in, constraint$data$pu))
+        }
+      }
+    }
+  }
+  
+  return(sort(unique(locked_in)))
+}
+
+#' Extract locked-out constraint indices from prioritizr problem
+#'
+#' @param prioritizr_problem A prioritizr problem object
+#' @param verbose Logical, whether to print messages
+#'
+#' @return Integer vector of locked-out planning unit indices
+#' @keywords internal
+extract_locked_out_constraints <- function(prioritizr_problem, verbose = TRUE) {
+  locked_out <- integer(0)
+  
+  if (!is.null(prioritizr_problem$constraints)) {
+    for (constraint in prioritizr_problem$constraints) {
+      # Check if this is a locked-out constraint
+      if (inherits(constraint, "LockedOutConstraint")) {
+        # Extract indices using the constraint's data
+        if (!is.null(constraint$data) && "pu" %in% names(constraint$data)) {
+          locked_out <- unique(c(locked_out, constraint$data$pu))
+        }
+      }
+    }
+  }
+  
+  return(sort(unique(locked_out)))
 }
 
 #' Create boundary matrix from planning units

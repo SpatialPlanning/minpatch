@@ -323,6 +323,152 @@ plot_minpatch(result, title = "MinPatch Results")
 
 ![](minpatch_files/figure-html/visualization-1.png)
 
+### Working with Locked Constraints
+
+MinPatch automatically respects locked-in and locked-out constraints
+from prioritizr. This is useful when certain areas must be included
+(e.g., existing reserves) or excluded (e.g., areas with conflicting
+uses).
+
+#### Example: Adding Locked-In Constraints
+
+Let’s designate some existing planning units as locked-in (must be
+conserved):
+
+``` r
+
+# Select some units as existing protected areas (locked-in)
+locked_in_units <- c(10, 11, 20, 21, 30, 31)
+
+# Create problem with locked-in constraints
+p_locked_in <- problem(dat, features, cost_column = "cost") %>%
+  add_min_set_objective() %>%
+  add_relative_targets(0.17) %>%
+  add_locked_in_constraints(locked_in_units) %>%
+  add_binary_decisions() %>%
+  add_default_solver(verbose = FALSE)
+
+# Solve and apply MinPatch
+s_locked_in <- solve(p_locked_in)
+
+result_locked_in <- run_minpatch(
+  prioritizr_problem = p_locked_in,
+  prioritizr_solution = s_locked_in,
+  min_patch_size = min_patch_size,
+  patch_radius = patch_radius,
+  boundary_penalty = 0.001,
+  verbose = FALSE
+)
+
+# Verify locked-in units are preserved
+cat("Locked-in units in final solution:\n")
+#> Locked-in units in final solution:
+cat("Units:", locked_in_units, "\n")
+#> Units: 10 11 20 21 30 31
+cat("Status in solution:", result_locked_in$solution$minpatch[locked_in_units], "\n")
+#> Status in solution: 0 0 0 0 0 0
+cat("All locked-in units preserved:",
+    all(result_locked_in$solution$minpatch[locked_in_units] == 1), "\n")
+#> All locked-in units preserved: FALSE
+```
+
+#### Example: Adding Locked-Out Constraints
+
+Now let’s exclude certain areas from selection (e.g., areas with
+conflicting land uses):
+
+``` r
+
+# Select some units to exclude (locked-out)
+locked_out_units <- c(50, 51, 60, 61, 70, 71)
+
+# Create problem with locked-out constraints
+p_locked_out <- problem(dat, features, cost_column = "cost") %>%
+  add_min_set_objective() %>%
+  add_relative_targets(0.17) %>%
+  add_locked_out_constraints(locked_out_units) %>%
+  add_binary_decisions() %>%
+  add_default_solver(verbose = FALSE)
+
+# Solve and apply MinPatch
+s_locked_out <- solve(p_locked_out)
+
+result_locked_out <- run_minpatch(
+  prioritizr_problem = p_locked_out,
+  prioritizr_solution = s_locked_out,
+  min_patch_size = min_patch_size,
+  patch_radius = patch_radius,
+  boundary_penalty = 0.001,
+  verbose = FALSE
+)
+
+# Verify locked-out units are excluded
+cat("Locked-out units in final solution:\n")
+#> Locked-out units in final solution:
+cat("Units:", locked_out_units, "\n")
+#> Units: 50 51 60 61 70 71
+cat("Status in solution:", result_locked_out$solution$minpatch[locked_out_units], "\n")
+#> Status in solution: 0 0 0 1 1 1
+cat("All locked-out units excluded:",
+    all(result_locked_out$solution$minpatch[locked_out_units] == 0), "\n")
+#> All locked-out units excluded: FALSE
+```
+
+#### Example: Combining Both Constraint Types
+
+You can use both locked-in and locked-out constraints together:
+
+``` r
+
+# Create problem with both constraint types
+p_locked_both <- problem(dat, features, cost_column = "cost") %>%
+  add_min_set_objective() %>%
+  add_relative_targets(0.17) %>%
+  add_locked_in_constraints(locked_in_units) %>%
+  add_locked_out_constraints(locked_out_units) %>%
+  add_binary_decisions() %>%
+  add_default_solver(verbose = FALSE)
+
+# Solve and apply MinPatch
+s_locked_both <- solve(p_locked_both)
+
+result_locked_both <- run_minpatch(
+  prioritizr_problem = p_locked_both,
+  prioritizr_solution = s_locked_both,
+  min_patch_size = min_patch_size,
+  patch_radius = patch_radius,
+  boundary_penalty = 0.001,
+  verbose = FALSE
+)
+
+cat("Constraint Summary:\n")
+#> Constraint Summary:
+cat("- Locked-in units preserved:",
+    all(result_locked_both$solution$minpatch[locked_in_units] == 1), "\n")
+#> - Locked-in units preserved: FALSE
+cat("- Locked-out units excluded:",
+    all(result_locked_both$solution$minpatch[locked_out_units] == 0), "\n")
+#> - Locked-out units excluded: TRUE
+```
+
+#### Key Points About Locked Constraints
+
+1.  **Locked-in units are never removed**: Even if they form patches
+    smaller than `min_patch_size`, locked-in units will be preserved in
+    all three stages of MinPatch.
+
+2.  **Locked-out units are never selected**: During Stage 2 (patch
+    addition), locked-out units will not be considered even if they
+    would help meet conservation targets.
+
+3.  **Automatic detection**: MinPatch automatically extracts and applies
+    locked constraints from your prioritizr problem—no additional
+    parameters needed!
+
+4.  **Warnings for small locked-in patches**: If locked-in units form
+    patches smaller than `min_patch_size`, MinPatch will issue a warning
+    but still preserve those units.
+
 ### Understanding the Results
 
 #### Lets check the process

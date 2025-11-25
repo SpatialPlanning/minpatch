@@ -56,7 +56,6 @@ tas <- tas %>%
 # Run prioritizr analysis
 
 ```{r}
-
 p <- problem(tas, features = features, cost_column = "cost") %>%
   add_min_set_objective() %>%
   add_relative_targets(0.30) %>%  # 30% of each feature
@@ -64,14 +63,11 @@ p <- problem(tas, features = features, cost_column = "cost") %>%
   add_default_solver(verbose = FALSE)
 
 s <- solve(p)
-
 ```
 
 ## Plot prioritizr solution
 ```{r}
-
 plot_prioritizr(s)
-
 ```
 
 
@@ -80,7 +76,6 @@ plot_prioritizr(s)
 ## Choose a patch size
 
 ```{r}
-
 # Calculate reasonable parameters based on planning unit characteristics
 median_area <- median(st_area(tas))
 
@@ -102,7 +97,6 @@ cat("- This means patches must be at least", round(min_patch_size/median_area, 3
 ## Run minpatch
 
 ```{r}
-
 result <- run_minpatch(
   prioritizr_problem = p,
   prioritizr_solution = s,
@@ -156,7 +150,6 @@ The minimum patch size parameter is the core constraint that drives MinPatch beh
 Larger minimum patch sizes result in fewer, bigger patches with potentially higher total area, as MinPatch must ensure every patch meets the size requirement. Smaller minimum patch sizes allow more flexibility, potentially resulting in more patches that are closer to the original *prioritizr* solution. The choice of minimum patch size should reflect ecological or management considerations - for example, larger patches may be needed to support viable populations or reduce edge effects, while smaller patches may be acceptable in highly connected landscapes or for features that don't require large contiguous areas.
 
 ```{r}
-
 # Calculate reasonable parameters based on planning unit characteristics
 median_area <- median(st_area(tas))
 min_patch_size <- median_area * 10
@@ -208,7 +201,6 @@ patchwork::wrap_plots(plot_minpatch(result, title = "Patch Size x5"),
 The boundary penalty controls how much MinPatch prioritizes spatial compactness during the "simulated whittling" stage. During whittling, MinPatch considers removing planning units from patch edges, but only if doing so doesn't increase the total *priortizr* cost. The boundary penalty affects this decision by penalizing fragmented solutions - higher penalties favour more compact patches by making it costly to create additional "edge" between selected and unselected areas. When MinPatch evaluates whether to remove a unit, it calculates the change in boundary length (units with selected neighbours increase boundary when removed, while units with unselected neighbours decrease boundary) and multiplies this by the boundary penalty. If the resulting boundary cost change exceeds the unit's cost, the unit cannot be removed. In datasets like Tasmania with long planning unit boundaries relative to unit costs, even small boundary penalties can be highly influential, potentially preventing most unit removals and resulting in similar solutions across different penalty values. Very small penalties (e.g., 1e-10) may be needed to see meaningful differences in such cases.
 
 ```{r}
-
 # Calculate reasonable parameters based on planning unit characteristics
 median_area <- median(st_area(tas))
 min_patch_size <- median_area * 5

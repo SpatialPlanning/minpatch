@@ -109,8 +109,7 @@
 <h2 id="run-prioritizr-analysis">Run prioritizr analysis<a class="anchor" aria-label="anchor" href="#run-prioritizr-analysis"></a>
 </h2>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://prioritizr.net/reference/problem.html" class="external-link">problem</a></span><span class="op">(</span><span class="va">tas</span>, features <span class="op">=</span> <span class="va">features</span>, cost_column <span class="op">=</span> <span class="st">"cost"</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://prioritizr.net/reference/problem.html" class="external-link">problem</a></span><span class="op">(</span><span class="va">tas</span>, features <span class="op">=</span> <span class="va">features</span>, cost_column <span class="op">=</span> <span class="st">"cost"</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://prioritizr.net/reference/add_min_set_objective.html" class="external-link">add_min_set_objective</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://prioritizr.net/reference/add_relative_targets.html" class="external-link">add_relative_targets</a></span><span class="op">(</span><span class="fl">0.30</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span>  <span class="co"># 30% of each feature</span></span>
 <span>  <span class="fu"><a href="https://prioritizr.net/reference/add_binary_decisions.html" class="external-link">add_binary_decisions</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
@@ -121,8 +120,7 @@
 <h3 id="plot-prioritizr-solution">Plot prioritizr solution<a class="anchor" aria-label="anchor" href="#plot-prioritizr-solution"></a>
 </h3>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="fu"><a href="../reference/plot_prioritizr.html">plot_prioritizr</a></span><span class="op">(</span><span class="va">s</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_prioritizr.html">plot_prioritizr</a></span><span class="op">(</span><span class="va">s</span><span class="op">)</span></span></code></pre></div>
 <p><img src="minpatchTasmania_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" width="700"></p>
 </div>
 </div>
@@ -133,8 +131,7 @@
 <h3 id="choose-a-patch-size">Choose a patch size<a class="anchor" aria-label="anchor" href="#choose-a-patch-size"></a>
 </h3>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="co"># Calculate reasonable parameters based on planning unit characteristics</span></span>
+<code class="sourceCode R"><span><span class="co"># Calculate reasonable parameters based on planning unit characteristics</span></span>
 <span><span class="va">median_area</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/summarize-generics.html" class="external-link">median</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_measures.html" class="external-link">st_area</a></span><span class="op">(</span><span class="va">tas</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Set minimum patch size to 5x median planning unit area</span></span>
@@ -157,8 +154,7 @@
 <h3 id="run-minpatch">Run minpatch<a class="anchor" aria-label="anchor" href="#run-minpatch"></a>
 </h3>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_minpatch.html">run_minpatch</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_minpatch.html">run_minpatch</a></span><span class="op">(</span></span>
 <span>  prioritizr_problem <span class="op">=</span> <span class="va">p</span>,</span>
 <span>  prioritizr_solution <span class="op">=</span> <span class="va">s</span>,</span>
 <span>  min_patch_size <span class="op">=</span> <span class="va">min_patch_size</span>,</span>
@@ -170,19 +166,10 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Validating inputs...</span></span>
 <span><span class="co">#&gt; Initializing data structures...</span></span>
-<span><span class="co">#&gt; Calculating boundary matrix (this may take a while)...</span></span>
-<span><span class="co">#&gt; Processed 100 of 1128 planning units</span></span>
-<span><span class="co">#&gt; Processed 200 of 1128 planning units</span></span>
-<span><span class="co">#&gt; Processed 300 of 1128 planning units</span></span>
-<span><span class="co">#&gt; Processed 400 of 1128 planning units</span></span>
-<span><span class="co">#&gt; Processed 500 of 1128 planning units</span></span>
-<span><span class="co">#&gt; Processed 600 of 1128 planning units</span></span>
-<span><span class="co">#&gt; Processed 700 of 1128 planning units</span></span>
-<span><span class="co">#&gt; Processed 800 of 1128 planning units</span></span>
-<span><span class="co">#&gt; Processed 900 of 1128 planning units</span></span>
-<span><span class="co">#&gt; Processed 1000 of 1128 planning units</span></span>
-<span><span class="co">#&gt; Processed 1100 of 1128 planning units</span></span>
-<span><span class="co">#&gt; Creating patch radius dictionary...</span></span>
+<span><span class="co">#&gt; Calculating boundary matrix using 14 cores...</span></span>
+<span><span class="co">#&gt; Processing chunks in parallel...</span></span>
+<span><span class="co">#&gt; Combining results...</span></span>
+<span><span class="co">#&gt; Creating patch radius dictionary (optimized)...</span></span>
 <span><span class="co">#&gt; Processed 100 of 1128 planning units</span></span>
 <span><span class="co">#&gt; Processed 200 of 1128 planning units</span></span>
 <span><span class="co">#&gt; Processed 300 of 1128 planning units</span></span>
@@ -456,8 +443,7 @@ reduce edge effects, while smaller patches may be acceptable in highly
 connected landscapes or for features that don’t require large contiguous
 areas.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="co"># Calculate reasonable parameters based on planning unit characteristics</span></span>
+<code class="sourceCode R"><span><span class="co"># Calculate reasonable parameters based on planning unit characteristics</span></span>
 <span><span class="va">median_area</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/summarize-generics.html" class="external-link">median</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_measures.html" class="external-link">st_area</a></span><span class="op">(</span><span class="va">tas</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">min_patch_size</span> <span class="op">&lt;-</span> <span class="va">median_area</span> <span class="op">*</span> <span class="fl">10</span></span>
 <span><span class="va">patch_radius</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">median_area</span> <span class="op">*</span> <span class="fl">10</span><span class="op">)</span></span>
@@ -523,8 +509,7 @@ similar solutions across different penalty values. Very small penalties
 (e.g., 1e-10) may be needed to see meaningful differences in such
 cases.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="co"># Calculate reasonable parameters based on planning unit characteristics</span></span>
+<code class="sourceCode R"><span><span class="co"># Calculate reasonable parameters based on planning unit characteristics</span></span>
 <span><span class="va">median_area</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/summarize-generics.html" class="external-link">median</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_measures.html" class="external-link">st_area</a></span><span class="op">(</span><span class="va">tas</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">min_patch_size</span> <span class="op">&lt;-</span> <span class="va">median_area</span> <span class="op">*</span> <span class="fl">5</span></span>
 <span><span class="va">patch_radius</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">median_area</span> <span class="op">*</span> <span class="fl">10</span><span class="op">)</span></span>

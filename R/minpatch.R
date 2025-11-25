@@ -99,6 +99,8 @@ run_minpatch <- function(prioritizr_problem,
                          solution_column = "solution_1",
                          verbose = TRUE) {
 
+  # Stage 0: Checks and data preparation -----
+
   # Check if prioritizr is available
   if (!requireNamespace("prioritizr", quietly = TRUE)) {
     stop("prioritizr package is required for this function")
@@ -206,7 +208,9 @@ run_minpatch <- function(prioritizr_problem,
   minpatch_data <- calculate_patch_stats(minpatch_data)
   initial_patch_stats <- minpatch_data$patch_stats
 
-  # Stage 1: Remove small patches (conditional)
+
+
+  # Stage 1: Remove small patches (conditional) -----
   if (remove_small_patches) {
     if (verbose) cat("Stage 1: Removing small patches...\n")
     minpatch_data <- remove_small_patches_from_solution(minpatch_data)
@@ -231,14 +235,12 @@ run_minpatch <- function(prioritizr_problem,
     minpatch_data$prioritizr_solution$minpatch <- create_solution_vector(minpatch_data$unit_dict)
   }
 
-  # Stage 2: Add new patches to meet targets (conditional)
+  # Stage 2: Add new patches to meet targets (conditional) ----
   unmet_targets <- character(0)
   if (add_patches) {
     if (verbose) cat("Stage 2: Adding new patches...\n")
 
-
     minpatch_data <- add_new_patches(minpatch_data, verbose)
-
 
     # Check final unmet targets
     unmet_targets <- identify_unmet_targets(minpatch_data)
@@ -253,7 +255,7 @@ run_minpatch <- function(prioritizr_problem,
     if (verbose) cat("Stage 2: Skipping addition of new patches...\n")
   }
 
-  # Stage 3: Simulated whittling (conditional)
+  # Stage 3: Simulated whittling (conditional) ----
   if (whittle_patches) {
     if (verbose) cat("Stage 3: Removing unnecessary planning units...\n")
     minpatch_data <- simulated_whittling(minpatch_data, verbose)

@@ -1,6 +1,8 @@
 #' Create patch dictionary from unit dictionary
 #'
-#' Identifies connected components (patches) in the current solution
+#' Identifies connected components (patches) in the current solution using igraph
+#' and sparse matrix operations. This implementation follows the wheretowork approach
+#' for efficient patch identification using matrix subsetting.
 #'
 #' @param minpatch_data List containing all MinPatch data structures
 #'
@@ -11,53 +13,41 @@ make_patch_dict <- function(minpatch_data) {
   unit_dict <- minpatch_data$unit_dict
   boundary_matrix <- minpatch_data$boundary_matrix
 
-  # Get all selected planning units (status = 1 or 2)
-  selected_units <- names(unit_dict)[sapply(unit_dict, function(x) x$status %in% c(1, 2))]
+  # Get indices of selected planning units (status = 1 or 2)
+  selected_idx <- which(sapply(unit_dict, function(x) x$status %in% c(1, 2)))
 
-
-  if (length(selected_units) == 0) {
+  if (length(selected_idx) == 0) {
     return(list())
   }
 
+  # Subset boundary matrix to only selected units (WTW approach)
+  adj_matrix <- boundary_matrix[selected_idx, selected_idx]
+  
+  # Convert to binary adjacency (1 if boundary exists, 0 otherwise)
+  adj_matrix@x <- rep(1, length(adj_matrix@x))
+  
+  # Set diagonal to 1 (self-connections)
+  Matrix::diag(adj_matrix) <- 1
+
+  # Create graph from adjacency matrix
+  g <- igraph::graph_from_adjacency_matrix(adj_matrix, mode = "undirected")
+
+  # Identify components (patches) using igraph
+  clu <- igraph::components(g)
+
+  # Create patch dictionary from component membership
   patch_dict <- list()
-  patch_id <- 1
-  remaining_units <- selected_units
+  unit_names <- names(unit_dict)[selected_idx]
 
-  while (length(remaining_units) > 0) {
-    # Start a new patch with the first remaining unit
-    current_patch <- character(0)
-    units_to_check <- remaining_units[1]
+  for (patch_id in seq_len(clu$no)) {
+    # Get unit IDs in this component
+    unit_ids <- unit_names[clu$membership == patch_id]
 
-
-    # Find all connected units using breadth-first search
-    while (length(units_to_check) > 0) {
-      current_unit <- units_to_check[1]
-      units_to_check <- units_to_check[-1]
-
-      if (!current_unit %in% current_patch) {
-        current_patch <- c(current_patch, current_unit)
-
-        # Find neighbors of current unit that are also selected
-        neighbors <- names(boundary_matrix[[current_unit]])
-        selected_neighbors <- intersect(neighbors, remaining_units)
-        selected_neighbors <- selected_neighbors[!selected_neighbors %in% current_patch]
-
-
-        units_to_check <- unique(c(units_to_check, selected_neighbors))
-      }
-    }
-
-
-    # Store patch information
     patch_dict[[as.character(patch_id)]] <- list(
       area = 0,  # Will be calculated later
-      unit_count = length(current_patch),
-      unit_ids = current_patch
+      unit_count = length(unit_ids),
+      unit_ids = unit_ids
     )
-
-    # Remove processed units from remaining units
-    remaining_units <- setdiff(remaining_units, current_patch)
-    patch_id <- patch_id + 1
   }
 
   return(patch_dict)

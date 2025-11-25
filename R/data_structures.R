@@ -159,28 +159,47 @@ initialize_minpatch_data <- function(solution, planning_units, targets, costs,
 
 #' Create boundary matrix from planning units
 #'
-#' Creates a matrix of shared boundary lengths between adjacent planning units
+#' Creates a sparse matrix of shared boundary lengths between adjacent planning units.
+#' Returns a Matrix::sparseMatrix for efficient storage and operations.
+#' This optimized version supports parallel processing via the parallelly package.
+#' When n_cores = 1, runs sequentially with no parallel overhead.
 #'
 #' @param planning_units sf object with planning unit geometries
+#' @param verbose Logical, whether to print progress
+#' @param n_cores Integer, number of cores to use. If NULL, uses availableCores(omit=1).
+#'               Set to 1 for sequential processing.
 #'
-#' @return Named list where each element contains neighbors and shared boundary lengths
+#' @return Matrix::dgCMatrix sparse matrix where [i,j] is the shared boundary length
 #' @keywords internal
-create_boundary_matrix <- function(planning_units, verbose = TRUE) {
+create_boundary_matrix <- function(planning_units, verbose = TRUE, n_cores = NULL) {
 
   n_units <- nrow(planning_units)
-  boundary_matrix <- vector("list", n_units)
-  names(boundary_matrix) <- as.character(seq_len(n_units))
 
-  # Initialize empty lists for each planning unit
-  for (i in seq_len(n_units)) {
-    boundary_matrix[[i]] <- list()
+  # Determine number of cores
+  if (is.null(n_cores)) {
+    if (requireNamespace("parallelly", quietly = TRUE)) {
+      n_cores <- parallelly::availableCores(omit = 2)
+    } else {
+      n_cores <- 1
+    }
+  }
+  # Only use parallel for larger datasets (overhead not worth it for small ones)
+  if (n_units < 500) {
+    n_cores <- 1
+  } else {
+    n_cores <- min(n_cores, n_units)
   }
 
-  # Find adjacent planning units and calculate shared boundary lengths
-  # This is computationally intensive, so we'll use sf::st_touches for adjacency
-  # and sf::st_intersection for boundary lengths
+  # Final safety check: ensure n_cores is always between 1 and n_units
+  n_cores <- max(1, min(n_cores, n_units))
 
-  if (verbose) cat("Calculating boundary matrix (this may take a while)...\n")
+  if (verbose) {
+    if (n_cores > 1) {
+      cat("Calculating boundary matrix using", n_cores, "cores...\n")
+    } else {
+      cat("Calculating boundary matrix (optimized version)...\n")
+    }
+  }
 
   # Check for invalid geometries and repair if needed
   if (any(!sf::st_is_valid(planning_units))) {
@@ -188,49 +207,113 @@ create_boundary_matrix <- function(planning_units, verbose = TRUE) {
     planning_units <- sf::st_make_valid(planning_units)
   }
 
-  # Get adjacency matrix using a more robust method
-  # sf::st_touches() can be unreliable due to precision issues
-  # Use st_intersects() with boundaries instead
+  # Pre-compute all boundaries once (major optimization)
   boundaries <- sf::st_boundary(planning_units)
-  touches <- sf::st_intersects(boundaries, boundaries, sparse = FALSE)
 
-  # Remove self-intersections (diagonal)
-  diag(touches) <- FALSE
+  # Pre-compute all perimeters once for diagonal
+  perimeters <- as.numeric(sf::st_length(boundaries))
 
+  # Get sparse adjacency list (much more efficient than dense matrix)
+  touches_sparse <- sf::st_intersects(boundaries, boundaries)
 
-  # Calculate shared boundaries
-  for (i in seq_len(n_units)) {
-    for (j in seq_len(n_units)) {
-      if (i != j && touches[i, j]) {
-        # Calculate shared boundary length (suppress sf warnings)
-        intersection <- suppressWarnings(sf::st_intersection(
-          sf::st_boundary(planning_units[i, ]),
-          sf::st_boundary(planning_units[j, ])
-        ))
+  # Split work into chunks - handle edge cases properly
+  if (n_cores == 1) {
+    # Single core: all units in one chunk
+    chunks <- list(seq_len(n_units))
+  } else {
+    # Multiple cores: split evenly
+    # Ensure we don't try to create more chunks than units
+    actual_cores <- min(n_cores, n_units)
+    if (actual_cores >= n_units) {
+      # If cores >= units, each unit gets its own chunk
+      chunks <- as.list(seq_len(n_units))
+    } else {
+      # Normal case: split into chunks
+      chunks <- split(seq_len(n_units), cut(seq_len(n_units), actual_cores, labels = FALSE))
+    }
+  }
 
-        if (nrow(intersection) > 0) {
-          shared_length <- sum(as.numeric(sf::st_length(intersection)))
-          # Use tolerance for very small shared lengths (floating-point precision issues)
-          if (shared_length > 1e-10) {
-            boundary_matrix[[i]][[as.character(j)]] <- shared_length
-          } else if (shared_length > 0) {
-            # For very small but non-zero lengths, use a minimal positive value
-            boundary_matrix[[i]][[as.character(j)]] <- 1e-6
+  # Function to process a chunk of units
+  process_chunk <- function(unit_indices) {
+    local_i <- integer()
+    local_j <- integer()
+    local_lengths <- numeric()
+
+    for (i in unit_indices) {
+      neighbors <- touches_sparse[[i]]
+      neighbors <- neighbors[neighbors != i]
+
+      if (length(neighbors) > 0) {
+        for (j in neighbors) {
+          if (i < j) {  # Only process each pair once
+            intersection <- suppressWarnings(sf::st_intersection(
+              boundaries[i, ],
+              boundaries[j, ]
+            ))
+
+            if (nrow(intersection) > 0) {
+              shared_length <- sum(as.numeric(sf::st_length(intersection)))
+              if (shared_length > 1e-10) {
+                local_i <- c(local_i, i, j)
+                local_j <- c(local_j, j, i)
+                local_lengths <- c(local_lengths, shared_length, shared_length)
+              } else if (shared_length > 0) {
+                local_i <- c(local_i, i, j)
+                local_j <- c(local_j, j, i)
+                local_lengths <- c(local_lengths, 1e-6, 1e-6)
+              }
+            }
           }
         }
       }
     }
 
-    # Add self-boundary (external edge) - approximate as perimeter
-    perimeter <- as.numeric(sf::st_length(sf::st_boundary(planning_units[i, ])))
-    boundary_matrix[[i]][[as.character(i)]] <- perimeter
-
-    if (verbose && i %% 100 == 0) {
-      cat("Processed", i, "of", n_units, "planning units\n")
-    }
+    list(i = local_i, j = local_j, x = local_lengths)
   }
 
-  return(boundary_matrix)
+  # Process chunks (parallel if n_cores > 1, sequential if n_cores = 1)
+  if (n_cores > 1 && requireNamespace("parallelly", quietly = TRUE)) {
+    # Parallel processing
+    cl <- parallelly::makeClusterPSOCK(n_cores, autoStop = TRUE, verbose = FALSE)
+    on.exit(parallel::stopCluster(cl), add = TRUE)
+
+    parallel::clusterExport(cl, c("boundaries", "touches_sparse"),
+                           envir = environment())
+    parallel::clusterEvalQ(cl, library(sf))
+
+    if (verbose) cat("Processing chunks in parallel...\n")
+    results <- parallel::parLapply(cl, chunks, process_chunk)
+  } else {
+    # Sequential processing
+    results <- lapply(chunks, function(chunk) {
+      result <- process_chunk(chunk)
+      if (verbose && max(chunk) %% 100 == 0) {
+        cat("Processed", max(chunk), "of", n_units, "planning units\n")
+      }
+      result
+    })
+  }
+
+  # Combine results
+  if (verbose && n_cores > 1) cat("Combining results...\n")
+  i_indices <- unlist(lapply(results, function(r) r$i))
+  j_indices <- unlist(lapply(results, function(r) r$j))
+  boundary_lengths <- unlist(lapply(results, function(r) r$x))
+
+  # Add perimeters on diagonal
+  i_indices <- c(i_indices, seq_len(n_units))
+  j_indices <- c(j_indices, seq_len(n_units))
+  boundary_lengths <- c(boundary_lengths, perimeters)
+
+  # Create sparse matrix
+  Matrix::sparseMatrix(
+    i = i_indices,
+    j = j_indices,
+    x = boundary_lengths,
+    dims = c(n_units, n_units),
+    dimnames = list(as.character(seq_len(n_units)),
+                   as.character(seq_len(n_units)))
+  )
 }
 
 #' Create abundance matrix from planning units
@@ -282,7 +365,8 @@ create_abundance_matrix <- function(planning_units, prioritizr_problem) {
 
 #' Create patch radius dictionary
 #'
-#' For each planning unit, find all units within the specified patch radius
+#' For each planning unit, find all units within the specified patch radius.
+#' Optimized version computes full distance matrix once instead of n times.
 #'
 #' @param planning_units sf object with planning unit geometries
 #' @param patch_radius radius for patch creation
@@ -299,16 +383,21 @@ create_patch_radius_dict <- function(planning_units, patch_radius, verbose = TRU
   centroids <- sf::st_centroid(planning_units %>%
                                  dplyr::select("geometry"))
 
-  if (verbose) cat("Creating patch radius dictionary...\n")
+  if (verbose) cat("Creating patch radius dictionary (optimized)...\n")
 
+  # OPTIMIZATION: Compute full distance matrix ONCE instead of n times
+  # This changes from O(n²) distance calculations to O(n²/2) calculations
+  dist_matrix <- sf::st_distance(centroids, centroids)
+  dist_matrix_numeric <- as.numeric(dist_matrix)
+  patch_radius_numeric <- as.numeric(patch_radius)
+
+  # Create matrix of dimensions n x n
+  dist_mat <- matrix(dist_matrix_numeric, nrow = n_units, ncol = n_units)
+
+  # For each unit, find neighbors within radius
   for (i in seq_len(n_units)) {
-    # Find all units within patch_radius of unit i
-    distances <- sf::st_distance(centroids[i, ], centroids)
-    # Convert both to numeric to avoid units mismatch
-    distances_numeric <- as.numeric(distances)
-    patch_radius_numeric <- as.numeric(patch_radius)
-    within_radius <- which(distances_numeric <= patch_radius_numeric & seq_len(n_units) != i)
-
+    # Use vectorized comparison on pre-computed distances
+    within_radius <- which(dist_mat[i, ] <= patch_radius_numeric & seq_len(n_units) != i)
     patch_radius_dict[[i]] <- as.character(within_radius)
 
     if (verbose && i %% 100 == 0) {

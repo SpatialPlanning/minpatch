@@ -9,9 +9,9 @@ described in Smith et al. (2010).
 
 Useful links:
 
-- <https://github.com/yourusername/minpatch>
+- <https://github.com/SpatialPlanning/minpatch>
 
-- Report bugs at <https://github.com/yourusername/minpatch/issues>
+- Report bugs at <https://github.com/SpatialPlanning/minpatch/issues>
 
 ## Author
 

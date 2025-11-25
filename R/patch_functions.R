@@ -1,8 +1,8 @@
 #' Create patch dictionary from unit dictionary
 #'
-#' Identifies connected components (patches) in the current solution using igraph.
-#' This implementation uses graph theory algorithms (via igraph) for faster
-#' performance, especially with large planning problems.
+#' Identifies connected components (patches) in the current solution using igraph
+#' and sparse matrix operations. This implementation follows the wheretowork approach
+#' for efficient patch identification using matrix subsetting.
 #'
 #' @param minpatch_data List containing all MinPatch data structures
 #'
@@ -13,34 +13,21 @@ make_patch_dict <- function(minpatch_data) {
   unit_dict <- minpatch_data$unit_dict
   boundary_matrix <- minpatch_data$boundary_matrix
 
-  # Get all selected planning units (status = 1 or 2)
-  selected_units <- names(unit_dict)[sapply(unit_dict, function(x) x$status %in% c(1, 2))]
+  # Get indices of selected planning units (status = 1 or 2)
+  selected_idx <- which(sapply(unit_dict, function(x) x$status %in% c(1, 2)))
 
-  if (length(selected_units) == 0) {
+  if (length(selected_idx) == 0) {
     return(list())
   }
 
-  # Create adjacency matrix for selected units
-  n_selected <- length(selected_units)
-  adj_matrix <- matrix(0, nrow = n_selected, ncol = n_selected)
-  rownames(adj_matrix) <- selected_units
-  colnames(adj_matrix) <- selected_units
-
-  # Fill adjacency matrix based on boundary_matrix
-  for (i in seq_along(selected_units)) {
-    unit_i <- selected_units[i]
-    neighbors <- names(boundary_matrix[[unit_i]])
-
-    for (j in seq_along(selected_units)) {
-      unit_j <- selected_units[j]
-      if (unit_j %in% neighbors) {
-        adj_matrix[i, j] <- 1
-      }
-    }
-  }
-
+  # Subset boundary matrix to only selected units (WTW approach)
+  adj_matrix <- boundary_matrix[selected_idx, selected_idx]
+  
+  # Convert to binary adjacency (1 if boundary exists, 0 otherwise)
+  adj_matrix@x <- rep(1, length(adj_matrix@x))
+  
   # Set diagonal to 1 (self-connections)
-  diag(adj_matrix) <- 1
+  Matrix::diag(adj_matrix) <- 1
 
   # Create graph from adjacency matrix
   g <- igraph::graph_from_adjacency_matrix(adj_matrix, mode = "undirected")
@@ -50,10 +37,11 @@ make_patch_dict <- function(minpatch_data) {
 
   # Create patch dictionary from component membership
   patch_dict <- list()
+  unit_names <- names(unit_dict)[selected_idx]
 
   for (patch_id in seq_len(clu$no)) {
     # Get unit IDs in this component
-    unit_ids <- selected_units[clu$membership == patch_id]
+    unit_ids <- unit_names[clu$membership == patch_id]
 
     patch_dict[[as.character(patch_id)]] <- list(
       area = 0,  # Will be calculated later

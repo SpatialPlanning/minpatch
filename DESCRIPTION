@@ -42,7 +42,8 @@ Imports:
     rlang,
     stats,
     magrittr,
-    igraph
+    igraph,
+    Matrix
 Suggests:
     dplyr,
     ggplot2,
@@ -53,7 +54,8 @@ Suggests:
     patchwork,
     rmarkdown,
     stars,
-    stringr
+    stringr,
+    parallelly
 VignetteBuilder: knitr
 URL: https://github.com/SpatialPlanning/minpatch
 BugReports: https://github.com/SpatialPlanning/minpatch/issues

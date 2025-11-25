@@ -21,6 +21,9 @@ simulated_whittling <- function(minpatch_data, verbose = TRUE) {
   iteration <- 0
   max_iterations <- 10000  # Prevent infinite loops
   keystone_pu_id_set <- character(0)  # Initialize keystone set
+  
+  # OPTIMIZATION: Cache feature amounts and only update when unit is removed
+  feature_amounts <- calculate_feature_conservation(minpatch_data)
 
   while (iteration < max_iterations) {
     iteration <- iteration + 1
@@ -45,8 +48,8 @@ simulated_whittling <- function(minpatch_data, verbose = TRUE) {
       break  # No more edge units to consider
     }
 
-    # Calculate whittling scores for edge units
-    whittle_scores_raw <- calculate_whittle_scores(edge_units, minpatch_data)
+    # Calculate whittling scores for edge units (pass cached feature amounts)
+    whittle_scores_raw <- calculate_whittle_scores(edge_units, minpatch_data, feature_amounts)
 
     # Separate keystone units (needed for targets) from scoreable units
     whittle_scores <- list()
@@ -74,11 +77,19 @@ simulated_whittling <- function(minpatch_data, verbose = TRUE) {
     # Find the unit with the lowest whittling score (most suitable for removal)
     candidate_unit <- names(whittle_scores)[which.min(unlist(whittle_scores))]
 
-    # Check if removing this unit is acceptable
-    removal_result <- can_remove_unit(candidate_unit, minpatch_data)
+    # Check if removing this unit is acceptable (pass cached feature amounts)
+    removal_result <- can_remove_unit(candidate_unit, minpatch_data, feature_amounts)
     if (removal_result) {
       # Remove the unit
       unit_dict[[candidate_unit]]$status <- 0
+      
+      # OPTIMIZATION: Update cached feature amounts incrementally instead of recalculating
+      unit_abundances <- abundance_matrix[[candidate_unit]]
+      for (feat_id in names(unit_abundances)) {
+        if (feat_id %in% names(feature_amounts)) {
+          feature_amounts[feat_id] <- feature_amounts[feat_id] - unit_abundances[[feat_id]]
+        }
+      }
 
       if (verbose && iteration <= 10) {
         cat("    Removed unit", candidate_unit, "at iteration", iteration, "\n")
@@ -107,7 +118,7 @@ simulated_whittling <- function(minpatch_data, verbose = TRUE) {
 #' Find edge planning units
 #'
 #' Identifies planning units that are on the edge of selected areas
-#' (have at least one unselected neighbor)
+#' (have at least one unselected neighbor). Optimized with vector pre-allocation.
 #'
 #' @param minpatch_data List containing all MinPatch data structures
 #'
@@ -117,55 +128,72 @@ find_edge_units <- function(minpatch_data) {
 
   unit_dict <- minpatch_data$unit_dict
   boundary_matrix <- minpatch_data$boundary_matrix
-
-  edge_units <- character(0)
+  
+  n_units <- length(unit_dict)
+  
+  # Pre-allocate for worst case (all selected units are edge units)
+  edge_units <- character(n_units)
+  edge_count <- 0
 
   for (unit_id in names(unit_dict)) {
     if (unit_dict[[unit_id]]$status %in% c(1, 2)) {  # Consider both selected (1) and conserved (2) units
 
-      # Check if this unit has any unselected neighbors
-      neighbors <- names(boundary_matrix[[unit_id]])
+      # Get neighbors from sparse matrix (units with non-zero boundary)
+      unit_idx <- as.integer(unit_id)
+      neighbor_indices <- which(boundary_matrix[unit_idx, ] > 0)
+      neighbor_ids <- colnames(boundary_matrix)[neighbor_indices]
 
-      for (neighbor_id in neighbors) {
+      is_edge <- FALSE
+      for (neighbor_id in neighbor_ids) {
         if (neighbor_id != unit_id && neighbor_id %in% names(unit_dict)) {
           neighbor_status <- unit_dict[[neighbor_id]]$status
 
           # If neighbor is available (0) or excluded (3), this is an edge unit
           if (neighbor_status %in% c(0, 3)) {
-            edge_units <- c(edge_units, unit_id)
+            is_edge <- TRUE
             break
           }
         } else if (neighbor_id == unit_id) {
-          # Self-reference indicates external boundary
-          edge_units <- c(edge_units, unit_id)
+          # Self-reference (diagonal) indicates external boundary
+          is_edge <- TRUE
           break
         }
       }
+      
+      if (is_edge) {
+        edge_count <- edge_count + 1
+        edge_units[edge_count] <- unit_id
+      }
     }
   }
-
-  return(unique(edge_units))
+  
+  # Trim to actual size and return unique values
+  return(unique(edge_units[seq_len(edge_count)]))
 }
 
 
 #' Calculate whittling scores for edge units
 #'
 #' Calculates the "Low Relevance" score for each edge unit based on
-#' feature importance (Equation A2 from the original paper)
+#' feature importance (Equation A2 from the original paper).
+#' Optimized to accept pre-computed feature amounts to avoid redundant calculations.
 #'
 #' @param edge_units Character vector of edge unit IDs
 #' @param minpatch_data List containing all MinPatch data structures
+#' @param feature_amounts Optional pre-computed feature conservation amounts
 #'
 #' @return Named vector of whittling scores
 #' @keywords internal
-calculate_whittle_scores <- function(edge_units, minpatch_data) {
+calculate_whittle_scores <- function(edge_units, minpatch_data, feature_amounts = NULL) {
 
   unit_dict <- minpatch_data$unit_dict
   abundance_matrix <- minpatch_data$abundance_matrix
   target_dict <- minpatch_data$target_dict
 
-  # Calculate current feature conservation amounts
-  feature_amounts <- calculate_feature_conservation(minpatch_data)
+  # Calculate current feature conservation amounts only if not provided
+  if (is.null(feature_amounts)) {
+    feature_amounts <- calculate_feature_conservation(minpatch_data)
+  }
 
   scores <- list()
 
@@ -230,7 +258,7 @@ calculate_whittle_scores <- function(edge_units, minpatch_data) {
 #'
 #' @return Logical indicating if unit can be removed
 #' @keywords internal
-can_remove_unit <- function(unit_id, minpatch_data) {
+can_remove_unit <- function(unit_id, minpatch_data, feature_amounts = NULL) {
 
   unit_dict <- minpatch_data$unit_dict
   min_patch_size <- minpatch_data$min_patch_size
@@ -240,8 +268,8 @@ can_remove_unit <- function(unit_id, minpatch_data) {
     return(FALSE)
   }
 
-  # Check if removal would violate conservation targets
-  if (removal_violates_targets(unit_id, minpatch_data)) {
+  # Check if removal would violate conservation targets (pass cached feature amounts)
+  if (removal_violates_targets(unit_id, minpatch_data, feature_amounts)) {
     return(FALSE)
   }
 
@@ -265,19 +293,24 @@ can_remove_unit <- function(unit_id, minpatch_data) {
 
 #' Check if removing unit would violate conservation targets
 #'
+#' Optimized to accept pre-computed feature amounts to avoid redundant calculations.
+#'
 #' @param unit_id ID of unit to potentially remove
 #' @param minpatch_data List containing all MinPatch data structures
+#' @param feature_amounts Optional pre-computed feature conservation amounts
 #'
 #' @return Logical indicating if removal would violate targets
 #' @keywords internal
-removal_violates_targets <- function(unit_id, minpatch_data) {
+removal_violates_targets <- function(unit_id, minpatch_data, feature_amounts = NULL) {
 
   unit_dict <- minpatch_data$unit_dict
   abundance_matrix <- minpatch_data$abundance_matrix
   target_dict <- minpatch_data$target_dict
 
-  # Calculate current feature amounts
-  feature_amounts <- calculate_feature_conservation(minpatch_data)
+  # Calculate current feature amounts only if not provided
+  if (is.null(feature_amounts)) {
+    feature_amounts <- calculate_feature_conservation(minpatch_data)
+  }
 
   # Get features in this unit
   unit_abundances <- abundance_matrix[[unit_id]]
@@ -354,14 +387,19 @@ removal_increases_cost <- function(unit_id, minpatch_data) {
 
   unit_cost <- unit_dict[[unit_id]]$cost
 
+  # Get neighbors from sparse matrix
+  unit_idx <- as.integer(unit_id)
+  neighbor_indices <- which(boundary_matrix[unit_idx, ] > 0)
+  neighbor_ids <- colnames(boundary_matrix)[neighbor_indices]
+  
   # Calculate change in boundary cost
-  neighbors <- names(boundary_matrix[[unit_id]])
   boundary_change <- 0
 
-  for (neighbor_id in neighbors) {
+  for (neighbor_id in neighbor_ids) {
     if (neighbor_id %in% names(unit_dict)) {
       neighbor_status <- unit_dict[[neighbor_id]]$status
-      boundary_length <- boundary_matrix[[unit_id]][[neighbor_id]]
+      neighbor_idx <- as.integer(neighbor_id)
+      boundary_length <- boundary_matrix[unit_idx, neighbor_idx]
 
       if (neighbor_status %in% c(1, 2)) {
         # Removing unit increases boundary (neighbor becomes edge)

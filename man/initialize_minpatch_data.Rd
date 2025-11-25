@@ -35,11 +35,17 @@ initialize_minpatch_data(
 \item{prioritizr_problem}{A prioritizr problem object}
 
 \item{prioritizr_solution}{A solved prioritizr solution object}
+
+\item{verbose}{Logical, whether to print progress}
 }
 \value{
 List containing all necessary data structures
 }
 \description{
-Creates the internal data structures needed for MinPatch processing
+Creates the internal data structures needed for MinPatch processing.
+This function extracts locked-in and locked-out constraints from the
+prioritizr problem and applies them as status codes:
+- Status 2 (conserved) for locked-in units
+- Status 3 (excluded) for locked-out units
 }
 \keyword{internal}

@@ -4,7 +4,7 @@
 \alias{can_remove_unit}
 \title{Check if a planning unit can be removed}
 \usage{
-can_remove_unit(unit_id, minpatch_data)
+can_remove_unit(unit_id, minpatch_data, feature_amounts = NULL)
 }
 \arguments{
 \item{unit_id}{ID of unit to potentially remove}

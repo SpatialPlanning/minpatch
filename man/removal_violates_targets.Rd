@@ -4,17 +4,19 @@
 \alias{removal_violates_targets}
 \title{Check if removing unit would violate conservation targets}
 \usage{
-removal_violates_targets(unit_id, minpatch_data)
+removal_violates_targets(unit_id, minpatch_data, feature_amounts = NULL)
 }
 \arguments{
 \item{unit_id}{ID of unit to potentially remove}
 
 \item{minpatch_data}{List containing all MinPatch data structures}
+
+\item{feature_amounts}{Optional pre-computed feature conservation amounts}
 }
 \value{
 Logical indicating if removal would violate targets
 }
 \description{
-Check if removing unit would violate conservation targets
+Optimized to accept pre-computed feature amounts to avoid redundant calculations.
 }
 \keyword{internal}

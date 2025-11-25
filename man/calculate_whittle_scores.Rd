@@ -4,18 +4,21 @@
 \alias{calculate_whittle_scores}
 \title{Calculate whittling scores for edge units}
 \usage{
-calculate_whittle_scores(edge_units, minpatch_data)
+calculate_whittle_scores(edge_units, minpatch_data, feature_amounts = NULL)
 }
 \arguments{
 \item{edge_units}{Character vector of edge unit IDs}
 
 \item{minpatch_data}{List containing all MinPatch data structures}
+
+\item{feature_amounts}{Optional pre-computed feature conservation amounts}
 }
 \value{
 Named vector of whittling scores
 }
 \description{
 Calculates the "Low Relevance" score for each edge unit based on
-feature importance (Equation A2 from the original paper)
+feature importance (Equation A2 from the original paper).
+Optimized to accept pre-computed feature amounts to avoid redundant calculations.
 }
 \keyword{internal}

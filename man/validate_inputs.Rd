@@ -11,7 +11,11 @@ validate_inputs(
   costs,
   min_patch_size,
   patch_radius,
-  boundary_penalty
+  boundary_penalty,
+  locked_in_indices = NULL,
+  locked_out_indices = NULL,
+  area_dict = NULL,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -28,11 +32,20 @@ validate_inputs(
 \item{patch_radius}{patch radius for adding patches}
 
 \item{boundary_penalty}{Boundary penalty value}
+
+\item{locked_in_indices}{Optional indices of locked-in planning units}
+
+\item{locked_out_indices}{Optional indices of locked-out planning units}
+
+\item{area_dict}{Optional area dictionary for locked-in patch size validation}
+
+\item{verbose}{Logical, whether to print warnings}
 }
 \value{
 NULL (throws errors if validation fails)
 }
 \description{
-Internal function to validate all inputs to the MinPatch algorithm
+Internal function to validate all inputs to the MinPatch algorithm,
+including locked-in and locked-out constraints
 }
 \keyword{internal}

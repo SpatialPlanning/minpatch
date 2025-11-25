@@ -263,3 +263,248 @@ test_that("MinPatch handles different min_patch_size values", {
   expect_true(all(c("solution", "patch_stats") %in% names(result_small)))
   expect_true(all(c("solution", "patch_stats") %in% names(result_large)))
 })
+
+test_that("MinPatch respects locked-in constraints", {
+  test_data <- create_test_data()
+  
+  # Add locked-in constraints to some planning units
+  locked_in_units <- c(1, 2, 3, 10, 20)
+  
+  p_locked <- test_data$prioritizr_problem %>%
+    prioritizr::add_locked_in_constraints(locked_in_units)
+  
+  # Solve with locked constraints
+  s_locked <- solve(p_locked)
+  
+  # Run MinPatch
+  result <- run_minpatch(
+    prioritizr_problem = p_locked,
+    prioritizr_solution = s_locked,
+    min_patch_size = 1.0,
+    patch_radius = 1.5,
+    verbose = FALSE
+  )
+  
+  # Check that locked-in units are selected in the result
+  for (unit in locked_in_units) {
+    expect_equal(result$solution$minpatch[unit], 1,
+                 info = paste("Unit", unit, "should be locked-in and selected"))
+  }
+  
+  # Check that locked-in units are marked as status = 2 in unit_dict
+  for (unit in locked_in_units) {
+    expect_equal(result$minpatch_data$unit_dict[[as.character(unit)]]$status, 2,
+                 info = paste("Unit", unit, "should have status 2 (conserved)"))
+  }
+})
+
+test_that("MinPatch respects locked-out constraints", {
+  test_data <- create_test_data()
+  
+  # Add locked-out constraints to some planning units
+  locked_out_units <- c(5, 15, 25, 35, 45)
+  
+  p_locked <- test_data$prioritizr_problem %>%
+    prioritizr::add_locked_out_constraints(locked_out_units)
+  
+  # Solve with locked constraints
+  s_locked <- solve(p_locked)
+  
+  # Run MinPatch
+  result <- run_minpatch(
+    prioritizr_problem = p_locked,
+    prioritizr_solution = s_locked,
+    min_patch_size = 1.0,
+    patch_radius = 1.5,
+    verbose = FALSE
+  )
+  
+  # Check that locked-out units are NOT selected in the result
+  for (unit in locked_out_units) {
+    expect_equal(result$solution$minpatch[unit], 0,
+                 info = paste("Unit", unit, "should be locked-out and not selected"))
+  }
+  
+  # Check that locked-out units are marked as status = 3 in unit_dict
+  for (unit in locked_out_units) {
+    expect_equal(result$minpatch_data$unit_dict[[as.character(unit)]]$status, 3,
+                 info = paste("Unit", unit, "should have status 3 (excluded)"))
+  }
+})
+
+test_that("MinPatch handles both locked-in and locked-out constraints together", {
+  test_data <- create_test_data()
+  
+  # Add both types of constraints
+  locked_in_units <- c(1, 2, 3)
+  locked_out_units <- c(50, 60, 70)
+  
+  p_locked <- test_data$prioritizr_problem %>%
+    prioritizr::add_locked_in_constraints(locked_in_units) %>%
+    prioritizr::add_locked_out_constraints(locked_out_units)
+  
+  # Solve with locked constraints
+  s_locked <- solve(p_locked)
+  
+  # Run MinPatch
+  result <- run_minpatch(
+    prioritizr_problem = p_locked,
+    prioritizr_solution = s_locked,
+    min_patch_size = 1.0,
+    patch_radius = 1.5,
+    verbose = FALSE
+  )
+  
+  # Check locked-in units are selected
+  for (unit in locked_in_units) {
+    expect_equal(result$solution$minpatch[unit], 1)
+  }
+  
+  # Check locked-out units are not selected
+  for (unit in locked_out_units) {
+    expect_equal(result$solution$minpatch[unit], 0)
+  }
+})
+
+test_that("Locked-in units are not removed in Stage 1 (small patch removal)", {
+  test_data <- create_test_data()
+  
+  # Create a scenario with small isolated locked-in units
+  empty_solution <- test_data$prioritizr_solution
+  empty_solution$solution_1 <- rep(0, nrow(empty_solution))
+  
+  # Add a few locked-in units that would form a small patch
+  locked_in_units <- c(1, 2)
+  
+  p_locked <- test_data$prioritizr_problem %>%
+    prioritizr::add_locked_in_constraints(locked_in_units)
+  
+  # Run MinPatch with high min_patch_size to test if locked units are protected
+  result <- run_minpatch(
+    prioritizr_problem = p_locked,
+    prioritizr_solution = empty_solution,
+    min_patch_size = 10.0,
+    patch_radius = 1.5,
+    remove_small_patches = TRUE,
+    verbose = FALSE
+  )
+  
+  # Locked-in units should still be selected despite forming a small patch
+  for (unit in locked_in_units) {
+    expect_equal(result$solution$minpatch[unit], 1,
+                 info = paste("Locked-in unit", unit, "should not be removed even if patch is small"))
+  }
+})
+
+test_that("Locked-out units are never selected in Stage 2 (patch addition)", {
+  test_data <- create_test_data()
+  
+  # Start with empty solution
+  empty_solution <- test_data$prioritizr_solution
+  empty_solution$solution_1 <- rep(0, nrow(empty_solution))
+  
+  # Lock out units that would otherwise be good candidates
+  locked_out_units <- c(10, 11, 12, 13, 14)
+  
+  p_locked <- test_data$prioritizr_problem %>%
+    prioritizr::add_locked_out_constraints(locked_out_units)
+  
+  # Run MinPatch with patch addition enabled
+  result <- run_minpatch(
+    prioritizr_problem = p_locked,
+    prioritizr_solution = empty_solution,
+    min_patch_size = 1.0,
+    patch_radius = 1.5,
+    remove_small_patches = FALSE,
+    add_patches = TRUE,
+    verbose = FALSE
+  )
+  
+  # Locked-out units should never be selected
+  for (unit in locked_out_units) {
+    expect_equal(result$solution$minpatch[unit], 0,
+                 info = paste("Locked-out unit", unit, "should never be selected in Stage 2"))
+  }
+})
+
+test_that("Locked-in units are not removed in Stage 3 (whittling)", {
+  test_data <- create_test_data()
+  
+  # Create solution with some locked-in edge units
+  locked_in_units <- c(1, 10, 20)
+  
+  p_locked <- test_data$prioritizr_problem %>%
+    prioritizr::add_locked_in_constraints(locked_in_units)
+  
+  # Solve with locked constraints
+  s_locked <- solve(p_locked)
+  
+  # Run MinPatch with whittling enabled
+  result <- run_minpatch(
+    prioritizr_problem = p_locked,
+    prioritizr_solution = s_locked,
+    min_patch_size = 1.0,
+    patch_radius = 1.5,
+    whittle_patches = TRUE,
+    verbose = FALSE
+  )
+  
+  # Locked-in units should remain selected after whittling
+  for (unit in locked_in_units) {
+    expect_equal(result$solution$minpatch[unit], 1,
+                 info = paste("Locked-in unit", unit, "should not be removed during whittling"))
+  }
+})
+
+test_that("Warning issued when locked-in patch is smaller than min_patch_size", {
+  test_data <- create_test_data()
+  
+  # Lock in just one or two small units
+  locked_in_units <- c(1)
+  
+  p_locked <- test_data$prioritizr_problem %>%
+    prioritizr::add_locked_in_constraints(locked_in_units)
+  
+  # Solve with locked constraints
+  s_locked <- solve(p_locked)
+  
+  # Should issue warning about small locked-in patch
+  expect_warning(
+    result <- run_minpatch(
+      prioritizr_problem = p_locked,
+      prioritizr_solution = s_locked,
+      min_patch_size = 100.0,
+      patch_radius = 1.5,
+      verbose = TRUE
+    ),
+    "smaller than min_patch_size"
+  )
+})
+
+test_that("Locked constraint information is stored in result", {
+  test_data <- create_test_data()
+  
+  locked_in_units <- c(1, 2, 3)
+  locked_out_units <- c(50, 60, 70)
+  
+  p_locked <- test_data$prioritizr_problem %>%
+    prioritizr::add_locked_in_constraints(locked_in_units) %>%
+    prioritizr::add_locked_out_constraints(locked_out_units)
+  
+  s_locked <- solve(p_locked)
+  
+  result <- run_minpatch(
+    prioritizr_problem = p_locked,
+    prioritizr_solution = s_locked,
+    min_patch_size = 1.0,
+    patch_radius = 1.5,
+    verbose = FALSE
+  )
+  
+  # Check that locked constraint info is stored
+  expect_true("locked_in_indices" %in% names(result$minpatch_data))
+  expect_true("locked_out_indices" %in% names(result$minpatch_data))
+  
+  expect_equal(sort(result$minpatch_data$locked_in_indices), sort(locked_in_units))
+  expect_equal(sort(result$minpatch_data$locked_out_indices), sort(locked_out_units))
+})

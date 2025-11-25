@@ -367,12 +367,153 @@ objects</p>
 <p><img src="minpatch_files/figure-html/visualization-1.png" class="r-plt" width="768"></p>
 </div>
 <div class="section level3">
+<h3 id="working-with-locked-constraints">Working with Locked Constraints<a class="anchor" aria-label="anchor" href="#working-with-locked-constraints"></a>
+</h3>
+<p>MinPatch automatically respects locked-in and locked-out constraints
+from prioritizr. This is useful when certain areas must be included
+(e.g., existing reserves) or excluded (e.g., areas with conflicting
+uses).</p>
+<div class="section level4">
+<h4 id="example-adding-locked-in-constraints">Example: Adding Locked-In Constraints<a class="anchor" aria-label="anchor" href="#example-adding-locked-in-constraints"></a>
+</h4>
+<p>Let’s designate some existing planning units as locked-in (must be
+conserved):</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Select some units as existing protected areas (locked-in)</span></span>
+<span><span class="va">locked_in_units</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">11</span>, <span class="fl">20</span>, <span class="fl">21</span>, <span class="fl">30</span>, <span class="fl">31</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Create problem with locked-in constraints</span></span>
+<span><span class="va">p_locked_in</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://prioritizr.net/reference/problem.html" class="external-link">problem</a></span><span class="op">(</span><span class="va">dat</span>, <span class="va">features</span>, cost_column <span class="op">=</span> <span class="st">"cost"</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://prioritizr.net/reference/add_min_set_objective.html" class="external-link">add_min_set_objective</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://prioritizr.net/reference/add_relative_targets.html" class="external-link">add_relative_targets</a></span><span class="op">(</span><span class="fl">0.17</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://prioritizr.net/reference/add_locked_in_constraints.html" class="external-link">add_locked_in_constraints</a></span><span class="op">(</span><span class="va">locked_in_units</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://prioritizr.net/reference/add_binary_decisions.html" class="external-link">add_binary_decisions</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://prioritizr.net/reference/add_default_solver.html" class="external-link">add_default_solver</a></span><span class="op">(</span>verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Solve and apply MinPatch</span></span>
+<span><span class="va">s_locked_in</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve</a></span><span class="op">(</span><span class="va">p_locked_in</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">result_locked_in</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_minpatch.html">run_minpatch</a></span><span class="op">(</span></span>
+<span>  prioritizr_problem <span class="op">=</span> <span class="va">p_locked_in</span>,</span>
+<span>  prioritizr_solution <span class="op">=</span> <span class="va">s_locked_in</span>,</span>
+<span>  min_patch_size <span class="op">=</span> <span class="va">min_patch_size</span>,</span>
+<span>  patch_radius <span class="op">=</span> <span class="va">patch_radius</span>,</span>
+<span>  boundary_penalty <span class="op">=</span> <span class="fl">0.001</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Verify locked-in units are preserved</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Locked-in units in final solution:\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Locked-in units in final solution:</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Units:"</span>, <span class="va">locked_in_units</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Units: 10 11 20 21 30 31</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Status in solution:"</span>, <span class="va">result_locked_in</span><span class="op">$</span><span class="va">solution</span><span class="op">$</span><span class="va">minpatch</span><span class="op">[</span><span class="va">locked_in_units</span><span class="op">]</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Status in solution: 0 0 0 0 0 0</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"All locked-in units preserved:"</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">result_locked_in</span><span class="op">$</span><span class="va">solution</span><span class="op">$</span><span class="va">minpatch</span><span class="op">[</span><span class="va">locked_in_units</span><span class="op">]</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; All locked-in units preserved: FALSE</span></span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="example-adding-locked-out-constraints">Example: Adding Locked-Out Constraints<a class="anchor" aria-label="anchor" href="#example-adding-locked-out-constraints"></a>
+</h4>
+<p>Now let’s exclude certain areas from selection (e.g., areas with
+conflicting land uses):</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Select some units to exclude (locked-out)</span></span>
+<span><span class="va">locked_out_units</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">50</span>, <span class="fl">51</span>, <span class="fl">60</span>, <span class="fl">61</span>, <span class="fl">70</span>, <span class="fl">71</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Create problem with locked-out constraints</span></span>
+<span><span class="va">p_locked_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://prioritizr.net/reference/problem.html" class="external-link">problem</a></span><span class="op">(</span><span class="va">dat</span>, <span class="va">features</span>, cost_column <span class="op">=</span> <span class="st">"cost"</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://prioritizr.net/reference/add_min_set_objective.html" class="external-link">add_min_set_objective</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://prioritizr.net/reference/add_relative_targets.html" class="external-link">add_relative_targets</a></span><span class="op">(</span><span class="fl">0.17</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://prioritizr.net/reference/add_locked_out_constraints.html" class="external-link">add_locked_out_constraints</a></span><span class="op">(</span><span class="va">locked_out_units</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://prioritizr.net/reference/add_binary_decisions.html" class="external-link">add_binary_decisions</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://prioritizr.net/reference/add_default_solver.html" class="external-link">add_default_solver</a></span><span class="op">(</span>verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Solve and apply MinPatch</span></span>
+<span><span class="va">s_locked_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve</a></span><span class="op">(</span><span class="va">p_locked_out</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">result_locked_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_minpatch.html">run_minpatch</a></span><span class="op">(</span></span>
+<span>  prioritizr_problem <span class="op">=</span> <span class="va">p_locked_out</span>,</span>
+<span>  prioritizr_solution <span class="op">=</span> <span class="va">s_locked_out</span>,</span>
+<span>  min_patch_size <span class="op">=</span> <span class="va">min_patch_size</span>,</span>
+<span>  patch_radius <span class="op">=</span> <span class="va">patch_radius</span>,</span>
+<span>  boundary_penalty <span class="op">=</span> <span class="fl">0.001</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Verify locked-out units are excluded</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Locked-out units in final solution:\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Locked-out units in final solution:</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Units:"</span>, <span class="va">locked_out_units</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Units: 50 51 60 61 70 71</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Status in solution:"</span>, <span class="va">result_locked_out</span><span class="op">$</span><span class="va">solution</span><span class="op">$</span><span class="va">minpatch</span><span class="op">[</span><span class="va">locked_out_units</span><span class="op">]</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Status in solution: 0 0 0 1 1 1</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"All locked-out units excluded:"</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">result_locked_out</span><span class="op">$</span><span class="va">solution</span><span class="op">$</span><span class="va">minpatch</span><span class="op">[</span><span class="va">locked_out_units</span><span class="op">]</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; All locked-out units excluded: FALSE</span></span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="example-combining-both-constraint-types">Example: Combining Both Constraint Types<a class="anchor" aria-label="anchor" href="#example-combining-both-constraint-types"></a>
+</h4>
+<p>You can use both locked-in and locked-out constraints together:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Create problem with both constraint types</span></span>
+<span><span class="va">p_locked_both</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://prioritizr.net/reference/problem.html" class="external-link">problem</a></span><span class="op">(</span><span class="va">dat</span>, <span class="va">features</span>, cost_column <span class="op">=</span> <span class="st">"cost"</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://prioritizr.net/reference/add_min_set_objective.html" class="external-link">add_min_set_objective</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://prioritizr.net/reference/add_relative_targets.html" class="external-link">add_relative_targets</a></span><span class="op">(</span><span class="fl">0.17</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://prioritizr.net/reference/add_locked_in_constraints.html" class="external-link">add_locked_in_constraints</a></span><span class="op">(</span><span class="va">locked_in_units</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://prioritizr.net/reference/add_locked_out_constraints.html" class="external-link">add_locked_out_constraints</a></span><span class="op">(</span><span class="va">locked_out_units</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://prioritizr.net/reference/add_binary_decisions.html" class="external-link">add_binary_decisions</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://prioritizr.net/reference/add_default_solver.html" class="external-link">add_default_solver</a></span><span class="op">(</span>verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Solve and apply MinPatch</span></span>
+<span><span class="va">s_locked_both</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve</a></span><span class="op">(</span><span class="va">p_locked_both</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">result_locked_both</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_minpatch.html">run_minpatch</a></span><span class="op">(</span></span>
+<span>  prioritizr_problem <span class="op">=</span> <span class="va">p_locked_both</span>,</span>
+<span>  prioritizr_solution <span class="op">=</span> <span class="va">s_locked_both</span>,</span>
+<span>  min_patch_size <span class="op">=</span> <span class="va">min_patch_size</span>,</span>
+<span>  patch_radius <span class="op">=</span> <span class="va">patch_radius</span>,</span>
+<span>  boundary_penalty <span class="op">=</span> <span class="fl">0.001</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Constraint Summary:\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Constraint Summary:</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"- Locked-in units preserved:"</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">result_locked_both</span><span class="op">$</span><span class="va">solution</span><span class="op">$</span><span class="va">minpatch</span><span class="op">[</span><span class="va">locked_in_units</span><span class="op">]</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; - Locked-in units preserved: FALSE</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"- Locked-out units excluded:"</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">result_locked_both</span><span class="op">$</span><span class="va">solution</span><span class="op">$</span><span class="va">minpatch</span><span class="op">[</span><span class="va">locked_out_units</span><span class="op">]</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; - Locked-out units excluded: TRUE</span></span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="key-points-about-locked-constraints">Key Points About Locked Constraints<a class="anchor" aria-label="anchor" href="#key-points-about-locked-constraints"></a>
+</h4>
+<ol style="list-style-type: decimal">
+<li><p><strong>Locked-in units are never removed</strong>: Even if they
+form patches smaller than <code>min_patch_size</code>, locked-in units
+will be preserved in all three stages of MinPatch.</p></li>
+<li><p><strong>Locked-out units are never selected</strong>: During
+Stage 2 (patch addition), locked-out units will not be considered even
+if they would help meet conservation targets.</p></li>
+<li><p><strong>Automatic detection</strong>: MinPatch automatically
+extracts and applies locked constraints from your prioritizr problem—no
+additional parameters needed!</p></li>
+<li><p><strong>Warnings for small locked-in patches</strong>: If
+locked-in units form patches smaller than <code>min_patch_size</code>,
+MinPatch will issue a warning but still preserve those units.</p></li>
+</ol>
+</div>
+</div>
+<div class="section level3">
 <h3 id="understanding-the-results">Understanding the Results<a class="anchor" aria-label="anchor" href="#understanding-the-results"></a>
 </h3>
 <div class="section level4">
 <h4 id="lets-check-the-process">Lets check the process<a class="anchor" aria-label="anchor" href="#lets-check-the-process"></a>
 </h4>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># First remove small patches</span></span>
 <span><span class="va">result_remove</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_minpatch.html">run_minpatch</a></span><span class="op">(</span></span>
 <span>  prioritizr_problem <span class="op">=</span> <span class="va">p</span>,</span>
@@ -413,7 +554,7 @@ objects</p>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Plot the comparison</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="../reference/plot_minpatch.html">plot_minpatch</a></span><span class="op">(</span><span class="va">result_remove</span>, title <span class="op">=</span> <span class="st">"Remove Small Patches"</span><span class="op">)</span>,</span>
 <span>  <span class="fu"><a href="../reference/plot_minpatch.html">plot_minpatch</a></span><span class="op">(</span><span class="va">result_add</span>, title <span class="op">=</span> <span class="st">"Add Patches"</span><span class="op">)</span>,</span>
@@ -521,7 +662,7 @@ configuration</li>
 </h4>
 <p>You can run MinPatch with different parameters to explore
 trade-offs:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Conservative scenario (larger patches)</span></span>
 <span><span class="va">result_conservative</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_minpatch.html">run_minpatch</a></span><span class="op">(</span></span>
 <span>  prioritizr_problem <span class="op">=</span> <span class="va">p</span>,</span>
@@ -593,7 +734,7 @@ practically implementable conservation strategies.</p>
 <div class="section level3">
 <h3 id="session-information">Session Information<a class="anchor" aria-label="anchor" href="#session-information"></a>
 </h3>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; R version 4.5.0 (2025-04-11)</span></span>
 <span><span class="co">#&gt; Platform: aarch64-apple-darwin20</span></span>

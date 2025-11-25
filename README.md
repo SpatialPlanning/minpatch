@@ -72,6 +72,8 @@ pak::pak("SpatialPlanning/minpatch")
   stages
 - **prioritizr Integration**: Seamless workflow with prioritizr
   solutions
+- **Locked Constraints Support**: Automatically respects locked-in and
+  locked-out constraints from prioritizr
 - **Flexible Parameters**: Control minimum patch sizes, patch radius,
   and boundary penalties
 - **Comprehensive Reporting**: Detailed statistics and comparisons
@@ -79,11 +81,29 @@ pak::pak("SpatialPlanning/minpatch")
 
 ## Algorithm Details
 
+### Locked Constraints
+
+MinPatch automatically respects locked-in and locked-out constraints
+from prioritizr problems:
+
+- **Locked-in constraints** (from `add_locked_in_constraints()`):
+  Planning units that are locked-in will never be removed, regardless of
+  patch size or during the whittling stage. These units are treated as
+  “conserved” areas that must be retained in the final solution.
+
+- **Locked-out constraints** (from `add_locked_out_constraints()`):
+  Planning units that are locked-out will never be selected, even when
+  adding new patches to meet conservation targets. These units are
+  completely excluded from consideration.
+
+If locked-in units form patches smaller than `min_patch_size`, a warning
+will be issued, but these units will still be preserved in the solution.
+
 ### Stage 1: Remove Small Patches
 
 Identifies connected components (patches) in the solution and removes
-those smaller than the minimum size threshold. Only removes patches that
-weren’t originally designated as conserved areas.
+those smaller than the minimum size threshold. Locked-in planning units
+are never removed, even if they form small patches.
 
 ### Stage 2: Add New Patches (BestPatch Algorithm)
 

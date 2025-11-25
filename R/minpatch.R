@@ -32,6 +32,18 @@
 #'   \item Whittle patches: Removes unnecessary planning units
 #' }
 #'
+#' **Locked Constraints**: MinPatch automatically respects locked-in and locked-out
+#' constraints from prioritizr problems (added via \code{add_locked_in_constraints()}
+#' and \code{add_locked_out_constraints()}):
+#' \itemize{
+#'   \item **Locked-in units**: Will never be removed, regardless of patch size or
+#'         whittling. They are treated as "conserved" areas that must be retained.
+#'   \item **Locked-out units**: Will never be selected, even when adding new patches
+#'         to meet conservation targets. They are completely excluded from consideration.
+#' }
+#' If locked-in units form patches smaller than \code{min_patch_size}, a warning
+#' will be issued, but these units will still be preserved.
+#'
 #' **Important**: If you set \code{remove_small_patches = TRUE} but
 #' \code{add_patches = FALSE}, the algorithm may remove patches without
 #' compensating, potentially violating conservation targets. In such cases,

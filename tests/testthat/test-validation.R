@@ -254,3 +254,94 @@ test_that("calculate_patch_stats handles empty patches", {
   expect_equal(stats$valid_patch_count, 0)
   expect_equal(stats$all_patch_area, 0)
 })
+
+test_that("validate_inputs catches conflicting locked constraints", {
+  test_data <- create_test_data()
+  
+  # Test that validation catches conflicts between locked-in and locked-out
+  expect_error(
+    validate_inputs(
+      solution = test_data$solution,
+      planning_units = test_data$planning_units,
+      targets = test_data$targets,
+      costs = NULL,
+      min_patch_size = 1.0,
+      patch_radius = 1.5,
+      boundary_penalty = 0,
+      locked_in_indices = c(1, 2, 3),
+      locked_out_indices = c(2, 3, 4),  # 2 and 3 conflict
+      verbose = FALSE
+    ),
+    "Conflict detected"
+  )
+})
+
+test_that("validate_inputs handles non-conflicting locked constraints", {
+  test_data <- create_test_data()
+  
+  # Should not throw error when there are no conflicts
+  expect_silent(
+    validate_inputs(
+      solution = test_data$solution,
+      planning_units = test_data$planning_units,
+      targets = test_data$targets,
+      costs = NULL,
+      min_patch_size = 1.0,
+      patch_radius = 1.5,
+      boundary_penalty = 0,
+      locked_in_indices = c(1, 2, 3),
+      locked_out_indices = c(10, 11, 12),
+      verbose = FALSE
+    )
+  )
+})
+
+test_that("extract_locked_in_constraints handles problems without constraints", {
+  test_data <- create_test_data()
+  
+  # Problem without locked constraints
+  locked_in <- extract_locked_in_constraints(test_data$prioritizr_problem, verbose = FALSE)
+  
+  expect_length(locked_in, 0)
+  expect_true(is.integer(locked_in))
+})
+
+test_that("extract_locked_out_constraints handles problems without constraints", {
+  test_data <- create_test_data()
+  
+  # Problem without locked constraints
+  locked_out <- extract_locked_out_constraints(test_data$prioritizr_problem, verbose = FALSE)
+  
+  expect_length(locked_out, 0)
+  expect_true(is.integer(locked_out))
+})
+
+test_that("extract_locked_in_constraints handles multiple constraints", {
+  test_data <- create_test_data()
+  
+  # Add multiple locked-in constraints
+  p_locked <- test_data$prioritizr_problem %>%
+    prioritizr::add_locked_in_constraints(c(1, 2, 3)) %>%
+    prioritizr::add_locked_in_constraints(c(10, 11, 12))
+  
+  locked_in <- extract_locked_in_constraints(p_locked, verbose = FALSE)
+  
+  # Should combine all locked-in constraints
+  expect_true(all(c(1, 2, 3, 10, 11, 12) %in% locked_in))
+  expect_length(unique(locked_in), 6)
+})
+
+test_that("extract_locked_out_constraints handles multiple constraints", {
+  test_data <- create_test_data()
+  
+  # Add multiple locked-out constraints
+  p_locked <- test_data$prioritizr_problem %>%
+    prioritizr::add_locked_out_constraints(c(5, 6, 7)) %>%
+    prioritizr::add_locked_out_constraints(c(15, 16, 17))
+  
+  locked_out <- extract_locked_out_constraints(p_locked, verbose = FALSE)
+  
+  # Should combine all locked-out constraints
+  expect_true(all(c(5, 6, 7, 15, 16, 17) %in% locked_out))
+  expect_length(unique(locked_out), 6)
+})

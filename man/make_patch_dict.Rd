@@ -13,6 +13,8 @@ make_patch_dict(minpatch_data)
 Named list where each patch contains area, unit count, and unit IDs
 }
 \description{
-Identifies connected components (patches) in the current solution
+Identifies connected components (patches) in the current solution using igraph
+and sparse matrix operations. This implementation follows the wheretowork approach
+for efficient patch identification using matrix subsetting.
 }
 \keyword{internal}

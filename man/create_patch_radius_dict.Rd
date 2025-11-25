@@ -15,6 +15,7 @@ create_patch_radius_dict(planning_units, patch_radius, verbose = TRUE)
 Named list where each planning unit contains list of units within radius
 }
 \description{
-For each planning unit, find all units within the specified patch radius
+For each planning unit, find all units within the specified patch radius.
+Optimized version computes full distance matrix once instead of n times.
 }
 \keyword{internal}

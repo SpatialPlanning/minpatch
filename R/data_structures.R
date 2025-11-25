@@ -242,9 +242,21 @@ extract_locked_in_constraints <- function(prioritizr_problem, verbose = TRUE) {
     for (constraint in prioritizr_problem$constraints) {
       # Check if this is a locked-in constraint
       if (inherits(constraint, "LockedInConstraint")) {
-        # Extract indices using the constraint's data
-        if (!is.null(constraint$data) && "pu" %in% names(constraint$data)) {
-          locked_in <- unique(c(locked_in, constraint$data$pu))
+        # Extract indices from the constraint's data tibble
+        # The data is stored in constraint$data$data with columns: idx, zone, status
+        # For locked-in: status = 1 and constraint$data$lb = TRUE
+        if (!is.null(constraint$data) && "data" %in% names(constraint$data)) {
+          constraint_data <- constraint$data$data
+          if (!is.null(constraint_data) && "idx" %in% names(constraint_data)) {
+            # Extract indices where status = 1 (locked in)
+            if ("status" %in% names(constraint_data)) {
+              locked_indices <- constraint_data$idx[constraint_data$status == 1]
+              locked_in <- unique(c(locked_in, as.integer(locked_indices)))
+            } else {
+              # If no status column, all indices in the tibble are locked in
+              locked_in <- unique(c(locked_in, as.integer(constraint_data$idx)))
+            }
+          }
         }
       }
     }
@@ -267,9 +279,21 @@ extract_locked_out_constraints <- function(prioritizr_problem, verbose = TRUE) {
     for (constraint in prioritizr_problem$constraints) {
       # Check if this is a locked-out constraint
       if (inherits(constraint, "LockedOutConstraint")) {
-        # Extract indices using the constraint's data
-        if (!is.null(constraint$data) && "pu" %in% names(constraint$data)) {
-          locked_out <- unique(c(locked_out, constraint$data$pu))
+        # Extract indices from the constraint's data tibble
+        # The data is stored in constraint$data$data with columns: idx, zone, status
+        # For locked-out: status = 0 and constraint$data$ub = FALSE
+        if (!is.null(constraint$data) && "data" %in% names(constraint$data)) {
+          constraint_data <- constraint$data$data
+          if (!is.null(constraint_data) && "idx" %in% names(constraint_data)) {
+            # Extract indices where status = 0 (locked out)
+            if ("status" %in% names(constraint_data)) {
+              locked_indices <- constraint_data$idx[constraint_data$status == 0]
+              locked_out <- unique(c(locked_out, as.integer(locked_indices)))
+            } else {
+              # If no status column, all indices in the tibble are locked out
+              locked_out <- unique(c(locked_out, as.integer(constraint_data$idx)))
+            }
+          }
         }
       }
     }

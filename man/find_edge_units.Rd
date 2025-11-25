@@ -14,6 +14,6 @@ Character vector of edge unit IDs
 }
 \description{
 Identifies planning units that are on the edge of selected areas
-(have at least one unselected neighbor)
+(have at least one unselected neighbor). Optimized with vector pre-allocation.
 }
 \keyword{internal}

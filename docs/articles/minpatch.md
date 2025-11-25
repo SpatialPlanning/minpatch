@@ -104,8 +104,8 @@ result <- run_minpatch(
 )
 #> Validating inputs...
 #> Initializing data structures...
-#> Calculating boundary matrix (this may take a while)...
-#> Creating patch radius dictionary...
+#> Calculating boundary matrix (optimized version)...
+#> Creating patch radius dictionary (optimized)...
 #> Calculating initial patch statistics...
 #> Stage 1: Removing small patches...
 #> Stage 2: Adding new patches...
@@ -548,26 +548,26 @@ sessionInfo()
 #> [5] sf_1.0-22        prioritizr_8.1.0 minpatch_0.1.0  
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] generics_0.1.4       sass_0.4.10          class_7.3-23        
-#>  [4] KernSmooth_2.23-26   stringi_1.8.7        lattice_0.22-7      
-#>  [7] digest_0.6.38        magrittr_2.0.4       RColorBrewer_1.1-3  
-#> [10] evaluate_1.0.5       grid_4.5.0           fastmap_1.2.0       
-#> [13] jsonlite_2.0.0       Matrix_1.7-4         ape_5.8-1           
-#> [16] e1071_1.7-16         DBI_1.2.3            scales_1.4.0        
-#> [19] codetools_0.2-20     textshaping_1.0.4    jquerylib_0.1.4     
-#> [22] cli_3.6.5            rlang_1.1.6          units_1.0-0         
-#> [25] withr_3.0.2          cachem_1.1.0         yaml_2.3.10         
-#> [28] tools_4.5.0          raster_3.6-32        parallel_4.5.0      
-#> [31] rcbc_0.1.0.9003      assertthat_0.2.1     exactextractr_0.10.0
-#> [34] vctrs_0.6.5          R6_2.6.1             proxy_0.4-27        
-#> [37] lifecycle_1.0.4      classInt_0.4-11      stringr_1.6.0       
-#> [40] fs_1.6.6             htmlwidgets_1.6.4    ragg_1.5.0          
-#> [43] pkgconfig_2.0.3      desc_1.4.3           gtable_0.3.6        
-#> [46] pkgdown_2.2.0        bslib_0.9.0          pillar_1.11.1       
-#> [49] glue_1.8.0           Rcpp_1.1.0           systemfonts_1.3.1   
-#> [52] tidyselect_1.2.1     xfun_0.54            tibble_3.3.0        
-#> [55] dichromat_2.0-0.1    rstudioapi_0.17.1    knitr_1.50          
-#> [58] farver_2.1.2         htmltools_0.5.8.1    nlme_3.1-168        
-#> [61] rmarkdown_2.30       compiler_4.5.0       S7_0.2.0            
-#> [64] sp_2.2-0
+#>  [1] gtable_0.3.6         xfun_0.54            bslib_0.9.0         
+#>  [4] raster_3.6-32        htmlwidgets_1.6.4    lattice_0.22-7      
+#>  [7] vctrs_0.6.5          tools_4.5.0          generics_0.1.4      
+#> [10] parallel_4.5.0       tibble_3.3.0         proxy_0.4-27        
+#> [13] pkgconfig_2.0.3      Matrix_1.7-4         KernSmooth_2.23-26  
+#> [16] RColorBrewer_1.1-3   S7_0.2.0             desc_1.4.3          
+#> [19] assertthat_0.2.1     lifecycle_1.0.4      compiler_4.5.0      
+#> [22] farver_2.1.2         stringr_1.6.0        textshaping_1.0.4   
+#> [25] codetools_0.2-20     htmltools_0.5.8.1    class_7.3-23        
+#> [28] sass_0.4.10          yaml_2.3.10          pillar_1.11.1       
+#> [31] pkgdown_2.2.0        exactextractr_0.10.0 jquerylib_0.1.4     
+#> [34] rcbc_0.1.0.9003      classInt_0.4-11      cachem_1.1.0        
+#> [37] nlme_3.1-168         parallelly_1.45.1    tidyselect_1.2.1    
+#> [40] digest_0.6.38        stringi_1.8.7        fastmap_1.2.0       
+#> [43] grid_4.5.0           cli_3.6.5            magrittr_2.0.4      
+#> [46] dichromat_2.0-0.1    e1071_1.7-16         ape_5.8-1           
+#> [49] withr_3.0.2          scales_1.4.0         sp_2.2-0            
+#> [52] rmarkdown_2.30       igraph_2.2.1         ragg_1.5.0          
+#> [55] evaluate_1.0.5       knitr_1.50           rlang_1.1.6         
+#> [58] Rcpp_1.1.0           glue_1.8.0           DBI_1.2.3           
+#> [61] rstudioapi_0.17.1    jsonlite_2.0.0       R6_2.6.1            
+#> [64] systemfonts_1.3.1    fs_1.6.6             units_1.0-0
 ```

@@ -46,7 +46,6 @@ tas <- tas %>%
 
 ``` r
 
-
 p <- problem(tas, features = features, cost_column = "cost") %>%
   add_min_set_objective() %>%
   add_relative_targets(0.30) %>%  # 30% of each feature
@@ -60,7 +59,6 @@ s <- solve(p)
 
 ``` r
 
-
 plot_prioritizr(s)
 ```
 
@@ -71,7 +69,6 @@ plot_prioritizr(s)
 ### Choose a patch size
 
 ``` r
-
 
 # Calculate reasonable parameters based on planning unit characteristics
 median_area <- median(st_area(tas))
@@ -109,19 +106,10 @@ result <- run_minpatch(
 )
 #> Validating inputs...
 #> Initializing data structures...
-#> Calculating boundary matrix (this may take a while)...
-#> Processed 100 of 1128 planning units
-#> Processed 200 of 1128 planning units
-#> Processed 300 of 1128 planning units
-#> Processed 400 of 1128 planning units
-#> Processed 500 of 1128 planning units
-#> Processed 600 of 1128 planning units
-#> Processed 700 of 1128 planning units
-#> Processed 800 of 1128 planning units
-#> Processed 900 of 1128 planning units
-#> Processed 1000 of 1128 planning units
-#> Processed 1100 of 1128 planning units
-#> Creating patch radius dictionary...
+#> Calculating boundary matrix using 14 cores...
+#> Processing chunks in parallel...
+#> Combining results...
+#> Creating patch radius dictionary (optimized)...
 #> Processed 100 of 1128 planning units
 #> Processed 200 of 1128 planning units
 #> Processed 300 of 1128 planning units

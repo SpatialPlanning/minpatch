@@ -61,7 +61,6 @@ pak::pak("SpatialPlanning/minpatch")
   and boundary penalties
 - **Comprehensive Reporting**: Detailed statistics and comparisons
 - **Visualization Support**: Plot results with ggplot2 (optional)
-- **Well Documented**: Extensive documentation and examples
 
 ## Algorithm Details
 

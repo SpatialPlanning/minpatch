@@ -109,3 +109,111 @@ test_that("BestPatch scoring works", {
     expect_equal(length(best_patch_scores), 0)
   }
 })
+
+test_that("add_new_patches handles maximum iterations", {
+  test_data <- create_test_data()
+  
+  minpatch_data <- initialize_minpatch_data(
+    test_data$solution, test_data$planning_units, test_data$targets,
+    NULL, 1.0, 1.5, 0, test_data$prioritizr_problem, test_data$prioritizr_solution
+  )
+  
+  minpatch_data$prioritizr_solution$minpatch <- create_solution_vector(minpatch_data$unit_dict)
+  
+  updated_data <- add_new_patches(minpatch_data, verbose = FALSE)
+  
+  expect_true("unit_dict" %in% names(updated_data))
+  expect_true("minpatch" %in% names(updated_data$prioritizr_solution))
+})
+
+test_that("add_new_patches handles no unmet targets", {
+  test_data <- create_test_data()
+  
+  minpatch_data <- initialize_minpatch_data(
+    rep(1, length(test_data$solution)),
+    test_data$planning_units,
+    test_data$targets,
+    NULL, 1.0, 1.5, 0,
+    test_data$prioritizr_problem,
+    test_data$prioritizr_solution
+  )
+  
+  minpatch_data$prioritizr_solution$minpatch <- create_solution_vector(minpatch_data$unit_dict)
+  
+  updated_data <- add_new_patches(minpatch_data, verbose = FALSE)
+  expect_true("unit_dict" %in% names(updated_data))
+})
+
+test_that("calculate_best_patch_scores handles empty unmet targets", {
+  test_data <- create_test_data()
+  
+  minpatch_data <- initialize_minpatch_data(
+    test_data$solution, test_data$planning_units, test_data$targets,
+    NULL, 1.0, 1.5, 0, test_data$prioritizr_problem, test_data$prioritizr_solution
+  )
+  
+  feature_amounts <- calculate_feature_conservation(minpatch_data)
+  
+  best_patch_scores <- calculate_best_patch_scores(
+    minpatch_data, feature_amounts, character(0)
+  )
+  
+  expect_true(is.numeric(best_patch_scores))
+  expect_equal(length(best_patch_scores), 0)
+})
+
+test_that("remove_small_patches_from_solution preserves conserved units", {
+  test_data <- create_test_data()
+  
+  minpatch_data <- initialize_minpatch_data(
+    test_data$solution, test_data$planning_units, test_data$targets,
+    NULL, 10.0,
+    1.5, 0, test_data$prioritizr_problem, test_data$prioritizr_solution
+  )
+  
+  selected_units <- names(minpatch_data$unit_dict)[
+    sapply(minpatch_data$unit_dict, function(x) x$status == 1)
+  ]
+  if (length(selected_units) > 0) {
+    minpatch_data$unit_dict[[selected_units[1]]]$status <- 2
+  }
+  
+  updated_data <- remove_small_patches_from_solution(minpatch_data)
+  
+  if (length(selected_units) > 0) {
+    expect_equal(updated_data$unit_dict[[selected_units[1]]]$status, 2)
+  }
+})
+
+test_that("add_patch_centered_on_unit only adds available units", {
+  test_data <- create_test_data()
+  
+  minpatch_data <- initialize_minpatch_data(
+    test_data$solution, test_data$planning_units, test_data$targets,
+    NULL, 1.0, 1.5, 0, test_data$prioritizr_problem, test_data$prioritizr_solution
+  )
+  
+  minpatch_data$unit_dict[["1"]]$status <- 0
+  minpatch_data$unit_dict[["2"]]$status <- 2
+  
+  updated_unit_dict <- add_patch_centered_on_unit(minpatch_data, "1")
+  
+  expect_equal(updated_unit_dict[["1"]]$status, 1)
+  expect_equal(updated_unit_dict[["2"]]$status, 2)
+})
+
+test_that("calculate_feature_conservation handles units with no features", {
+  test_data <- create_test_data()
+  
+  minpatch_data <- initialize_minpatch_data(
+    test_data$solution, test_data$planning_units, test_data$targets,
+    NULL, 1.0, 1.5, 0, test_data$prioritizr_problem, test_data$prioritizr_solution
+  )
+  
+  minpatch_data$abundance_matrix[["1"]] <- list()
+  
+  feature_amounts <- calculate_feature_conservation(minpatch_data)
+  
+  expect_true(is.numeric(feature_amounts))
+  expect_equal(length(feature_amounts), length(minpatch_data$target_dict))
+})

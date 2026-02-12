@@ -109,7 +109,9 @@ run_minpatch <- function(prioritizr_problem,
                          add_patches = TRUE,
                          whittle_patches = TRUE,
                          solution_column = "solution_1",
-                         verbose = TRUE) {
+                         verbose = TRUE,
+                         debug_boundary = FALSE,
+                         debug_boundary_every = 50) {
 
   # Stage 0: Checks and data preparation -----
 
@@ -211,6 +213,10 @@ run_minpatch <- function(prioritizr_problem,
     min_patch_size, patch_radius, boundary_penalty,
     prioritizr_problem, prioritizr_solution, verbose
   )
+
+  # DEBUG: pass flags into downstream functions (e.g., simulated_whittling)
+  minpatch_data$debug_boundary <- debug_boundary
+  minpatch_data$debug_boundary_every <- debug_boundary_every
 
   # Create initial minpatch column in prioritizr_solution
   minpatch_data$prioritizr_solution$minpatch <- create_solution_vector(minpatch_data$unit_dict)

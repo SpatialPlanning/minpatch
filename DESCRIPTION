@@ -64,6 +64,8 @@ Suggests:
     testthat (>= 3.0.0),
     tibble,
     tmap
+Remotes: 
+    github::emlab-ucsb/oceandatr
 VignetteBuilder: knitr
 URL: https://github.com/SpatialPlanning/minpatch
 BugReports: https://github.com/SpatialPlanning/minpatch/issues

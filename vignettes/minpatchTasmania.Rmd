@@ -5,9 +5,8 @@ vignette: >
   %\VignetteIndexEntry{MinPatch in Tasmania}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
-
 ---
-  
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
 collapse = TRUE,
@@ -16,6 +15,7 @@ comment = "#>"
 ```
 
 # Load packages
+
 ```{r setup, warning=FALSE, message=FALSE}
 library(minpatch)
 library(prioritizr)
@@ -66,10 +66,10 @@ s <- solve(p)
 ```
 
 ## Plot prioritizr solution
+
 ```{r}
 plot_prioritizr(s)
 ```
-
 
 # MinPatch
 
@@ -92,7 +92,6 @@ cat("- This means patches must be at least", round(min_patch_size/median_area, 3
     "times the median planning unit size\n")
 
 ```
-
 
 ## Run minpatch
 
@@ -138,15 +137,14 @@ print(comparison$summary)
 
 ```
 
-
 # Run different patch sizes
 
-The minimum patch size parameter is the core constraint that drives MinPatch behaviour - it determines the threshold below which patches are considered too small and must be either enlarged or removed. 
+The minimum patch size parameter is the core constraint that drives MinPatch behaviour - it determines the threshold below which patches are considered too small and must be either enlarged or removed.
 
-  * During Stage 1, MinPatch removes all patches smaller than this threshold (except existing protected areas). 
-  * During Stage 2, it adds new patches large enough to meet this minimum when targets are unmet. 
-  * During Stage 3 (whittling), it prevents the removal of planning units that would make any patch fall below this threshold. 
-  
+-   During Stage 1, MinPatch removes all patches smaller than this threshold (except existing protected areas).
+-   During Stage 2, it adds new patches large enough to meet this minimum when targets are unmet.
+-   During Stage 3 (whittling), it prevents the removal of planning units that would make any patch fall below this threshold.
+
 Larger minimum patch sizes result in fewer, bigger patches with potentially higher total area, as MinPatch must ensure every patch meets the size requirement. Smaller minimum patch sizes allow more flexibility, potentially resulting in more patches that are closer to the original *prioritizr* solution. The choice of minimum patch size should reflect ecological or management considerations - for example, larger patches may be needed to support viable populations or reduce edge effects, while smaller patches may be acceptable in highly connected landscapes or for features that don't require large contiguous areas.
 
 ```{r}
@@ -195,7 +193,6 @@ patchwork::wrap_plots(plot_minpatch(result, title = "Patch Size x5"),
   theme(legend.position = "bottom")
 ```
 
-
 # Run different Boundary Penalties
 
 The boundary penalty controls how much MinPatch prioritizes spatial compactness during the "simulated whittling" stage. During whittling, MinPatch considers removing planning units from patch edges, but only if doing so doesn't increase the total *priortizr* cost. The boundary penalty affects this decision by penalizing fragmented solutions - higher penalties favour more compact patches by making it costly to create additional "edge" between selected and unselected areas. When MinPatch evaluates whether to remove a unit, it calculates the change in boundary length (units with selected neighbours increase boundary when removed, while units with unselected neighbours decrease boundary) and multiplies this by the boundary penalty. If the resulting boundary cost change exceeds the unit's cost, the unit cannot be removed. In datasets like Tasmania with long planning unit boundaries relative to unit costs, even small boundary penalties can be highly influential, potentially preventing most unit removals and resulting in similar solutions across different penalty values. Very small penalties (e.g., 1e-10) may be needed to see meaningful differences in such cases.
@@ -211,7 +208,7 @@ result4 <- run_minpatch(
   prioritizr_solution = s,
   min_patch_size = min_patch_size,
   patch_radius = patch_radius,
-  boundary_penalty = 1e-5,
+  boundary_penalty = 1,
   remove_small_patches = TRUE,
   add_patches = TRUE,
   whittle_patches = TRUE,
@@ -224,7 +221,7 @@ result5 <- run_minpatch(
   prioritizr_solution = s,
   min_patch_size = min_patch_size,
   patch_radius = patch_radius,
-  boundary_penalty = 1e-10, 
+  boundary_penalty = 10, 
   remove_small_patches = TRUE,
   add_patches = TRUE,
   whittle_patches = TRUE,
@@ -233,13 +230,29 @@ result5 <- run_minpatch(
 
 ```
 
-## Visualise the minpatch solution
+## Visualise the final solution
 
 ```{r}
-patchwork::wrap_plots(plot_minpatch(result, title = "Boundary Penalty: 0"),
-                      plot_minpatch(result4, title = "Boundary Penalty: 1e-5"),
-                      plot_minpatch(result5, title = "Boundary Penalty: 1e-10"),
+
+patchwork::wrap_plots(plot_prioritizr(result2$solution, col = "minpatch", title = "Boundary Penalty: 0"),
+                      plot_prioritizr(result4$solution, col = "minpatch", title = "Boundary Penalty: 1"),
+                      plot_prioritizr(result5$solution, col = "minpatch", title = "Boundary Penalty: 10"),
                       guides = "collect",
                       ncol = 3) &
   theme(legend.position = "bottom")
+
+
+```
+
+## Visualise the differences in the minpatch solution  
+
+```{r}
+patchwork::wrap_plots(plot_minpatch(result2, title = "Boundary Penalty: 0"),
+                      plot_minpatch(result4, title = "Boundary Penalty: 1"),
+                      plot_minpatch(result5, title = "Boundary Penalty: 10"),
+                      guides = "collect",
+                      ncol = 3) &
+  theme(legend.position = "bottom")
+
+
 ```

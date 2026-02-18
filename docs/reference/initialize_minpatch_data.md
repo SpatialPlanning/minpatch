@@ -1,6 +1,10 @@
 # Initialize MinPatch data structures
 
-Creates the internal data structures needed for MinPatch processing
+Creates the internal data structures needed for MinPatch processing.
+This function extracts locked-in and locked-out constraints from the
+prioritizr problem and applies them as status codes: - Status 2
+(conserved) for locked-in units - Status 3 (excluded) for locked-out
+units
 
 ## Usage
 
@@ -56,6 +60,10 @@ initialize_minpatch_data(
 - prioritizr_solution:
 
   A solved prioritizr solution object
+
+- verbose:
+
+  Logical, whether to print progress
 
 ## Value
 

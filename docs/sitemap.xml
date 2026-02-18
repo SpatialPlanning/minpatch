@@ -1,6 +1,8 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>/404.html</loc></url>
+<url><loc>/articles/boundary-penalty.html</loc></url>
 <url><loc>/articles/index.html</loc></url>
+<url><loc>/articles/minpatch-oceandatr-Seychelles.html</loc></url>
 <url><loc>/articles/minpatch.html</loc></url>
 <url><loc>/articles/minpatchTasmania.html</loc></url>
 <url><loc>/authors.html</loc></url>
@@ -21,16 +23,21 @@
 <url><loc>/reference/create_boundary_matrix.html</loc></url>
 <url><loc>/reference/create_patch_radius_dict.html</loc></url>
 <url><loc>/reference/create_solution_vector.html</loc></url>
+<url><loc>/reference/extract_locked_in_constraints.html</loc></url>
+<url><loc>/reference/extract_locked_out_constraints.html</loc></url>
 <url><loc>/reference/find_edge_units.html</loc></url>
 <url><loc>/reference/generate_minpatch_report.html</loc></url>
 <url><loc>/reference/identify_unmet_targets.html</loc></url>
 <url><loc>/reference/index.html</loc></url>
 <url><loc>/reference/initialize_minpatch_data.html</loc></url>
+<url><loc>/reference/make_minpatch_summary_table.html</loc></url>
 <url><loc>/reference/make_patch_dict.html</loc></url>
 <url><loc>/reference/minpatch-package.html</loc></url>
 <url><loc>/reference/pipe.html</loc></url>
 <url><loc>/reference/plot_minpatch.html</loc></url>
+<url><loc>/reference/plot_patch_validity.html</loc></url>
 <url><loc>/reference/plot_prioritizr.html</loc></url>
+<url><loc>/reference/plot_solution_grid.html</loc></url>
 <url><loc>/reference/print_minpatch_summary.html</loc></url>
 <url><loc>/reference/removal_increases_cost.html</loc></url>
 <url><loc>/reference/removal_increases_marxan_cost.html</loc></url>

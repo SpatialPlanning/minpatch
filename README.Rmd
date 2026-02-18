@@ -14,19 +14,16 @@ knitr::opts_chunk$set(
 ```
 
 # MinPatch for R
-<!-- badges: start -->
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![Windows](https://github.com/SpatialPlanning/minpatch/actions/workflows/Windows.yaml/badge.svg)](https://github.com/SpatialPlanning/minpatch/actions/workflows/Windows.yaml)
-[![Ubuntu](https://github.com/SpatialPlanning/minpatch/actions/workflows/Ubuntu.yaml/badge.svg)](https://github.com/SpatialPlanning/minpatch/actions/workflows/Ubuntu.yaml)
-[![MacOS](https://github.com/SpatialPlanning/minpatch/actions/workflows/MacOS.yaml/badge.svg)](https://github.com/SpatialPlanning/minpatch/actions/workflows/MacOS.yaml)
-[![issues - zoomss](https://img.shields.io/github/issues/SpatialPlanning/minpatch)](https://github.com/SpatialPlanning/minpatch/issues)
-[![Codecov test coverage](https://codecov.io/gh/SpatialPlanning/minpatch/graph/badge.svg)](https://app.codecov.io/gh/SpatialPlanning/minpatch)
-<!-- badges: end -->
 
+<!-- badges: start -->
+
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental) [![Windows](https://github.com/SpatialPlanning/minpatch/actions/workflows/Windows.yaml/badge.svg)](https://github.com/SpatialPlanning/minpatch/actions/workflows/Windows.yaml) [![Ubuntu](https://github.com/SpatialPlanning/minpatch/actions/workflows/Ubuntu.yaml/badge.svg)](https://github.com/SpatialPlanning/minpatch/actions/workflows/Ubuntu.yaml) [![MacOS](https://github.com/SpatialPlanning/minpatch/actions/workflows/MacOS.yaml/badge.svg)](https://github.com/SpatialPlanning/minpatch/actions/workflows/MacOS.yaml) [![issues - zoomss](https://img.shields.io/github/issues/SpatialPlanning/minpatch)](https://github.com/SpatialPlanning/minpatch/issues) [![Codecov test coverage](https://codecov.io/gh/SpatialPlanning/minpatch/graph/badge.svg)](https://app.codecov.io/gh/SpatialPlanning/minpatch)
+
+<!-- badges: end -->
 
 **Note: This is still a work in progress and significant bugs may be present. Use with caution**
 
-More information on the original implemention of MinPatch for Marxan and QGIS is available here:  https://cluz-systematic-conservation-planning.github.io
+More information on the original implemention of MinPatch for Marxan and QGIS is available here: <https://cluz-systematic-conservation-planning.github.io>
 
 ## Overview
 
@@ -38,18 +35,18 @@ MinPatch is a post-processing tool for conservation planning solutions that ensu
 
 Conservation planning software like Marxan and prioritizr can produce solutions with many small, fragmented protected areas. While these solutions may be mathematically optimal, small protected areas are often:
 
-- Less ecologically viable
-- More expensive to manage
-- More vulnerable to edge effects
-- Less resilient to disturbances
+-   Less ecologically viable
+-   More expensive to manage
+-   More vulnerable to edge effects
+-   Less resilient to disturbances
 
 ### The Solution
 
 MinPatch addresses this by post-processing conservation solutions through three stages:
 
-1. **Remove Small Patches**: Eliminate protected areas smaller than a minimum size threshold
-2. **Add New Patches**: Add new areas to meet conservation targets using the BestPatch algorithm
-3. **Simulated Whittling**: Remove unnecessary planning units while maintaining constraints
+1.  **Remove Small Patches**: Eliminate protected areas smaller than a minimum size threshold
+2.  **Add New Patches**: Add new areas to meet conservation targets using the BestPatch algorithm
+3.  **Simulated Whittling**: Remove unnecessary planning units while maintaining constraints
 
 ## Installation
 
@@ -58,15 +55,14 @@ MinPatch addresses this by post-processing conservation solutions through three 
 pak::pak("SpatialPlanning/minpatch")
 ```
 
-
 ## Key Features
 
-- **Full MinPatch Algorithm**: Complete implementation of all three stages
-- **prioritizr Integration**: Seamless workflow with prioritizr solutions
-- **Locked Constraints Support**: Automatically respects locked-in and locked-out constraints from prioritizr
-- **Flexible Parameters**: Control minimum patch sizes, patch radius, and boundary penalties
-- **Comprehensive Reporting**: Detailed statistics and comparisons
-- **Visualization Support**: Plot results with ggplot2 (optional)
+-   **Full MinPatch Algorithm**: Complete implementation of all three stages
+-   **prioritizr Integration**: Seamless workflow with prioritizr solutions
+-   **Locked Constraints Support**: Automatically respects locked-in and locked-out constraints from prioritizr
+-   **Flexible Parameters**: Control minimum patch sizes, patch radius, and boundary penalties
+-   **Comprehensive Reporting**: Detailed statistics and comparisons
+-   **Visualization Support**: Plot results with ggplot2 (optional)
 
 ## Algorithm Details
 
@@ -74,9 +70,9 @@ pak::pak("SpatialPlanning/minpatch")
 
 MinPatch automatically respects locked-in and locked-out constraints from prioritizr problems:
 
-- **Locked-in constraints** (from `add_locked_in_constraints()`): Planning units that are locked-in will never be removed, regardless of patch size or during the whittling stage. These units are treated as "conserved" areas that must be retained in the final solution.
+-   **Locked-in constraints** (from `add_locked_in_constraints()`): Planning units that are locked-in will never be removed, regardless of patch size or during the whittling stage. These units are treated as "conserved" areas that must be retained in the final solution.
 
-- **Locked-out constraints** (from `add_locked_out_constraints()`): Planning units that are locked-out will never be selected, even when adding new patches to meet conservation targets. These units are completely excluded from consideration.
+-   **Locked-out constraints** (from `add_locked_out_constraints()`): Planning units that are locked-out will never be selected, even when adding new patches to meet conservation targets. These units are completely excluded from consideration.
 
 If locked-in units form patches smaller than `min_patch_size`, a warning will be issued, but these units will still be preserved in the solution.
 
@@ -88,14 +84,14 @@ Identifies connected components (patches) in the solution and removes those smal
 
 Uses the BestPatch scoring system to add new patches:
 
-1. Calculate current conservation levels for each feature
-2. Identify features with unmet targets
-3. Score potential patches based on their contribution to targets relative to cost
-4. Add the highest-scoring patch and repeat
+1.  Calculate current conservation levels for each feature
+2.  Identify features with unmet targets
+3.  Score potential patches based on their contribution to targets relative to cost
+4.  Add the highest-scoring patch and repeat
 
 The BestPatch score is calculated as:
 
-```
+```         
 Score = Σ(feature_contribution / target_gap) / patch_cost
 ```
 
@@ -103,19 +99,33 @@ Score = Σ(feature_contribution / target_gap) / patch_cost
 
 Removes unnecessary planning units through an iterative process:
 
-1. Identify edge units (on the boundary of selected areas)
-2. Calculate whittling scores based on feature importance
-3. Remove units that don't violate constraints:
-   - Must not cause targets to be unmet
-   - Must not make patches too small
-   - Must not increase total cost (if boundary penalty > 0)
-   - Must not split patches into non-viable pieces
+1.  Identify edge units (on the boundary of selected areas)
+2.  Calculate whittling scores based on feature importance
+3.  Remove units that don't violate constraints:
+    -   Must not cause targets to be unmet
+    -   Must not make patches too small
+    -   Must not increase total cost (if boundary penalty \> 0)
+    -   Must not split patches into non-viable pieces
+
+### User inputs (parameters that shape patch structure)
+
+MinPatch uses a small set of user-defined parameters that determine how patch structure is modified to reduce fragmentation. Together, these settings control minimum patch size, how candidate patches are constructed, and how strongly irregular boundaries are penalised.
+
+-   **`min_patch_size`**: The minimum allowable patch size. Patches smaller than this threshold are removed in Stage 1 (except where locked-in units apply), and removals in Stage 3 are blocked if they would cause any patch (or split fragment) to drop below this size.
+
+-   **`patch_radius`**: Controls how candidate patches are constructed in Stage 2 (BestPatch). Larger radii generally favour adding more compact patches (fewer isolated units), but can also increase the total area added.
+
+-   **`boundary_penalty`** *(optional)*: Controls how strongly MinPatch discourages irregular patch edges during Stage 3 (whittling). Conceptually, `boundary_penalty` converts patch perimeter (boundary length) into the same “currency” as planning-unit cost, so edge length can be traded off against area/opportunity cost. When `boundary_penalty > 0`, a candidate edge unit is only removed if doing so does not increase the boundary-penalised objective:
+
+    $$ \Delta \text{Objective} = (\text{boundary_penalty} \times \Delta \text{perimeter}) - \text{unit_cost} $$
+
+    If $\Delta \text{Objective} > 0$, the removal is blocked because the increase in boundary penalty outweighs the cost saved by removing the unit (i.e., it would make the patch edge more “expensive”). Setting `boundary_penalty = 0` turns off this check.
 
 ## Citation
 
 If you use this package, please cite both the original paper and this implementation:
 
-```
+```         
 Smith, R.J., Di Minin, E., Linke, S., Segan, D.B., Possingham, H.P. (2010). 
 An approach for ensuring minimum protected area size in systematic conservation planning. 
 Biological Conservation, 143(10), 2525-2531.
@@ -126,7 +136,7 @@ Everett J.D., Richardson A.J., Smith R.J. (2025). _minpatch: Post-Processing for
 
 ## License
 
-GPL (>= 3)
+GPL (\>= 3)
 
 ## References
 
@@ -134,6 +144,6 @@ Smith, R.J., Di Minin, E., Linke, S., Segan, D.B., Possingham, H.P. (2010). An a
 
 ## Getting Help
 
-- Check the package vignette: `vignette("minpatch")`
-- View function documentation: `?run_minpatch`
-- Report bugs: [GitHub Issues](https://github.com/SpatialPlanning/minpatch/issues)
+-   Check the package vignette: `vignette("minpatch")`
+-   View function documentation: `?run_minpatch`
+-   Report bugs: [GitHub Issues](https://github.com/SpatialPlanning/minpatch/issues)

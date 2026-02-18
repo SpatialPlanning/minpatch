@@ -19,7 +19,9 @@ run_minpatch(
   add_patches = TRUE,
   whittle_patches = TRUE,
   solution_column = "solution_1",
-  verbose = TRUE
+  verbose = TRUE,
+  debug_boundary = FALSE,
+  debug_boundary_every = 50
 )
 ```
 
@@ -66,6 +68,14 @@ run_minpatch(
 
   Logical, whether to print progress (default = TRUE)
 
+- debug_boundary:
+
+  Logical, whether to print boundary cost debug info (default = FALSE)
+
+- debug_boundary_every:
+
+  Integer, print debug info every N iterations (default = 50)
+
 ## Value
 
 MinPatch result object with enhanced reporting using prioritizr
@@ -80,6 +90,23 @@ The MinPatch algorithm consists of three stages:
 2.  Add new patches: Adds patches to meet conservation targets
 
 3.  Whittle patches: Removes unnecessary planning units
+
+\*\*Locked Constraints\*\*: MinPatch automatically respects locked-in
+and locked-out constraints from prioritizr problems (added via
+[`add_locked_in_constraints()`](https://prioritizr.net/reference/add_locked_in_constraints.html)
+and
+[`add_locked_out_constraints()`](https://prioritizr.net/reference/add_locked_out_constraints.html)):
+
+- \*\*Locked-in units\*\*: Will never be removed, regardless of patch
+  size or whittling. They are treated as "conserved" areas that must be
+  retained.
+
+- \*\*Locked-out units\*\*: Will never be selected, even when adding new
+  patches to meet conservation targets. They are completely excluded
+  from consideration.
+
+If locked-in units form patches smaller than `min_patch_size`, a warning
+will be issued, but these units will still be preserved.
 
 \*\*Important\*\*: If you set `remove_small_patches = TRUE` but
 `add_patches = FALSE`, the algorithm may remove patches without
@@ -133,45 +160,45 @@ result <- run_minpatch(
 #>   Initial unmet targets: 5 
 #>   Unmet feature IDs: 1, 2, 3, 4, 5 
 #>   Iteration 1 - Unmet targets: 5 
-#>     Found 85 potential patches with scores
-#>     Best score: 0.002500108 for unit 90 
-#>     Added patch centered on unit 90 
-#>   Iteration 2 - Unmet targets: 4 
-#>     Found 76 potential patches with scores
-#>     Best score: 0.002060928 for unit 78 
+#>     Found 90 potential patches with scores
+#>     Best score: 0.001699533 for unit 78 
 #>     Added patch centered on unit 78 
+#>   Iteration 2 - Unmet targets: 5 
+#>     Found 76 potential patches with scores
+#>     Best score: 0.001651032 for unit 66 
+#>     Added patch centered on unit 66 
 #>   All conservation targets are now met!
 #> Stage 3: Removing unnecessary planning units...
-#>     Edge units found: 21 
+#>     Edge units found: 8 
 #>     Keystone units: 0 
 #>     New keystone units: 0 
-#>     Scoreable units: 21 
-#>     Unit 90 cannot be removed - adding to keystone set
-#>     Edge units found: 20 
+#>     Scoreable units: 8 
+#>     Unit 88 cannot be removed - adding to keystone set
+#>     Edge units found: 7 
 #>     Keystone units: 1 
 #>     New keystone units: 0 
-#>     Scoreable units: 20 
-#>     Unit 81 cannot be removed - adding to keystone set
-#>     Edge units found: 19 
-#>     Keystone units: 2 
+#>     Scoreable units: 7 
+#>     Removed unit 64 at iteration 2 
+#>     Edge units found: 7 
+#>     Keystone units: 1 
 #>     New keystone units: 0 
-#>     Scoreable units: 19 
-#>     Unit 80 cannot be removed - adding to keystone set
-#>     Edge units found: 18 
-#>     Keystone units: 3 
+#>     Scoreable units: 7 
+#>     Removed unit 65 at iteration 3 
+#>     Edge units found: 9 
+#>     Keystone units: 1 
 #>     New keystone units: 0 
-#>     Scoreable units: 18 
-#>     Unit 89 cannot be removed - adding to keystone set
-#>     Edge units found: 17 
-#>     Keystone units: 4 
+#>     Scoreable units: 9 
+#>     Removed unit 66 at iteration 4 
+#>     Edge units found: 8 
+#>     Keystone units: 1 
 #>     New keystone units: 0 
-#>     Scoreable units: 17 
-#>     Unit 73 cannot be removed - adding to keystone set
-#>     Unit 79 cannot be removed - adding to keystone set
-#>     Unit 72 cannot be removed - adding to keystone set
-#>     Unit 88 cannot be removed - adding to keystone set
-#>     Unit 87 cannot be removed - adding to keystone set
-#>     Unit 64 cannot be removed - adding to keystone set
+#>     Scoreable units: 8 
+#>     Removed unit 57 at iteration 5 
+#>     Unit 56 cannot be removed - adding to keystone set
+#>     Removed unit 47 at iteration 7 
+#>     Unit 55 cannot be removed - adding to keystone set
+#>     Unit 63 cannot be removed - adding to keystone set
+#>     Unit 46 cannot be removed - adding to keystone set
 #>   No more edge units to consider - terminating
 #> Calculating final statistics...
 #> MinPatch processing complete!
@@ -195,11 +222,9 @@ result2 <- run_minpatch(
 #>   Unmet feature IDs: 1, 2, 3, 4, 5 
 #> Stage 2: Skipping addition of new patches...
 #> Stage 3: Removing unnecessary planning units...
-#>     Edge units found: 5 
+#>     Edge units found: 0 
 #>     Keystone units: 0 
-#>     New keystone units: 5 
-#>     Scoreable units: 0 
-#>   No units can be removed - all are keystone - terminating
+#>   No more edge units to consider - terminating
 #> Calculating final statistics...
 #> MinPatch processing complete!
 
@@ -207,21 +232,21 @@ print_minpatch_summary(result)
 #> === MinPatch Processing Summary ===
 #> 
 #> Patch Statistics:
-#>   Initial patches: 7 (valid: 1)
-#>   Final patches: 4 (valid: 2)
-#>   Area change: 0.05 (31.2%)
+#>   Initial patches: 9 (valid: 0)
+#>   Final patches: 6 (valid: 3)
+#>   Area change: 0.04 (25.0%)
 #> 
 #> Cost Breakdown:
-#>   Planning unit cost: 4137.80
+#>   Planning unit cost: 3964.91
 #>   Boundary cost: 0.00
-#>   Total cost: 4137.80
-#>   Selected units: 21
+#>   Total cost: 3964.91
+#>   Selected units: 20
 #> 
 #> Feature Representation:
 #>   Total features: 5
 #>   Targets met: 5
 #>   Targets unmet: 0
-#>   Mean proportion: 0.236
+#>   Mean proportion: 0.227
 #>   Total shortfall: 0.00
 #> 
 #> 

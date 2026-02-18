@@ -35,27 +35,35 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.3
 Depends: 
-    R (>= 4.0.0)
+    R (>= 4.1.0)
 Imports:
-    sf (>= 1.0.0),
+    igraph,
+    magrittr,
+    Matrix,
     prioritizr (>= 7.0.0),
     rlang,
+    sf (>= 1.0.0),
     stats,
-    magrittr,
-    igraph,
-    Matrix
+    tidyselect
 Suggests:
     dplyr,
     ggplot2,
-    prioritizrdata,
-    terra,
-    testthat (>= 3.0.0),
+    kableExtra,
     knitr,
+    lwgeom,
+    oceandatr,
+    parallelly,
     patchwork,
+    prioritizrdata,
+    purrr,
     rmarkdown,
+    shadowtext,
     stars,
     stringr,
-    parallelly
+    terra,
+    testthat (>= 3.0.0),
+    tibble,
+    tmap
 VignetteBuilder: knitr
 URL: https://github.com/SpatialPlanning/minpatch
 BugReports: https://github.com/SpatialPlanning/minpatch/issues

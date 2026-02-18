@@ -1,0 +1,339 @@
+# Boundary penalty in MinPatch
+
+## Overview
+
+`boundary_penalty` is an optional parameter that discourages irregular
+(high-perimeter) patch shapes during **Stage 3 (Simulated Whittling)**.
+The key idea is that `boundary_penalty` converts **boundary length
+(perimeter)** into the same “currency” as planning-unit cost, so
+MinPatch can trade off saving cost against creating more edge.
+
+In practice:
+
+- higher `boundary_penalty` → stronger preference for smooth, compact
+  patches (less edge)
+
+- lower `boundary_penalty` → more willingness to accept jagged edges if
+  they reduce planning-unit cos
+
+## Where it is used in MinPatch
+
+MinPatch does **not** re-run the optimiser in Stage 3. Instead, it tests
+removing one **edge** planning unit at a time and accepts the removal
+only if:
+
+1.  Targets remain met
+
+2.  Minimum patch-size requirements remain met (including after splits)
+
+3.  The boundary-penalised objective does **not** increase (only if
+    `boundary_penalty > 0`)
+
+This means Stage 3 uses a **local “delta” test** (change in objective)
+rather than solving a new optimisation problem.
+
+## Decision rule (the thing to remember)
+
+Conceptually, Stage 3 evaluates an objective of the form:
+
+``` math
+\text{Objective} = \sum(\text{PU cost}) + \text{boundary_penalty} \times (\text{total perimeter})
+```
+
+When testing removal of a single planning unit, the code computes a
+local change:
+
+``` math
+ \Delta \text{Objective} = (\text{boundary_penalty} \times \Delta \text{perimeter}) - \text{unit_cost} 
+```
+
+\- If $`\Delta \text{Objective} > 0`$ → objective increased → **block**
+removal\
+- If $`\Delta \text{Objective} \le 0`$ → objective stayed the same or
+decreased → **allow** removal (assuming constraints pass)
+
+### Why this looks like “total_cost_change” in the code
+
+In the code, you’ll often see a value like:
+
+`total_cost_change = boundary_cost_change - unit_cost`
+
+That is exactly $`\Delta \text{Objective}`$ written in code form:
+
+- `boundary_cost_change` corresponds to `boundary_penalty × Δperimeter`
+
+- `unit_cost` is the cost you save by removing the unit
+
+So: `total_cost_change` **is the change in the objective**.
+
+## What does “same currency as cost” mean?
+
+The objective combines two different things:
+
+1.  **Planning-unit cost** (whatever you choose: dollars, area,
+    opportunity cost, etc.)
+
+2.  **Perimeter** (boundary length: km, m, or “edge count” depending on
+    your data)
+
+To add these together, `boundary_penalty` acts like a **conversion
+rate**: it converts boundary length into “cost units”.
+
+``` math
+\text{Objective} = \sum(\text{PU cost}) + \text{boundary_penalty} \times (\text{total perimeter})
+```
+
+### If your PU cost is in dollars
+
+- PU cost might be: $`\$ / \text{PU}`$ or $`\$ / \text{km}^2`$
+
+- perimeter is in km
+
+- so `boundary_penalty` behaves like **dollars per km of edge**:
+  $`\$ / \text{km}`$
+
+**Interpretation:**\
+`boundary_penalty` is the *price you are willing to pay* to avoid 1 km
+of extra boundary.
+
+Example: if `boundary_penalty = 2000`, then adding 1 km of perimeter
+“costs” \$2000 in the objective.
+
+### If your PU cost is area
+
+Sometimes “cost” is literally area (e.g., each PU cost = area in km²).
+Then:
+
+- PU cost is in km²
+
+- perimeter is in km
+
+- `boundary_penalty` behaves like **km² per km**
+
+You can think of this as “equivalent area cost per km of edge”.
+
+**Interpretation:**\
+`boundary_penalty` tells you how much extra *area cost* you are willing
+to accept to avoid 1 km of extra boundary.
+
+So if `boundary_penalty = 0.5`, then an extra 1 km of edge is treated
+like adding 0.5 km² of cost.
+
+### The simplest way to remember it
+
+- **unit_cost** = the savings you get from removing a PU
+
+- **boundary_penalty × Δperimeter** = the “edge bill” you pay (or save)
+  when boundary changes
+
+And Stage 3 only removes a PU when:
+
+``` math
+ \Delta \text{Objective} = (\text{boundary_penalty} \times \Delta \text{perimeter}) - \text{unit_cost} \le 0 
+```
+
+So you can read it as:
+
+> Only remove the PU if the edge bill doesn’t outweigh the cost saved.
+
+## Worked examples (with explicit total perimeter)
+
+Assumptions for both examples:
+
+- 4-neighbour adjacency (up/down/left/right)
+- each shared cell edge has length **1 km**
+- `total perimeter` is the perimeter of the **whole selected patch** (in
+  km)
+
+A very useful identity (grid perimeter change):
+
+If a removed PU has $`k`$**selected neighbours** (0–4), then removing it
+changes perimeter by:
+
+``` math
+\Delta \text{perimeter} = -4 + 2k
+```
+
+So perimeter **increases** only when $`k \ge 3`$ (i.e., the PU was
+“shielding” three selected neighbours).
+
+------------------------------------------------------------------------
+
+### Example A — removing an edge PU reduces total perimeter (allowed)
+
+Here the patch has two selected PUs in a line. `U` is an **edge unit**
+because it touches `.` above, below, and right.
+
+**Before removing U**
+
+``` text
+| . | . |
+| S | U |
+| . | . |
+```
+
+Compute the **total perimeter**:
+
+- Two adjacent cells have perimeter =6 km\
+  (Each cell has 4 edges → 8 total, minus 2 for the shared edge → 6)
+
+So:
+
+- $`P{\text{before}}`$= 6 km
+
+**After removing U**
+
+``` text
+| . | . |
+| S | . |
+| . | . |
+```
+
+- Single cell has perimeter = 4 km
+
+So:
+
+- $`P{\text{after}}`$ = 4 km
+
+- $`\Delta \text{perimeter}`$ = 4 - 6 =−2 km
+
+Now apply the Stage 3 boundary check:
+
+Assume:
+
+- `boundary_penalty = 10`
+
+- `unit_cost = 5`
+
+``` math
+\Delta \text{Objective} = (\text{boundary_penalty} \times \Delta \text{perimeter}) - \text{unit_cost}\ \text{= 10}\ \times \ (-2) - 5 = -2  
+```
+
+Decision:
+
+- $`\Delta \text{Objective} \le 0`$ → objective decreased → **allow
+  removal** (if other constraints pass).
+
+------------------------------------------------------------------------
+
+### Example B — removing an edge PU increases total perimeter (blocked), but patch stays connected
+
+Here we use a 3×2 rectangle. Let `U` be the **middle PU on the bottom
+row**.\
+`U` is an **edge unit** because it touches `.` below (outside the
+rectangle).
+
+**Before removing U**
+
+``` text
+| S | S | S |
+| S | U | S |
+```
+
+Compute the **total perimeter**:
+
+A 3×2 rectangle has perimeter:
+
+- $`P{\text{before}}`$= 2(3+2)=10 km
+
+**After removing U**
+
+``` text
+| S | S | S |
+| S | . | S |
+```
+
+Important: the patch is **still connected** (you can still walk between
+all remaining `S` cells via shared borders on the top row).
+
+Now compute the **total perimeter after**.
+
+We can use the neighbour rule:
+
+- `U` had $`k=3`$ selected neighbours (left, right, and above are
+  selected; below is not).
+
+- Therefore:
+
+``` math
+\Delta \text{perimeter} = -4 + 2k = -4 + 2(3) = +2
+```
+
+So:
+
+- $`P_{\text{after}} = 10 + 2 = 12`$ km\
+- $`\Delta \text{perimeter} = +2`$ km
+
+Now apply the boundary check:
+
+Assume:
+
+- `boundary_penalty = 10`
+
+- `unit_cost = 5`
+
+``` math
+\Delta \text{Objective} = 10 \times (+2) - 5 = +15
+```
+
+Decision:
+
+- $`\Delta \text{Objective} > 0`$ → objective increased → **block
+  removal**
+
+**Interpretation:**\
+Removing `U` saves cost, but it *exposes new edge* on its three
+neighbours, increasing total perimeter enough that the
+boundary-penalised objective gets worse.
+
+## Practical guidance for choosing `boundary_penalty`
+
+There isn’t one universal “correct” value because it depends on the
+scale and units of your costs and boundary lengths. A practical
+workflow:
+
+1.  **Start with `boundary_penalty = 0`**\
+    This turns off boundary blocking. Whittling then only uses targets +
+    patch-size + split viability rules.
+
+2.  **Increase gradually** and observe how solutions change\
+    As you increase it, removals that create extra edge become more
+    likely to be blocked, producing smoother patches.
+
+3.  **Do a small sensitivity check**\
+    Try a few values spanning a small range (e.g., 0, low, medium, high)
+    and compare: \`\`\`
+
+- number of patches
+
+- mean/median patch size
+
+- total perimeter
+
+- total planning-unit cost retained/removed \`\`\`
+
+If `boundary_penalty` is too high, Stage 3 can become conservative: it
+may keep “bridges” or edge units because removing them would raise the
+boundary term too much.
+
+## FAQ
+
+**Does Stage 3 re-run the optimiser (prioritizr)?**\
+No. Stage 3 does local, one-unit-at-a-time removal tests. It never
+resolves a new optimisation problem.
+
+**Are we comparing costs to the Stage 2 solution?**\
+Not directly. Stage 3 compares the objective **before vs after removing
+one candidate unit**. It uses $`Δ objective`$ (local change), not a full
+re-optimisation.
+
+**Is it “per patch” or “whole solution”?**\
+Conceptually the objective is for the whole solution (sum of PU costs +
+boundary penalty term). In code, the change is computed locally using
+the candidate’s neighbour relationships, because only local boundary
+edges change when you remove one unit.
+
+**What if my costs are not area?**\
+That’s fine—`boundary_penalty` still converts perimeter into the same
+units as your chosen cost layer. The interpretation becomes: “how much
+cost am I willing to pay to avoid 1 km of extra edge?”

@@ -17,8 +17,7 @@ comment = "#>"
 # Load packages
 
 ```{r setup, warning=FALSE, message=FALSE}
-#library(minpatch)
-devtools::load_all()
+library(minpatch)
 library(prioritizr)
 library(prioritizrdata)
 library(terra)
@@ -231,7 +230,21 @@ result5 <- run_minpatch(
 
 ```
 
-## Visualise the minpatch solution
+## Visualise the final solution
+
+```{r}
+
+patchwork::wrap_plots(plot_prioritizr(result2$solution, col = "minpatch", title = "Boundary Penalty: 0"),
+                      plot_prioritizr(result4$solution, col = "minpatch", title = "Boundary Penalty: 1"),
+                      plot_prioritizr(result5$solution, col = "minpatch", title = "Boundary Penalty: 10"),
+                      guides = "collect",
+                      ncol = 3) &
+  theme(legend.position = "bottom")
+
+
+```
+
+## Visualise the differences in the minpatch solution  
 
 ```{r}
 patchwork::wrap_plots(plot_minpatch(result2, title = "Boundary Penalty: 0"),
@@ -240,18 +253,6 @@ patchwork::wrap_plots(plot_minpatch(result2, title = "Boundary Penalty: 0"),
                       guides = "collect",
                       ncol = 3) &
   theme(legend.position = "bottom")
-
-
-boundary_penalties <- c(0, 1, 10)
-boundary_results   <- list(result3, result4, result5)
-
-plot_boundary_penalty_grid(
-  results = boundary_results,
-  penalties = boundary_penalties,
-  get_solution_fun = get_solution_with_solution1,
-  ncol = 3,
-  penalty_label_fun = function(x) format(x, scientific = FALSE, trim = TRUE)
-)
 
 
 ```

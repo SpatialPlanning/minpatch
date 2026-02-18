@@ -322,25 +322,44 @@ plot_minpatch <- function(minpatch_result, title = "MinPatch Results") {
 #' plot_prioritizr(s, col = "solution_1", title = "My Conservation Plan")
 plot_prioritizr <- function(s, col = "solution_1", title = "prioritizr Solution") {
 
-ggplot2::ggplot(data = s) +
-  ggplot2::geom_sf(ggplot2::aes(fill = as.logical(.data[[col]])), color = "white", size = 0.2) +
-  ggplot2::scale_fill_manual(
-    values = c("TRUE" = "blue",
-               "FALSE" = "grey80"),
-    name = "PU's Selected",
-    drop = FALSE) +
-  ggplot2::theme_void() +
-  ggplot2::labs(title = title) +
-  ggplot2::theme(
-    plot.title = ggplot2::element_text(hjust = 0.5),
-    legend.position = "bottom"
-  )
+  ggplot2::ggplot(data = s) +
+    ggplot2::geom_sf(ggplot2::aes(fill = as.logical(.data[[col]])), color = "white", size = 0.2) +
+    ggplot2::scale_fill_manual(
+      values = c("TRUE" = "blue",
+                 "FALSE" = "grey80"),
+      name = "PU's Selected",
+      drop = FALSE) +
+    ggplot2::theme_void() +
+    ggplot2::labs(title = title) +
+    ggplot2::theme(
+      plot.title = ggplot2::element_text(hjust = 0.5),
+      legend.position = "bottom"
+    )
 }
 
 
-#' Plot prioritizr-style selection maps across boundary penalties (vignette helper)
-#' - One shared legend
-#' - Clean titles (no "MinPatch")
+#' Plot solution grid across multiple results
+#'
+#' Creates a grid of prioritizr-style selection maps with a shared legend.
+#' Useful for comparing solutions across different boundary penalties or
+#' MinPatch multipliers.
+#'
+#' @param results List of MinPatch result objects to plot
+#' @param get_solution_fun Function to extract solution sf object from each result
+#' @param ncol Number of columns in the grid (default = 3)
+#' @param legend_position Position of shared legend (default = "bottom")
+#' @param title_size Font size for plot titles (default = 13)
+#' @param titles Character vector of titles (one per result). Takes priority over other title options.
+#' @param title_fun Function(i, results) returning title string. Used if titles is NULL.
+#' @param subtitle_values Numeric vector of values (e.g., penalties or multipliers) for titles
+#' @param title_prefix Prefix string for subtitle_values titles (e.g., "Boundary penalty = ")
+#' @param value_label_fun Function to format subtitle_values (default formats scientifically)
+#' @param include_baseline Logical, whether to include a baseline plot (default = FALSE)
+#' @param baseline_solution sf object for baseline solution (required if include_baseline = TRUE)
+#' @param baseline_title Title for baseline plot
+#'
+#' @return A patchwork object combining all plots
+#' @export
 plot_solution_grid <- function(
     results,
     get_solution_fun,
@@ -349,7 +368,7 @@ plot_solution_grid <- function(
     title_size = 13,
 
     # --- Title options (pick ONE) ---
-    titles = NULL,            # e.g., c("MinPatch: 5× median PU area", ...)
+    titles = NULL,            # e.g., c("MinPatch: 5x median PU area", ...)
     title_fun = NULL,         # function(i, results) -> "..."
     subtitle_values = NULL,   # e.g., penalties or multipliers
     title_prefix = "",        # e.g., "Boundary penalty = " or "MinPatch: "
@@ -695,16 +714,16 @@ make_minpatch_summary_table <- function(
     res
   })
 
-  # --- min patch size lookup (km²) from median PU area ---
-  median_pu_area_m2  <- median(sf::st_area(region_sf_proj))
+  # --- min patch size lookup (km^2) from median PU area ---
+  median_pu_area_m2  <- stats::median(sf::st_area(region_sf_proj))
   min_patch_lookup <- tibble::tibble(
-    multiplier    = multipliers,
+    multiplier = multipliers,
     min_patch_km2 = as.numeric(multipliers * median_pu_area_m2) / 1e6
   )
 
   # --- runtime lookup (seconds) ---
   runtime_lookup <- tibble::tibble(
-    scenario    = c("Baseline", paste0("MinPatch ×", multipliers)),
+    scenario    = c("Baseline", paste0("MinPatch \u00d7", multipliers)),
     runtime_sec = c(as.numeric(baseline_elapsed),
                     if (is.null(minpatch_elapsed)) rep(NA_real_, length(multipliers)) else as.numeric(minpatch_elapsed))
   )
@@ -735,7 +754,7 @@ make_minpatch_summary_table <- function(
   minpatch_rows <- purrr::map2_dfr(minpatch_results_proj, multipliers, function(res, mult) {
     overall <- compare_solutions_fun(res)$overall
     tibble::tibble(
-      scenario                 = paste0("MinPatch ×", mult),
+      scenario                 = paste0("MinPatch \u00d7", mult),
       multiplier               = mult,
       min_patch_size_km2       = min_patch_lookup$min_patch_km2[min_patch_lookup$multiplier == mult],
       selected_pu              = get_metric(overall, "MinPatch", "Selected Planning Units"),
@@ -754,26 +773,29 @@ make_minpatch_summary_table <- function(
   solution_summary <- dplyr::bind_rows(baseline_row, minpatch_rows) %>%
     dplyr::left_join(runtime_lookup, by = "scenario") %>%
     dplyr::mutate(
-      multiplier = dplyr::if_else(is.na(multiplier), "-", as.character(multiplier)),
-      dplyr::across(c(selected_pu, n_patches, valid_patches_ge_min), ~ as.integer(round(.x))),
-      dplyr::across(c(min_patch_size_km2, total_area_km2, median_patch_km2, total_perimeter_km), ~ round(.x, 2)),
-      dplyr::across(c(total_pu_cost, boundary_cost, overall_cost), ~ round(.x, 2)),
-      runtime_sec = round(runtime_sec, 1)
+      multiplier = dplyr::if_else(is.na(.data$multiplier), "-", as.character(.data$multiplier)),
+      dplyr::across(tidyselect::all_of(c("selected_pu", "n_patches", "valid_patches_ge_min")),
+                    ~ as.integer(round(.x))),
+      dplyr::across(tidyselect::all_of(c("min_patch_size_km2", "total_area_km2", "median_patch_km2",
+                      "total_perimeter_km","total_pu_cost", "boundary_cost",
+                      "overall_cost")),
+                    ~ round(.x, 2)),
+      runtime_sec = round(.data$runtime_sec, 1)
     ) %>%
     dplyr::select(
-      scenario,
-      `Multiplier`                  = multiplier,
-      `Minimum patch size (km²)`    = min_patch_size_km2,
-      `Selected PUs`                = selected_pu,
-      `Total area (km²)`            = total_area_km2,
-      `Total perimeter (km)`        = total_perimeter_km,
-      `# patches`                   = n_patches,
-      `Valid patches (>= min size)` = valid_patches_ge_min,
-      `Median patch size (km²)`     = median_patch_km2,
-      `Total PU cost`               = total_pu_cost,
-      `Boundary cost`               = boundary_cost,
-      `Overall cost`                = overall_cost,
-      `Runtime (s)`                 = runtime_sec
+      .data$scenario,
+      `Multiplier`                  = .data$multiplier,
+      `Minimum patch size (km^2)`   = .data$min_patch_size_km2,
+      `Selected PUs`                = .data$selected_pu,
+      `Total area (km^2)`           = .data$total_area_km2,
+      `Total perimeter (km)`        = .data$total_perimeter_km,
+      `# patches`                   = .data$n_patches,
+      `Valid patches (>= min size)` = .data$valid_patches_ge_min,
+      `Median patch size (km^2)`    = .data$median_patch_km2,
+      `Total PU cost`               = .data$total_pu_cost,
+      `Boundary cost`               = .data$boundary_cost,
+      `Overall cost`                = .data$overall_cost,
+      `Runtime (s)`                 = .data$runtime_sec
     )
 
   out <- list(data = solution_summary, kable = NULL)
@@ -795,7 +817,7 @@ make_minpatch_summary_table <- function(
 #' Plot rook-adjacency patches for a MinPatch solution and flag valid/invalid patches
 #'
 #' A patch is a rook-connected cluster of selected planning units (edge-sharing).
-#' A patch is "valid" if its area >= (multiplier × median PU area), with a small
+#' A patch is "valid" if its area >= (multiplier x median PU area), with a small
 #' numeric tolerance to avoid floating-point edge cases.
 #'
 #' @param multiplier Numeric. The MinPatch multiplier to plot (must exist in `multipliers`).
@@ -809,6 +831,7 @@ make_minpatch_summary_table <- function(
 #' @param debug Logical. If TRUE, prints patch table (including diff vs threshold).
 #'
 #' @return ggplot object, or tibble, or sf patch polygons (see `return`).
+#' @export
 plot_patch_validity <- function(
     multiplier,
     multipliers,
@@ -853,7 +876,7 @@ plot_patch_validity <- function(
       selected = (.data$minpatch == 1)
     )
 
-  # ---- threshold area (m²): multiplier × median PU area (numeric) ----
+  # ---- threshold area (m^2): multiplier x median PU area (numeric) ----
   median_pu_area_m2 <- stats::median(as.numeric(sf::st_area(pu_sf)), na.rm = TRUE)
   min_patch_area_m2 <- as.numeric(multiplier) * as.numeric(median_pu_area_m2)
 
@@ -900,7 +923,7 @@ plot_patch_validity <- function(
     ) %>%
     sf::st_as_sf() %>%
     dplyr::mutate(
-      patch_area = as.numeric(sf::st_area(.data$geometry)),         # m²
+      patch_area = as.numeric(sf::st_area(.data$geometry)),         # m^2
       is_valid   = (.data$patch_area + eps) >= min_patch_area_m2,
       label_pt   = sf::st_point_on_surface(.data$geometry)
     )
@@ -926,7 +949,7 @@ plot_patch_validity <- function(
 
   if (return == "counts") {
     return(tibble::tibble(
-      scenario          = paste0("MinPatch ×", multiplier),
+      scenario          = paste0("MinPatch \u00d7", multiplier),
       new_n_patches     = as.integer(n_patches),
       new_valid_patches = as.integer(n_valid_patches),
       new_invalid_patches = as.integer(n_invalid_patches),
@@ -966,7 +989,7 @@ plot_patch_validity <- function(
     n_patches, " patches | ",
     n_valid_patches, " valid | ",
     n_invalid_patches, " invalid",
-    " (threshold = ", round(min_patch_area_m2 / 1e6, 3), " km²) | ",
+    " (threshold = ", round(min_patch_area_m2 / 1e6, 3), " km\u00b2) | ",
     "snap = ", isTRUE(do_snap),
     "\n",
     sep = ""
@@ -996,14 +1019,14 @@ plot_patch_validity <- function(
       )
     ) +
     ggplot2::labs(
-      title = paste0("MinPatch: ", multiplier, "× median PU area"),
+      title = paste0("MinPatch: ", multiplier, "\u00d7 median PU area"),
       subtitle = paste0(
         "Patches (rook adjacency): ",
         n_patches, " total | ",
         n_valid_patches, " valid | ",
         n_invalid_patches, " invalid",
-        " | valid if patch area ≥ ",
-        multiplier, "× median PU area",
+        " | valid if patch area \u2265 ",
+        multiplier, "\u00d7 median PU area",
         " | snap = ", isTRUE(do_snap)
       ),
       fill = NULL

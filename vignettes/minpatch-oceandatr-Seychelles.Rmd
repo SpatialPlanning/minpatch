@@ -67,11 +67,6 @@ solutions.
 
 ```{r load-packages, echo=TRUE, message=FALSE, warning=FALSE}
 
-# if (!require(remotes)) install.packages("remotes")
-# might need to increase timeout as it is a large package
-# options(timeout = 9999)
-# remotes::install_github("emlab-ucsb/oceandatr")
-#install.packages("kableExtra")
 library(oceandatr)
 library(terra)
 library(sf)
@@ -79,8 +74,7 @@ library(dplyr)
 library(ggplot2)
 library(patchwork)
 library(prioritizr)
-#library(minpatch)
-devtools::load_all()
+library(minpatch)
 library(purrr)
 library(tibble)
 library(kableExtra)
@@ -98,7 +92,6 @@ planning domain.
 
 ```{r planning-domain, echo=TRUE, message=FALSE, warning=FALSE}
 Seychelles_eez <- get_boundary(name = "Seychelles")
-# Note: needed to update the packageVersion of curl before this worked
 
 # plot to check we have Seychelles' EEZ
 plot(Seychelles_eez[1], 
@@ -215,8 +208,8 @@ library(tmap)
 library(terra)
 library(stringr)
 
-names(feature_set) <- names(feature_set) |>
-  gsub("_", " ", x = _) |>
+names(feature_set) <- names(feature_set) %>% 
+  gsub("_", " ", .) %>% 
   stringr::str_to_sentence()
 
 feature_bin <- feature_set > 0
@@ -430,17 +423,17 @@ We start by showing the selected planning units for the baseline and
 each MinPatch run.
 
 ```{r minpatch-2x2, echo=TRUE, fig.height=8, fig.width=10}
-plot_solution_grid(
-  results = minpatch_results,
-  get_solution_fun = get_solution_with_solution1,
-  subtitle_values = multipliers,
-  title_prefix = "MinPatch: ",
-  value_label_fun = function(x) paste0(x, "× median PU area"),
-  include_baseline = TRUE,
-  baseline_solution = s_base,
-  baseline_title = "Baseline (prioritizr)",
-  ncol = 2
-)
+# plot_solution_grid(
+#   results = minpatch_results,
+#   get_solution_fun = get_solution_with_solution1,
+#   subtitle_values = multipliers,
+#   title_prefix = "MinPatch: ",
+#   value_label_fun = function(x) paste0(x, "× median PU area"),
+#   include_baseline = TRUE,
+#   baseline_solution = s_base,
+#   baseline_title = "Baseline (prioritizr)",
+#   ncol = 2
+# )
 ```
 
 On the plot, we can see that the baseline solution is highly fragmented,
@@ -523,7 +516,7 @@ compact patch units.
 ```{r patch-labelled-maps, fig.height=7, fig.width=10, message=FALSE, warning=FALSE}
 
 for (m in c(5, 10, 20)) {
-  print(plot_patch_validity(
+  print(minpatch::plot_patch_validity(
     multiplier = m,
     multipliers = multipliers,
     minpatch_results = minpatch_results,
@@ -673,20 +666,13 @@ We then check the resulting spatial solutions, but only focusing on the
 selected planning units.
 
 ```{r boundary-plot, fig.width = 10, fig.height = 8}
-boundary_penalties <- c(bp3, bp4, bp5)
-boundary_results   <- list(result3, result4, result5)
 
-plot_solution_grid(
-  results = boundary_results,
-  get_solution_fun = get_solution_with_solution1,
-  subtitle_values = boundary_penalties,
-  title_prefix = "MinPatch: boundary penalty = ",
-  value_label_fun = function(x) format(x, scientific = TRUE, trim = TRUE),
-  include_baseline = TRUE,
-  baseline_solution = s_base,
-  ncol = 2,
-  penalty_label_fun = function(x) format(x, scientific = FALSE, trim = TRUE)
-)
+patchwork::wrap_plots(plot_prioritizr(result3$solution, col = "minpatch", title = paste0("Boundary Penalty: ", bp3)),
+                      plot_prioritizr(result4$solution, col = "minpatch", title = paste0("Boundary Penalty: ", bp4)),
+                      plot_prioritizr(result5$solution, col = "minpatch", title = paste0("Boundary Penalty: ", bp5)),
+                      guides = "collect",
+                      ncol = 3) &
+  theme(legend.position = "bottom")
 
 ```
 
@@ -861,15 +847,3 @@ for (i in seq_along(minpatch_results_bp)) {
 ```
 
 Similarly, the values across the individual summaries are the same.
-
-**Notes:**
-
--   The boundary penalty does not work within MinPatch, looking at the
-    all the metrics in the tables, as well as the resulting spatial
-    plots.
-
--   To raise an issue on the MinPatch repository that the boundary
-    penalty is not working.
-
--   To get involved in writing the package (create a branch and see if I
-    can fix the issue).

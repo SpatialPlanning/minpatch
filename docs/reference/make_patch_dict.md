@@ -1,6 +1,9 @@
 # Create patch dictionary from unit dictionary
 
-Identifies connected components (patches) in the current solution
+Identifies connected components (patches) in the current solution using
+igraph and sparse matrix operations. This implementation follows the
+wheretowork approach for efficient patch identification using matrix
+subsetting.
 
 ## Usage
 

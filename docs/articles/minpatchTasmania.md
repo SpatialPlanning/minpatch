@@ -149,41 +149,38 @@ result <- run_minpatch(
 #>   Iteration 10 - Unmet targets: 17 
 #>   All conservation targets are now met!
 #> Stage 3: Removing unnecessary planning units...
-#>     Edge units found: 427 
+#>     Edge units found: 154 
 #>     Keystone units: 0 
-#>     New keystone units: 15 
-#>     Scoreable units: 412 
-#>     Unit 66 cannot be removed - adding to keystone set
-#>     Edge units found: 411 
-#>     Keystone units: 16 
+#>     New keystone units: 9 
+#>     Scoreable units: 145 
+#>     Removed unit 438 at iteration 1 
+#>     Edge units found: 145 
+#>     Keystone units: 9 
 #>     New keystone units: 0 
-#>     Scoreable units: 411 
-#>     Unit 420 cannot be removed - adding to keystone set
-#>     Edge units found: 410 
-#>     Keystone units: 17 
+#>     Scoreable units: 145 
+#>     Removed unit 419 at iteration 2 
+#>     Edge units found: 146 
+#>     Keystone units: 9 
 #>     New keystone units: 0 
-#>     Scoreable units: 410 
-#>     Unit 246 cannot be removed - adding to keystone set
-#>     Edge units found: 409 
-#>     Keystone units: 18 
-#>     New keystone units: 0 
-#>     Scoreable units: 409 
-#>     Unit 419 cannot be removed - adding to keystone set
-#>     Edge units found: 408 
-#>     Keystone units: 19 
-#>     New keystone units: 0 
-#>     Scoreable units: 408 
-#>     Unit 438 cannot be removed - adding to keystone set
+#>     Scoreable units: 146 
 #>     Unit 439 cannot be removed - adding to keystone set
-#>     Unit 111 cannot be removed - adding to keystone set
-#>     Unit 537 cannot be removed - adding to keystone set
-#>     Unit 864 cannot be removed - adding to keystone set
-#>     Unit 926 cannot be removed - adding to keystone set
+#>     Edge units found: 145 
+#>     Keystone units: 10 
+#>     New keystone units: 0 
+#>     Scoreable units: 145 
+#>     Removed unit 111 at iteration 4 
+#>     Edge units found: 144 
+#>     Keystone units: 10 
+#>     New keystone units: 0 
+#>     Scoreable units: 144 
+#>     Removed unit 401 at iteration 5 
+#>     Removed unit 420 at iteration 6 
+#>     Removed unit 400 at iteration 7 
+#>     Removed unit 213 at iteration 8 
+#>     Removed unit 255 at iteration 9 
+#>     Removed unit 75 at iteration 10 
 #>   Whittling iteration 100 
-#>   Whittling iteration 200 
-#>   Whittling iteration 300 
-#>   Whittling iteration 400 
-#>   No more edge units to consider - terminating
+#>   No units can be removed - all are keystone - terminating
 #> Calculating final statistics...
 #> MinPatch processing complete!
 ```
@@ -206,20 +203,20 @@ print_minpatch_summary(result)
 #> 
 #> Patch Statistics:
 #>   Initial patches: 58 (valid: 11)
-#>   Final patches: 12 (valid: 11)
-#>   Area change: 4378267698.40 (21.8%)
+#>   Final patches: 15 (valid: 14)
+#>   Area change: -646956349.29 (-3.2%)
 #> 
 #> Cost Breakdown:
-#>   Planning unit cost: 68792497.20
+#>   Planning unit cost: 59188469.96
 #>   Boundary cost: 0.00
-#>   Total cost: 68792497.20
-#>   Selected units: 427
+#>   Total cost: 59188469.96
+#>   Selected units: 344
 #> 
 #> Feature Representation:
 #>   Total features: 33
 #>   Targets met: 33
 #>   Targets unmet: 0
-#>   Mean proportion: 0.449
+#>   Mean proportion: 0.392
 #>   Total shortfall: 0.00
 #> 
 #> 
@@ -233,14 +230,14 @@ cat("=== Overall Solution Comparison ===\n")
 #> === Overall Solution Comparison ===
 print(comparison$overall)
 #>                        Metric    Original    MinPatch     Change Percent_Change
-#> 1     Selected Planning Units         330         427         97       29.39394
-#> 2                  Total Area 20052333083 24430600782 4378267698       21.83421
-#> 3           Number of Patches          58          12        -46      -79.31034
-#> 4 Valid Patches (>= min size)          11          11          0        0.00000
-#> 5           Median Patch Size    64915437   661924221  597008784      919.67152
-#> 6          Planning Unit Cost    68792497    68792497          0        0.00000
+#> 1     Selected Planning Units         330         344         14       4.242424
+#> 2                  Total Area 20052333083 19405376734 -646956349      -3.226340
+#> 3           Number of Patches          58          15        -43     -74.137931
+#> 4 Valid Patches (>= min size)          11          14          3      27.272727
+#> 5           Median Patch Size    64915437   373340097  308424660     475.117591
+#> 6          Planning Unit Cost    59188470    59188470          0       0.000000
 #> 7               Boundary Cost           0           0          0             NA
-#> 8                  Total Cost    68792497    68792497          0        0.00000
+#> 8                  Total Cost    59188470    59188470          0       0.000000
 
 # Print feature-level comparison
 cat("\n=== Feature-Level Area Comparison ===\n")
@@ -248,39 +245,39 @@ cat("\n=== Feature-Level Area Comparison ===\n")
 #> === Feature-Level Area Comparison ===
 print(comparison$features)
 #>    Feature_ID Target Original_Area MinPatch_Area Area_Change Percent_Change
-#> 1           1    1.2             2             4           2     100.000000
-#> 2           2   33.0            35            39           4      11.428571
-#> 3           3    2.7             3             6           3     100.000000
-#> 4           4  170.1           177           197          20      11.299435
-#> 5           5  213.9           221           260          39      17.647059
-#> 6           6  242.1           250           317          67      26.800000
-#> 7           7    9.9            12            13           1       8.333333
-#> 8           8  108.3           113           137          24      21.238938
-#> 9           9   30.9            41            53          12      29.268293
-#> 10         10  260.4           271           339          68      25.092251
-#> 11         11   62.4            67            82          15      22.388060
-#> 12         12  132.0           151           190          39      25.827815
-#> 13         13  133.5           138           163          25      18.115942
-#> 14         14  122.4           128           137           9       7.031250
-#> 15         15   62.4            66            76          10      15.151515
-#> 16         16  240.0           246           310          64      26.016260
-#> 17         17    0.3             1             1           0       0.000000
-#> 18         18   27.6            29            29           0       0.000000
-#> 19         19    6.6             8             8           0       0.000000
-#> 20         20   18.0            19            25           6      31.578947
-#> 21         21   24.3            31            41          10      32.258065
-#> 22         22    7.5            12            13           1       8.333333
-#> 23         23   34.5            39            54          15      38.461538
-#> 24         24   11.1            12            12           0       0.000000
-#> 25         25   47.1            51            77          26      50.980392
-#> 26         26    9.3            11            11           0       0.000000
-#> 27         27   86.7            88           102          14      15.909091
-#> 28         28    6.6             7            12           5      71.428571
-#> 29         29    1.2             2             2           0       0.000000
-#> 30         30  186.0           192           195           3       1.562500
-#> 31         31   66.3            71            97          26      36.619718
-#> 32         32   30.9            36            49          13      36.111111
-#> 33         33   57.9            60            67           7      11.666667
+#> 1           1    1.2             2             3           1     50.0000000
+#> 2           2   33.0            35            38           3      8.5714286
+#> 3           3    2.7             3             5           2     66.6666667
+#> 4           4  170.1           177           173          -4     -2.2598870
+#> 5           5  213.9           221           214          -7     -3.1674208
+#> 6           6  242.1           250           250           0      0.0000000
+#> 7           7    9.9            12            11          -1     -8.3333333
+#> 8           8  108.3           113           110          -3     -2.6548673
+#> 9           9   30.9            41            49           8     19.5121951
+#> 10         10  260.4           271           281          10      3.6900369
+#> 11         11   62.4            67            66          -1     -1.4925373
+#> 12         12  132.0           151           152           1      0.6622517
+#> 13         13  133.5           138           134          -4     -2.8985507
+#> 14         14  122.4           128           123          -5     -3.9062500
+#> 15         15   62.4            66            69           3      4.5454545
+#> 16         16  240.0           246           257          11      4.4715447
+#> 17         17    0.3             1             1           0      0.0000000
+#> 18         18   27.6            29            28          -1     -3.4482759
+#> 19         19    6.6             8             8           0      0.0000000
+#> 20         20   18.0            19            24           5     26.3157895
+#> 21         21   24.3            31            37           6     19.3548387
+#> 22         22    7.5            12            11          -1     -8.3333333
+#> 23         23   34.5            39            40           1      2.5641026
+#> 24         24   11.1            12            12           0      0.0000000
+#> 25         25   47.1            51            71          20     39.2156863
+#> 26         26    9.3            11            11           0      0.0000000
+#> 27         27   86.7            88            87          -1     -1.1363636
+#> 28         28    6.6             7            10           3     42.8571429
+#> 29         29    1.2             2             2           0      0.0000000
+#> 30         30  186.0           192           187          -5     -2.6041667
+#> 31         31   66.3            71            78           7      9.8591549
+#> 32         32   30.9            36            37           1      2.7777778
+#> 33         33   57.9            60            58          -2     -3.3333333
 #>    Original_Target_Met MinPatch_Target_Met Original_Proportion
 #> 1                 TRUE                TRUE            1.666667
 #> 2                 TRUE                TRUE            1.060606
@@ -316,39 +313,39 @@ print(comparison$features)
 #> 32                TRUE                TRUE            1.165049
 #> 33                TRUE                TRUE            1.036269
 #>    MinPatch_Proportion
-#> 1             3.333333
-#> 2             1.181818
-#> 3             2.222222
-#> 4             1.158142
-#> 5             1.215521
-#> 6             1.309376
-#> 7             1.313131
-#> 8             1.265005
-#> 9             1.715210
-#> 10            1.301843
-#> 11            1.314103
-#> 12            1.439394
-#> 13            1.220974
-#> 14            1.119281
-#> 15            1.217949
-#> 16            1.291667
+#> 1             2.500000
+#> 2             1.151515
+#> 3             1.851852
+#> 4             1.017049
+#> 5             1.000468
+#> 6             1.032631
+#> 7             1.111111
+#> 8             1.015697
+#> 9             1.585761
+#> 10            1.079109
+#> 11            1.057692
+#> 12            1.151515
+#> 13            1.003745
+#> 14            1.004902
+#> 15            1.105769
+#> 16            1.070833
 #> 17            3.333333
-#> 18            1.050725
+#> 18            1.014493
 #> 19            1.212121
-#> 20            1.388889
-#> 21            1.687243
-#> 22            1.733333
-#> 23            1.565217
+#> 20            1.333333
+#> 21            1.522634
+#> 22            1.466667
+#> 23            1.159420
 #> 24            1.081081
-#> 25            1.634820
+#> 25            1.507431
 #> 26            1.182796
-#> 27            1.176471
-#> 28            1.818182
+#> 27            1.003460
+#> 28            1.515152
 #> 29            1.666667
-#> 30            1.048387
-#> 31            1.463047
-#> 32            1.585761
-#> 33            1.157168
+#> 30            1.005376
+#> 31            1.176471
+#> 32            1.197411
+#> 33            1.001727
 
 # Print summary statistics
 cat("\n=== Feature Change Summary ===\n")
@@ -356,7 +353,7 @@ cat("\n=== Feature Change Summary ===\n")
 #> === Feature Change Summary ===
 print(comparison$summary)
 #>   features_improved features_reduced features_unchanged targets_gained
-#> 1                27                0                  6              0
+#> 1                15               12                  6              0
 #>   targets_lost
 #> 1            0
 ```
@@ -466,7 +463,7 @@ result4 <- run_minpatch(
   prioritizr_solution = s,
   min_patch_size = min_patch_size,
   patch_radius = patch_radius,
-  boundary_penalty = 1e-5,
+  boundary_penalty = 1,
   remove_small_patches = TRUE,
   add_patches = TRUE,
   whittle_patches = TRUE,
@@ -479,7 +476,7 @@ result5 <- run_minpatch(
   prioritizr_solution = s,
   min_patch_size = min_patch_size,
   patch_radius = patch_radius,
-  boundary_penalty = 1e-10, 
+  boundary_penalty = 10, 
   remove_small_patches = TRUE,
   add_patches = TRUE,
   whittle_patches = TRUE,
@@ -487,16 +484,31 @@ result5 <- run_minpatch(
 )
 ```
 
-### Visualise the minpatch solution
+### Visualise the final solution
 
 ``` r
 
-patchwork::wrap_plots(plot_minpatch(result, title = "Boundary Penalty: 0"),
-                      plot_minpatch(result4, title = "Boundary Penalty: 1e-5"),
-                      plot_minpatch(result5, title = "Boundary Penalty: 1e-10"),
+
+patchwork::wrap_plots(plot_prioritizr(result2$solution, col = "minpatch", title = "Boundary Penalty: 0"),
+                      plot_prioritizr(result4$solution, col = "minpatch", title = "Boundary Penalty: 1"),
+                      plot_prioritizr(result5$solution, col = "minpatch", title = "Boundary Penalty: 10"),
                       guides = "collect",
                       ncol = 3) &
   theme(legend.position = "bottom")
 ```
 
 ![](minpatchTasmania_files/figure-html/unnamed-chunk-12-1.png)
+
+### Visualise the differences in the minpatch solution
+
+``` r
+
+patchwork::wrap_plots(plot_minpatch(result2, title = "Boundary Penalty: 0"),
+                      plot_minpatch(result4, title = "Boundary Penalty: 1"),
+                      plot_minpatch(result5, title = "Boundary Penalty: 10"),
+                      guides = "collect",
+                      ncol = 3) &
+  theme(legend.position = "bottom")
+```
+
+![](minpatchTasmania_files/figure-html/unnamed-chunk-13-1.png)

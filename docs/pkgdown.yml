@@ -1,7 +1,9 @@
-pandoc: 3.8.2.1
+pandoc: '3.9'
 pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
+  boundary-penalty: boundary-penalty.html
+  minpatch-oceandatr-Seychelles: minpatch-oceandatr-Seychelles.html
   minpatch: minpatch.html
   minpatchTasmania: minpatchTasmania.html
-last_built: 2025-11-25T03:43Z
+last_built: 2026-02-18T20:54Z

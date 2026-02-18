@@ -23,6 +23,8 @@
 #' @param whittle_patches Logical, whether to remove unnecessary units (Stage 3, default = TRUE)
 #' @param solution_column Name of solution column (default = "solution_1")
 #' @param verbose Logical, whether to print progress (default = TRUE)
+#' @param debug_boundary Logical, whether to print boundary cost debug info (default = FALSE)
+#' @param debug_boundary_every Integer, print debug info every N iterations (default = 50)
 #'
 #' @details
 #' The MinPatch algorithm consists of three stages:

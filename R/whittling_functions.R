@@ -10,7 +10,7 @@
 #' @keywords internal
 simulated_whittling <- function(minpatch_data, verbose = TRUE) {
 
-  message("[TEST SIMULATED WHITTLING]")
+  # message("[TEST SIMULATED WHITTLING]")
   # DEBUG SETTINGS (turn on/off from your script)
   debug_boundary <- isTRUE(minpatch_data$debug_boundary)
   debug_every    <- if (!is.null(minpatch_data$debug_boundary_every)) minpatch_data$debug_boundary_every else 200

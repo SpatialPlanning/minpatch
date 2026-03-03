@@ -8,7 +8,10 @@ make_minpatch_summary_table(
   region_sf,
   baseline_solution_sf,
   minpatch_results,
-  multipliers,
+  mode = c("multiplier", "boundary_penalty"),
+  multipliers = NULL,
+  boundary_penalties = NULL,
+  fixed_multiplier = NA_real_,
   compare_solutions_fun = NULL,
   baseline_compare_obj = NULL,
   baseline_elapsed = NA_real_,
@@ -28,7 +31,13 @@ make_minpatch_summary_table(
 
 \item{minpatch_results}{List of MinPatch results; each must contain `$solution` (sf).}
 
-\item{multipliers}{Numeric vector; same length/order as `minpatch_results`.}
+\item{mode}{One of "multiplier" or "boundary_penalty".}
+
+\item{multipliers}{Numeric vector; required if mode="multiplier".}
+
+\item{boundary_penalties}{Numeric vector; required if mode="boundary_penalty".}
+
+\item{fixed_multiplier}{Numeric scalar used only if mode="boundary_penalty" (e.g., 5 for "5× median PU area").}
 
 \item{compare_solutions_fun}{Function that returns a list with `$overall`.
 If NULL, the function will try to find `compare_solutions()` in your session.}
@@ -38,7 +47,7 @@ If NULL, defaults to `minpatch_results[[1]]`.}
 
 \item{baseline_elapsed}{Baseline runtime (seconds). Optional.}
 
-\item{minpatch_elapsed}{MinPatch runtimes (seconds). Optional; must match `multipliers`.}
+\item{minpatch_elapsed}{MinPatch runtimes (seconds). Optional; must match number of runs.}
 
 \item{projected_epsg}{EPSG for perimeter calcs if inputs are lon/lat (default 32740).}
 
@@ -59,4 +68,9 @@ list(data = tibble, kable = html or NULL)
 Builds a single table summarising a baseline solution and multiple MinPatch solutions.
 Baseline patch metrics come from `compare_solutions(... )$overall[,"Original"]`, while
 MinPatch metrics come from `compare_solutions(... )$overall[,"MinPatch"]`.
+}
+\details{
+Two modes:
+- mode = "multiplier": multiple min patch sizes (uses `multipliers`)
+- mode = "boundary_penalty": one min patch size, multiple boundary penalties (uses `boundary_penalties`)
 }

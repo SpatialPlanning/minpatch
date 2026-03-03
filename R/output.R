@@ -602,16 +602,23 @@ print_minpatch_summary <- function(minpatch_result) {
 #' Baseline patch metrics come from `compare_solutions(... )$overall[,"Original"]`, while
 #' MinPatch metrics come from `compare_solutions(... )$overall[,"MinPatch"]`.
 #'
+#' Two modes:
+#' - mode = "multiplier": multiple min patch sizes (uses `multipliers`)
+#' - mode = "boundary_penalty": one min patch size, multiple boundary penalties (uses `boundary_penalties`)
+#'
 #' @param region_sf sf of all planning units (used to compute median PU area for min patch size).
 #' @param baseline_solution_sf sf containing the baseline solution selection column and PU costs.
 #' @param minpatch_results List of MinPatch results; each must contain `$solution` (sf).
-#' @param multipliers Numeric vector; same length/order as `minpatch_results`.
+#' @param mode One of "multiplier" or "boundary_penalty".
+#' @param multipliers Numeric vector; required if mode="multiplier".
+#' @param boundary_penalties Numeric vector; required if mode="boundary_penalty".
+#' @param fixed_multiplier Numeric scalar used only if mode="boundary_penalty" (e.g., 5 for "5× median PU area").
 #' @param compare_solutions_fun Function that returns a list with `$overall`.
 #'   If NULL, the function will try to find `compare_solutions()` in your session.
 #' @param baseline_compare_obj Object to pass into compare_solutions() for baseline "Original" metrics.
 #'   If NULL, defaults to `minpatch_results[[1]]`.
 #' @param baseline_elapsed Baseline runtime (seconds). Optional.
-#' @param minpatch_elapsed MinPatch runtimes (seconds). Optional; must match `multipliers`.
+#' @param minpatch_elapsed MinPatch runtimes (seconds). Optional; must match number of runs.
 #' @param projected_epsg EPSG for perimeter calcs if inputs are lon/lat (default 32740).
 #' @param baseline_solution_col Baseline selection column name (1/0). If NULL, auto-detects.
 #' @param minpatch_solution_col MinPatch selection column in `$solution` (default "minpatch").
@@ -625,7 +632,10 @@ make_minpatch_summary_table <- function(
     region_sf,
     baseline_solution_sf,
     minpatch_results,
-    multipliers,
+    mode = c("multiplier", "boundary_penalty"),
+    multipliers = NULL,
+    boundary_penalties = NULL,
+    fixed_multiplier = NA_real_,
     compare_solutions_fun = NULL,
     baseline_compare_obj = NULL,
     baseline_elapsed = NA_real_,
@@ -637,6 +647,9 @@ make_minpatch_summary_table <- function(
     baseline_boundary_cost = 0,
     make_kable = TRUE
 ) {
+
+  mode <- match.arg(mode)
+
   if (!requireNamespace("sf", quietly = TRUE)) stop("Package 'sf' is required.")
   if (!requireNamespace("dplyr", quietly = TRUE)) stop("Package 'dplyr' is required.")
   if (!requireNamespace("tibble", quietly = TRUE)) stop("Package 'tibble' is required.")
@@ -687,12 +700,23 @@ make_minpatch_summary_table <- function(
     sum(sel[[cost_col]], na.rm = TRUE)
   }
 
-  # --- checks ---
-  if (length(minpatch_results) != length(multipliers)) {
-    stop("minpatch_results and multipliers must have the same length.")
+  # --- mode-specific inputs ---
+  if (mode == "multiplier") {
+    if (is.null(multipliers)) stop("mode='multiplier' requires multipliers.")
+    if (length(minpatch_results) != length(multipliers)) stop("minpatch_results and multipliers must have same length.")
+    run_values <- multipliers
+    run_colname <- "Multiplier"
+    scenario_labels <- paste0("MinPatch ×", multipliers)
+  } else {
+    if (is.null(boundary_penalties)) stop("mode='boundary_penalty' requires boundary_penalties.")
+    if (length(minpatch_results) != length(boundary_penalties)) stop("minpatch_results and boundary_penalties must have same length.")
+    run_values <- boundary_penalties
+    run_colname <- "Boundary penalty"
+    scenario_labels <- paste0("MinPatch (bp=", boundary_penalties, ")")
   }
-  if (!is.null(minpatch_elapsed) && length(minpatch_elapsed) != length(multipliers)) {
-    stop("minpatch_elapsed must be NULL or same length as multipliers.")
+
+  if (!is.null(minpatch_elapsed) && length(minpatch_elapsed) != length(minpatch_results)) {
+    stop("minpatch_elapsed must be NULL or same length as minpatch_results.")
   }
 
   # --- auto-detect baseline selection column if not provided ---
@@ -714,18 +738,25 @@ make_minpatch_summary_table <- function(
     res
   })
 
-  # --- min patch size lookup (km^2) from median PU area ---
-  median_pu_area_m2  <- stats::median(sf::st_area(region_sf_proj))
-  min_patch_lookup <- tibble::tibble(
-    multiplier = multipliers,
-    min_patch_km2 = as.numeric(multipliers * median_pu_area_m2) / 1e6
-  )
+  # --- min patch size (km²) ---
+  median_pu_area_m2 <- median(sf::st_area(region_sf_proj))
+
+  if (mode == "multiplier") {
+    min_patch_size_km2_vec <- as.numeric(run_values * median_pu_area_m2) / 1e6
+  } else {
+    # one fixed min patch size for all boundary-penalty runs (e.g., 5× median PU area)
+    if (!is.finite(fixed_multiplier)) {
+      stop("mode='boundary_penalty' requires fixed_multiplier (e.g., 5).")
+    }
+    fixed_min_patch_km2 <- as.numeric(fixed_multiplier * median_pu_area_m2) / 1e6
+    min_patch_size_km2_vec <- rep(fixed_min_patch_km2, length(minpatch_results))
+  }
 
   # --- runtime lookup (seconds) ---
   runtime_lookup <- tibble::tibble(
-    scenario    = c("Baseline", paste0("MinPatch \u00d7", multipliers)),
+    scenario    = c("Baseline", scenario_labels),
     runtime_sec = c(as.numeric(baseline_elapsed),
-                    if (is.null(minpatch_elapsed)) rep(NA_real_, length(multipliers)) else as.numeric(minpatch_elapsed))
+                    if (is.null(minpatch_elapsed)) rep(NA_real_, length(minpatch_results)) else as.numeric(minpatch_elapsed))
   )
 
   # --- baseline overall metrics (Original) ---
@@ -735,10 +766,11 @@ make_minpatch_summary_table <- function(
   baseline_pu_cost_val <- pu_cost(baseline_sf_proj, baseline_solution_col, cost_col = cost_col)
   baseline_overall_cost_val <- baseline_pu_cost_val + baseline_boundary_cost
 
+  # Baseline row: include the run column but keep it NA (cleaner table)
   baseline_row <- tibble::tibble(
     scenario                 = "Baseline",
-    multiplier               = NA_real_,
-    min_patch_size_km2       = NA_real_,
+    run_value                = NA_real_,
+    min_patch_size_km2       = if (mode == "boundary_penalty") min_patch_size_km2_vec[1] else NA_real_,
     selected_pu              = get_metric(overall0, "Original", "Selected Planning Units"),
     total_area_km2           = get_metric(overall0, "Original", "Total Area") / 1e6,
     total_perimeter_km       = total_outer_perimeter_km(baseline_sf_proj, baseline_solution_col),
@@ -751,12 +783,14 @@ make_minpatch_summary_table <- function(
   )
 
   # --- MinPatch rows ---
-  minpatch_rows <- purrr::map2_dfr(minpatch_results_proj, multipliers, function(res, mult) {
+  minpatch_rows <- purrr::map2_dfr(seq_along(minpatch_results_proj), run_values, function(i, rv) {
+    res <- minpatch_results_proj[[i]]
     overall <- compare_solutions_fun(res)$overall
+
     tibble::tibble(
-      scenario                 = paste0("MinPatch \u00d7", mult),
-      multiplier               = mult,
-      min_patch_size_km2       = min_patch_lookup$min_patch_km2[min_patch_lookup$multiplier == mult],
+      scenario                 = scenario_labels[[i]],
+      run_value                = rv,
+      min_patch_size_km2       = min_patch_size_km2_vec[[i]],
       selected_pu              = get_metric(overall, "MinPatch", "Selected Planning Units"),
       total_area_km2           = get_metric(overall, "MinPatch", "Total Area") / 1e6,
       total_perimeter_km       = total_outer_perimeter_km(res$solution, minpatch_solution_col),
@@ -773,29 +807,32 @@ make_minpatch_summary_table <- function(
   solution_summary <- dplyr::bind_rows(baseline_row, minpatch_rows) %>%
     dplyr::left_join(runtime_lookup, by = "scenario") %>%
     dplyr::mutate(
-      multiplier = dplyr::if_else(is.na(.data$multiplier), "-", as.character(.data$multiplier)),
-      dplyr::across(tidyselect::all_of(c("selected_pu", "n_patches", "valid_patches_ge_min")),
-                    ~ as.integer(round(.x))),
-      dplyr::across(tidyselect::all_of(c("min_patch_size_km2", "total_area_km2", "median_patch_km2",
-                      "total_perimeter_km","total_pu_cost", "boundary_cost",
-                      "overall_cost")),
-                    ~ round(.x, 2)),
-      runtime_sec = round(.data$runtime_sec, 1)
-    ) %>%
+      run_value = dplyr::if_else(is.na(run_value), NA_character_, as.character(run_value)),
+      dplyr::across(c(selected_pu, n_patches, valid_patches_ge_min), ~ as.integer(round(.x))),
+      dplyr::across(c(min_patch_size_km2, total_area_km2, median_patch_km2, total_perimeter_km), ~ round(.x, 2)),
+      dplyr::across(c(total_pu_cost, boundary_cost, overall_cost), ~ round(.x, 2)),
+      runtime_sec = round(runtime_sec, 1)
+    )
+
+  # Rename run_value column nicely
+  names(solution_summary)[names(solution_summary) == "run_value"] <- run_colname
+
+  # Choose columns (show only the relevant run column)
+  solution_summary <- solution_summary %>%
     dplyr::select(
-      .data$scenario,
-      `Multiplier`                  = .data$multiplier,
-      `Minimum patch size (km^2)`   = .data$min_patch_size_km2,
-      `Selected PUs`                = .data$selected_pu,
-      `Total area (km^2)`           = .data$total_area_km2,
-      `Total perimeter (km)`        = .data$total_perimeter_km,
-      `# patches`                   = .data$n_patches,
-      `Valid patches (>= min size)` = .data$valid_patches_ge_min,
-      `Median patch size (km^2)`    = .data$median_patch_km2,
-      `Total PU cost`               = .data$total_pu_cost,
-      `Boundary cost`               = .data$boundary_cost,
-      `Overall cost`                = .data$overall_cost,
-      `Runtime (s)`                 = .data$runtime_sec
+      scenario,
+      !!run_colname,
+      `Minimum patch size (km²)`    = min_patch_size_km2,
+      `Selected PUs`                = selected_pu,
+      `Total area (km²)`            = total_area_km2,
+      `Total perimeter (km)`        = total_perimeter_km,
+      `# patches`                   = n_patches,
+      `Valid patches (>= min size)` = valid_patches_ge_min,
+      `Median patch size (km²)`     = median_patch_km2,
+      `Total PU cost`               = total_pu_cost,
+      `Boundary cost`               = boundary_cost,
+      `Overall cost`                = overall_cost,
+      `Runtime (s)`                 = runtime_sec
     )
 
   out <- list(data = solution_summary, kable = NULL)
@@ -1026,10 +1063,29 @@ plot_patch_validity <- function(
         n_valid_patches, " valid | ",
         n_invalid_patches, " invalid",
         " | valid if patch area \u2265 ",
-        multiplier, "\u00d7 median PU area",
-        " | snap = ", isTRUE(do_snap)
+        multiplier, "\u00d7 median PU area"
       ),
       fill = NULL
     ) +
     ggplot2::theme_minimal()
+}
+
+
+#' Ensure a solution has a `solution_1` column
+#'
+#' Helper that returns `x$solution`, adding a `solution_1` column if missing by
+#' copying the first column in `x$solution` that is not already in `x$planning_units`.
+#'
+#' @param x A list-like object containing `solution` and `planning_units`.
+#'
+#' @return A data.frame (or tibble) like `x$solution`, guaranteed to include `solution_1`
+#'   if a suitable column exists.
+#' @keywords internal
+get_solution_with_solution1 <- function(x) {
+  sol <- x$solution
+  extra_cols <- setdiff(names(sol), names(x$planning_units))
+  if (!"solution_1" %in% names(sol) && length(extra_cols) >= 1) {
+    sol$solution_1 <- sol[[extra_cols[1]]]
+  }
+  sol
 }

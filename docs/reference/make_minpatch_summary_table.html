@@ -24,7 +24,7 @@ MinPatch metrics come from `compare_solutions(... )$overall[,"MinPatch"]`.'></he
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/boundary-penalty.html">Boundary penalty in MinPatch</a></li>
-    <li><a class="dropdown-item" href="../articles/minpatch-oceandatr-Seychelles.html">Using oceandatr and minpatch to reduce fragmentation in a marine planning region (Seychelles)</a></li>
+    <li><a class="dropdown-item" href="../articles/minpatch-oceandatr-Seychelles.html">Using minpatch to reduce fragmentation in a marine planning region (Seychelles)</a></li>
     <li><a class="dropdown-item" href="../articles/minpatchTasmania.html">MinPatch in Tasmania</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/SpatialPlanning/minpatch/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
@@ -55,7 +55,10 @@ MinPatch metrics come from `compare_solutions(... )$overall[,"MinPatch"]`.</p>
 <span>  <span class="va">region_sf</span>,</span>
 <span>  <span class="va">baseline_solution_sf</span>,</span>
 <span>  <span class="va">minpatch_results</span>,</span>
-<span>  <span class="va">multipliers</span>,</span>
+<span>  mode <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"multiplier"</span>, <span class="st">"boundary_penalty"</span><span class="op">)</span>,</span>
+<span>  multipliers <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  boundary_penalties <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  fixed_multiplier <span class="op">=</span> <span class="cn">NA_real_</span>,</span>
 <span>  compare_solutions_fun <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  baseline_compare_obj <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  baseline_elapsed <span class="op">=</span> <span class="cn">NA_real_</span>,</span>
@@ -85,8 +88,20 @@ MinPatch metrics come from `compare_solutions(... )$overall[,"MinPatch"]`.</p>
 <dd><p>List of MinPatch results; each must contain `$solution` (sf).</p></dd>
 
 
+<dt id="arg-mode">mode<a class="anchor" aria-label="anchor" href="#arg-mode"></a></dt>
+<dd><p>One of "multiplier" or "boundary_penalty".</p></dd>
+
+
 <dt id="arg-multipliers">multipliers<a class="anchor" aria-label="anchor" href="#arg-multipliers"></a></dt>
-<dd><p>Numeric vector; same length/order as `minpatch_results`.</p></dd>
+<dd><p>Numeric vector; required if mode="multiplier".</p></dd>
+
+
+<dt id="arg-boundary-penalties">boundary_penalties<a class="anchor" aria-label="anchor" href="#arg-boundary-penalties"></a></dt>
+<dd><p>Numeric vector; required if mode="boundary_penalty".</p></dd>
+
+
+<dt id="arg-fixed-multiplier">fixed_multiplier<a class="anchor" aria-label="anchor" href="#arg-fixed-multiplier"></a></dt>
+<dd><p>Numeric scalar used only if mode="boundary_penalty" (e.g., 5 for "5× median PU area").</p></dd>
 
 
 <dt id="arg-compare-solutions-fun">compare_solutions_fun<a class="anchor" aria-label="anchor" href="#arg-compare-solutions-fun"></a></dt>
@@ -104,7 +119,7 @@ If NULL, defaults to `minpatch_results[[1]]`.</p></dd>
 
 
 <dt id="arg-minpatch-elapsed">minpatch_elapsed<a class="anchor" aria-label="anchor" href="#arg-minpatch-elapsed"></a></dt>
-<dd><p>MinPatch runtimes (seconds). Optional; must match `multipliers`.</p></dd>
+<dd><p>MinPatch runtimes (seconds). Optional; must match number of runs.</p></dd>
 
 
 <dt id="arg-projected-epsg">projected_epsg<a class="anchor" aria-label="anchor" href="#arg-projected-epsg"></a></dt>
@@ -134,6 +149,12 @@ If NULL, defaults to `minpatch_results[[1]]`.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>list(data = tibble, kable = html or NULL)</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Two modes:
+- mode = "multiplier": multiple min patch sizes (uses `multipliers`)
+- mode = "boundary_penalty": one min patch size, multiple boundary penalties (uses `boundary_penalties`)</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -1,4 +1,4 @@
-# Using oceandatr and minpatch to reduce fragmentation in a marine planning region (Seychelles)
+# Using minpatch to reduce fragmentation in a marine planning region (Seychelles)
 
 ## 1. Introduction
 
@@ -43,7 +43,6 @@ solutions.
 
 ``` r
 
-
 library(oceandatr)
 library(terra)
 library(sf)
@@ -51,10 +50,13 @@ library(dplyr)
 library(ggplot2)
 library(patchwork)
 library(prioritizr)
-library(minpatch)
+#library(minpatch)
+devtools::load_all()
 library(purrr)
 library(tibble)
 library(kableExtra)
+library(tmap)
+library(stringr)
 set.seed(123)
 # Note: oceandatr requires an up-to-date version of curl for data downloads
 # install.packages("curl") 
@@ -188,13 +190,9 @@ names(feature_set) <-  gsub("_", " ", names(feature_set)) %>% stringr::str_to_se
 ### 3.2 Plot features
 
 Features are visualised with **tmap**. Planning units are coloured
-**blue** where a feature is present and **grey** where it is absent.
+*blue* where a feature is present and *grey* where it is absent.
 
 ``` r
-
-library(tmap)
-library(terra)
-library(stringr)
 
 names(feature_set) <- names(feature_set) %>% 
   gsub("_", " ", .) %>% 
@@ -330,7 +328,7 @@ fragmented and scattered across the planning region.
 We define minimum patch sizes relative to the planning units by scaling
 the **median PU area** by `multipliers` (5×, 10×, 20×). This makes the
 thresholds easy to interpret as “roughly how many planning units per
-patch”. We also set a single **`patch_radius`** for all runs, chosen to
+patch”. We also set a single `patch_radius` for all runs, chosen to
 represent a neighbourhood of about 10 planning units. This radius
 defines the spatial search distance used by MinPatch to identify
 neighbouring planning units when forming, expanding, or merging patches.
@@ -713,47 +711,50 @@ In this section, we interpret how MinPatch modifies the baseline
 solution. We compare resulting spatial patterns, patch structure, and
 trade-offs between fragmentation and cost.
 
-#### 7.1 Selected planning units (baseline vs MinPatch runs)
+### 7.1 Selected planning units (baseline vs MinPatch runs)
 
 We start by showing the selected planning units for the baseline and
 each MinPatch run.
 
 ``` r
 
-# plot_solution_grid(
-#   results = minpatch_results,
-#   get_solution_fun = get_solution_with_solution1,
-#   subtitle_values = multipliers,
-#   title_prefix = "MinPatch: ",
-#   value_label_fun = function(x) paste0(x, "× median PU area"),
-#   include_baseline = TRUE,
-#   baseline_solution = s_base,
-#   baseline_title = "Baseline (prioritizr)",
-#   ncol = 2
-# )
+ plot_solution_grid(
+   results = minpatch_results,
+   get_solution_fun = get_solution_with_solution1,
+   subtitle_values = multipliers,
+   title_prefix = "MinPatch: ",
+   value_label_fun = function(x) paste0(x, "× median PU area"),
+   include_baseline = TRUE,
+   baseline_solution = s_base,
+   baseline_title = "Baseline (prioritizr)",
+   ncol = 2
+ )
 ```
+
+![](minpatch-oceandatr-Seychelles_files/figure-html/minpatch-2x2-1.png)
 
 On the plot, we can see that the baseline solution is highly fragmented,
 with many small and isolated selected planning units. As the minimum
 patch size increases, these small patches are removed or merged, leading
 to fewer, larger, and more spatially coherent patches.
 
-#### 7.2 Group summary table (all runs)
+### 7.2 Group summary table (all runs)
 
 Having examined the spatial solutions, we summarise all runs in a single
 table to compare outcomes across different metrics.
 
-[TABLE]
+| scenario | Multiplier | Minimum patch size (km²) | Selected PUs | Total area (km²) | Total perimeter (km) | \# patches | Valid patches (\>= min size) | Median patch size (km²) | Total PU cost | Boundary cost | Overall cost | Runtime (s) |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| Baseline | NA | NA | 453 | 407796.3 | 33767.14 | 146 | 22 | 1800.43 | 407796.3 | 0 | 407796.3 | 0.2 |
+| MinPatch ×5 | 5 | 4501.06 | 456 | 410496.9 | 17458.62 | 23 | 23 | 5401.28 | 410496.9 | 0 | 410496.9 | 66.8 |
+| MinPatch ×10 | 10 | 9002.13 | 466 | 419499.1 | 14992.65 | 11 | 11 | 9902.34 | 419499.1 | 0 | 419499.1 | 72.0 |
+| MinPatch ×20 | 20 | 18004.25 | 491 | 442004.4 | 18895.37 | 11 | 11 | 22505.31 | 442004.4 | 0 | 442004.4 | 106.2 |
 
-The baseline solution is highly fragmented (129 patches), with most
-patches failing the minimum-size rule (only 21 valid). Once MinPatch is
-applied, patches consolidate sharply: patch counts drop from 28 (×5) to
-15 (×10) to 8 (×20), and all remaining patches are valid at every
-multiplier. As the multiplier increases, patch sizes rise well beyond
-the threshold, showing progressively stronger spatial consolidation into
-fewer, larger patches.
+Once MinPatch is applied, the solution becomes less fragmented: as the
+multiplier increases, the number of patches decreases and the remaining
+patches become larger (higher median patch size).
 
-#### 7.3 Change maps (Added / Removed / Retained / No change)
+### 7.3 Change maps (Added / Removed / Retained / No change)
 
 After comparing runs, we use `plot_minpatch` to map which planning units
 were added, removed, or kept versus the baseline. The maps show how
@@ -781,7 +782,7 @@ patchwork::wrap_plots(
 
 ![](minpatch-oceandatr-Seychelles_files/figure-html/minpatch-plots-1.png)
 
-#### 7.4 Patch-labelled maps
+### 7.4 Patch-labelled maps
 
 We use a function that labels patches in the MinPatch solutions and
 flags each one as valid (meets the minimum patch-size rule) or invalid
@@ -797,7 +798,6 @@ truly contiguous area, avoid corner-only links, and tend to form more
 compact patch units.
 
 ``` r
-
 
 for (m in c(5, 10, 20)) {
   print(minpatch::plot_patch_validity(
@@ -821,7 +821,7 @@ for (m in c(5, 10, 20)) {
 
 ![](minpatch-oceandatr-Seychelles_files/figure-html/patch-labelled-maps-3.png)
 
-#### 7.5 Individual summaries (per run)
+### 7.5 Individual summaries (per run)
 
 Here, we show all the individual summaries for all the runs. These
 provide a detailed breakdown and comparison of the metrics of each
@@ -1294,17 +1294,6 @@ print(comparison$summary)
 #> 1            0
 ```
 
-**Notes:**
-
-- The calculation for valid and invalid patches should then again be
-  rechecked.
-
-- How is the planning unit cost calculated for the baseline? And why
-  does it differ in every summary table (i.e., table for each
-  multiplier)?
-
-- Add units to Total Area (km2 or m2?)
-
 ## 8. Run different boundary penalties
 
 The boundary penalty controls how strongly MinPatch favours spatially
@@ -1324,9 +1313,13 @@ grid with relatively uniform planning-unit areas.
 ``` r
 
 # calculate reasonable parameters based on planning unit characteristics
-median_area <- median(st_area(Seychelles_sf)) 
-min_patch_size <- median_area * 5
-patch_radius <- sqrt(median_area * 10/pi)
+median_pu_area_m2 <- median(st_area(Seychelles_sf)) 
+
+# use minpatch size 5x median PU
+# retain the same patch radius earlier
+min_patch_size <- median_pu_area_m2 * 5
+patch_radius
+#> 300035.4 [m]
 
 bp3 = 0
 t3 <- system.time({
@@ -1370,67 +1363,62 @@ t3 <- system.time({
 #>   Unmet feature IDs: 1, 3, 4, 5, 6, 7, 8, 9, 11, 12, 14, 15, 16, 19, 20, 22, 23, 24, 25, 26, 27, 28 
 #>   Iteration 1 - Unmet targets: 22 
 #>     Found 1268 potential patches with scores
-#>     Best score: 0.0006018207 for unit 715 
-#>     Added patch centered on unit 715 
-#>   Iteration 2 - Unmet targets: 21 
-#>     Found 1266 potential patches with scores
-#>     Best score: 0.0005272466 for unit 568 
-#>     Added patch centered on unit 568 
-#>   Iteration 3 - Unmet targets: 20 
-#>     Found 1259 potential patches with scores
-#>     Best score: 0.0004467726 for unit 397 
-#>     Added patch centered on unit 397 
-#>   Iteration 4 - Unmet targets: 19 
-#>     Found 1255 potential patches with scores
-#>     Best score: 0.0004979957 for unit 1293 
-#>     Added patch centered on unit 1293 
-#>   Iteration 5 - Unmet targets: 19 
-#>     Found 1251 potential patches with scores
-#>     Best score: 0.0005055629 for unit 1220 
-#>     Added patch centered on unit 1220 
-#>   Iteration 10 - Unmet targets: 12 
-#>   Iteration 20 - Unmet targets: 9 
-#>   Iteration 30 - Unmet targets: 4 
-#>   Iteration 40 - Unmet targets: 2 
+#>     Best score: 0.0001156402 for unit 1035 
+#>     Added patch centered on unit 1035 
+#>   Iteration 2 - Unmet targets: 18 
+#>     Found 1188 potential patches with scores
+#>     Best score: 0.00009560689 for unit 1467 
+#>     Added patch centered on unit 1467 
+#>   Iteration 3 - Unmet targets: 8 
+#>     Found 1043 potential patches with scores
+#>     Best score: 0.00005491464 for unit 2 
+#>     Added patch centered on unit 2 
+#>   Iteration 4 - Unmet targets: 2 
+#>     Found 910 potential patches with scores
+#>     Best score: 0.00001454845 for unit 192 
+#>     Added patch centered on unit 192 
 #>   All conservation targets are now met!
 #> Stage 3: Removing unnecessary planning units...
-#>     Edge units found: 341 
+#>     Edge units found: 178 
 #>     Keystone units: 0 
-#>     New keystone units: 60 
-#>     Scoreable units: 281 
-#>     Removed unit 1256 at iteration 1 
-#>     Edge units found: 281 
-#>     Keystone units: 60 
+#>     New keystone units: 12 
+#>     Scoreable units: 166 
+#>     Removed unit 418 at iteration 1 
+#>     Edge units found: 167 
+#>     Keystone units: 12 
 #>     New keystone units: 0 
-#>     Scoreable units: 281 
-#>     Unit 1276 cannot be removed - adding to keystone set
-#>     Edge units found: 280 
-#>     Keystone units: 61 
+#>     Scoreable units: 167 
+#>     Removed unit 383 at iteration 2 
+#>     Edge units found: 169 
+#>     Keystone units: 12 
 #>     New keystone units: 0 
-#>     Scoreable units: 280 
-#>     Unit 1277 cannot be removed - adding to keystone set
-#>     Edge units found: 279 
-#>     Keystone units: 62 
+#>     Scoreable units: 169 
+#>     Removed unit 419 at iteration 3 
+#>     Edge units found: 169 
+#>     Keystone units: 12 
 #>     New keystone units: 0 
-#>     Scoreable units: 279 
-#>     Removed unit 1292 at iteration 4 
-#>     Edge units found: 280 
-#>     Keystone units: 62 
+#>     Scoreable units: 169 
+#>     Removed unit 420 at iteration 4 
+#>     Edge units found: 170 
+#>     Keystone units: 12 
 #>     New keystone units: 0 
-#>     Scoreable units: 280 
-#>     Removed unit 1293 at iteration 5 
-#>     Removed unit 1219 at iteration 6 
-#>     Removed unit 1220 at iteration 7 
-#>     Removed unit 1257 at iteration 8 
-#>     Removed unit 395 at iteration 9 
-#>     Removed unit 1258 at iteration 10 
+#>     Scoreable units: 170 
+#>     Removed unit 385 at iteration 5 
+#>     Removed unit 350 at iteration 6 
+#>     Unit 349 cannot be removed - adding to keystone set
+#>     Removed unit 351 at iteration 8 
+#>     Removed unit 317 at iteration 9 
+#>     Removed unit 283 at iteration 10 
+#>   Whittling iteration 100 
+#>   Whittling iteration 200 
+#>   Whittling iteration 300 
 #>   No units can be removed - all are keystone - terminating
 #> Calculating final statistics...
 #> MinPatch processing complete!
 cat("result3 runtime (sec):", t3[["elapsed"]], "\n")
-#> result3 runtime (sec): 35.249
+#> result3 runtime (sec): 65.925
 
-bp4 = 0.00001
+bp4 = 0.01
 t4 <- system.time({
   result4 <- run_minpatch(
   prioritizr_problem = p_base,
@@ -1472,65 +1460,58 @@ t4 <- system.time({
 #>   Unmet feature IDs: 1, 3, 4, 5, 6, 7, 8, 9, 11, 12, 14, 15, 16, 19, 20, 22, 23, 24, 25, 26, 27, 28 
 #>   Iteration 1 - Unmet targets: 22 
 #>     Found 1268 potential patches with scores
-#>     Best score: 0.0006018207 for unit 715 
-#>     Added patch centered on unit 715 
-#>   Iteration 2 - Unmet targets: 21 
-#>     Found 1266 potential patches with scores
-#>     Best score: 0.0005272466 for unit 568 
-#>     Added patch centered on unit 568 
-#>   Iteration 3 - Unmet targets: 20 
-#>     Found 1259 potential patches with scores
-#>     Best score: 0.0004467726 for unit 397 
-#>     Added patch centered on unit 397 
-#>   Iteration 4 - Unmet targets: 19 
-#>     Found 1255 potential patches with scores
-#>     Best score: 0.0004979957 for unit 1293 
-#>     Added patch centered on unit 1293 
-#>   Iteration 5 - Unmet targets: 19 
-#>     Found 1251 potential patches with scores
-#>     Best score: 0.0005055629 for unit 1220 
-#>     Added patch centered on unit 1220 
-#>   Iteration 10 - Unmet targets: 12 
-#>   Iteration 20 - Unmet targets: 9 
-#>   Iteration 30 - Unmet targets: 4 
-#>   Iteration 40 - Unmet targets: 2 
+#>     Best score: 0.0001156402 for unit 1035 
+#>     Added patch centered on unit 1035 
+#>   Iteration 2 - Unmet targets: 18 
+#>     Found 1188 potential patches with scores
+#>     Best score: 0.00009560689 for unit 1467 
+#>     Added patch centered on unit 1467 
+#>   Iteration 3 - Unmet targets: 8 
+#>     Found 1043 potential patches with scores
+#>     Best score: 0.00005491464 for unit 2 
+#>     Added patch centered on unit 2 
+#>   Iteration 4 - Unmet targets: 2 
+#>     Found 910 potential patches with scores
+#>     Best score: 0.00001454845 for unit 192 
+#>     Added patch centered on unit 192 
 #>   All conservation targets are now met!
 #> Stage 3: Removing unnecessary planning units...
-#>     Edge units found: 341 
+#>     Edge units found: 178 
 #>     Keystone units: 0 
-#>     New keystone units: 60 
-#>     Scoreable units: 281 
-#>     Removed unit 1256 at iteration 1 
-#>     Edge units found: 281 
-#>     Keystone units: 60 
+#>     New keystone units: 12 
+#>     Scoreable units: 166 
+#>     Unit 418 cannot be removed - adding to keystone set
+#>     Edge units found: 165 
+#>     Keystone units: 13 
 #>     New keystone units: 0 
-#>     Scoreable units: 281 
-#>     Unit 1276 cannot be removed - adding to keystone set
-#>     Edge units found: 280 
-#>     Keystone units: 61 
+#>     Scoreable units: 165 
+#>     Unit 452 cannot be removed - adding to keystone set
+#>     Edge units found: 164 
+#>     Keystone units: 14 
 #>     New keystone units: 0 
-#>     Scoreable units: 280 
-#>     Unit 1277 cannot be removed - adding to keystone set
-#>     Edge units found: 279 
-#>     Keystone units: 62 
+#>     Scoreable units: 164 
+#>     Unit 453 cannot be removed - adding to keystone set
+#>     Edge units found: 163 
+#>     Keystone units: 15 
 #>     New keystone units: 0 
-#>     Scoreable units: 279 
-#>     Removed unit 1292 at iteration 4 
-#>     Edge units found: 280 
-#>     Keystone units: 62 
+#>     Scoreable units: 163 
+#>     Unit 455 cannot be removed - adding to keystone set
+#>     Edge units found: 162 
+#>     Keystone units: 16 
 #>     New keystone units: 0 
-#>     Scoreable units: 280 
-#>     Removed unit 1293 at iteration 5 
-#>     Removed unit 1219 at iteration 6 
-#>     Removed unit 1220 at iteration 7 
-#>     Removed unit 1257 at iteration 8 
-#>     Removed unit 395 at iteration 9 
-#>     Removed unit 1258 at iteration 10 
-#>   No units can be removed - all are keystone - terminating
+#>     Scoreable units: 162 
+#>     Unit 456 cannot be removed - adding to keystone set
+#>     Removed unit 488 at iteration 6 
+#>     Unit 493 cannot be removed - adding to keystone set
+#>     Unit 494 cannot be removed - adding to keystone set
+#>     Unit 495 cannot be removed - adding to keystone set
+#>     Unit 528 cannot be removed - adding to keystone set
+#>   Whittling iteration 100 
+#>   No more edge units to consider - terminating
 #> Calculating final statistics...
 #> MinPatch processing complete!
 cat("result4 runtime (sec):", t4[["elapsed"]], "\n")
-#> result4 runtime (sec): 35.78
+#> result4 runtime (sec): 58.132
 
 bp5 = 1
 t5 <- system.time({
@@ -1574,197 +1555,148 @@ t5 <- system.time({
 #>   Unmet feature IDs: 1, 3, 4, 5, 6, 7, 8, 9, 11, 12, 14, 15, 16, 19, 20, 22, 23, 24, 25, 26, 27, 28 
 #>   Iteration 1 - Unmet targets: 22 
 #>     Found 1268 potential patches with scores
-#>     Best score: 0.0006018207 for unit 715 
-#>     Added patch centered on unit 715 
-#>   Iteration 2 - Unmet targets: 21 
-#>     Found 1266 potential patches with scores
-#>     Best score: 0.0005272466 for unit 568 
-#>     Added patch centered on unit 568 
-#>   Iteration 3 - Unmet targets: 20 
-#>     Found 1259 potential patches with scores
-#>     Best score: 0.0004467726 for unit 397 
-#>     Added patch centered on unit 397 
-#>   Iteration 4 - Unmet targets: 19 
-#>     Found 1255 potential patches with scores
-#>     Best score: 0.0004979957 for unit 1293 
-#>     Added patch centered on unit 1293 
-#>   Iteration 5 - Unmet targets: 19 
-#>     Found 1251 potential patches with scores
-#>     Best score: 0.0005055629 for unit 1220 
-#>     Added patch centered on unit 1220 
-#>   Iteration 10 - Unmet targets: 12 
-#>   Iteration 20 - Unmet targets: 9 
-#>   Iteration 30 - Unmet targets: 4 
-#>   Iteration 40 - Unmet targets: 2 
+#>     Best score: 0.0001156402 for unit 1035 
+#>     Added patch centered on unit 1035 
+#>   Iteration 2 - Unmet targets: 18 
+#>     Found 1188 potential patches with scores
+#>     Best score: 0.00009560689 for unit 1467 
+#>     Added patch centered on unit 1467 
+#>   Iteration 3 - Unmet targets: 8 
+#>     Found 1043 potential patches with scores
+#>     Best score: 0.00005491464 for unit 2 
+#>     Added patch centered on unit 2 
+#>   Iteration 4 - Unmet targets: 2 
+#>     Found 910 potential patches with scores
+#>     Best score: 0.00001454845 for unit 192 
+#>     Added patch centered on unit 192 
 #>   All conservation targets are now met!
 #> Stage 3: Removing unnecessary planning units...
-#>     Edge units found: 341 
+#>     Edge units found: 178 
 #>     Keystone units: 0 
-#>     New keystone units: 60 
-#>     Scoreable units: 281 
-#>     Unit 1256 cannot be removed - adding to keystone set
-#>     Edge units found: 280 
-#>     Keystone units: 61 
+#>     New keystone units: 12 
+#>     Scoreable units: 166 
+#>     Unit 418 cannot be removed - adding to keystone set
+#>     Edge units found: 165 
+#>     Keystone units: 13 
 #>     New keystone units: 0 
-#>     Scoreable units: 280 
-#>     Unit 1276 cannot be removed - adding to keystone set
-#>     Edge units found: 279 
-#>     Keystone units: 62 
+#>     Scoreable units: 165 
+#>     Unit 452 cannot be removed - adding to keystone set
+#>     Edge units found: 164 
+#>     Keystone units: 14 
 #>     New keystone units: 0 
-#>     Scoreable units: 279 
-#>     Unit 1277 cannot be removed - adding to keystone set
-#>     Edge units found: 278 
-#>     Keystone units: 63 
+#>     Scoreable units: 164 
+#>     Unit 453 cannot be removed - adding to keystone set
+#>     Edge units found: 163 
+#>     Keystone units: 15 
 #>     New keystone units: 0 
-#>     Scoreable units: 278 
-#>     Unit 1292 cannot be removed - adding to keystone set
-#>     Edge units found: 277 
-#>     Keystone units: 64 
+#>     Scoreable units: 163 
+#>     Unit 455 cannot be removed - adding to keystone set
+#>     Edge units found: 162 
+#>     Keystone units: 16 
 #>     New keystone units: 0 
-#>     Scoreable units: 277 
-#>     Unit 1311 cannot be removed - adding to keystone set
-#>     Unit 1357 cannot be removed - adding to keystone set
-#>     Unit 1389 cannot be removed - adding to keystone set
-#>     Unit 1390 cannot be removed - adding to keystone set
-#>     Unit 1361 cannot be removed - adding to keystone set
-#>     Unit 1219 cannot be removed - adding to keystone set
+#>     Scoreable units: 162 
+#>     Unit 456 cannot be removed - adding to keystone set
+#>     Unit 488 cannot be removed - adding to keystone set
+#>     Unit 493 cannot be removed - adding to keystone set
+#>     Unit 494 cannot be removed - adding to keystone set
+#>     Unit 495 cannot be removed - adding to keystone set
+#>     Unit 528 cannot be removed - adding to keystone set
 #>   Whittling iteration 100 
-#>   Whittling iteration 200 
 #>   No more edge units to consider - terminating
 #> Calculating final statistics...
 #> MinPatch processing complete!
 cat("result5 runtime (sec):", t5[["elapsed"]], "\n")
-#> result5 runtime (sec): 50.855
+#> result5 runtime (sec): 58.365
 ```
 
 ## 9. Interpreting MinPatch with boundary penalties outcomes
 
-### 9.1 Change maps (Added / Removed / Retained / No change)
+### 9.1 Selected planning units (baseline vs MinPatch runs)
+
+We compare the spatial solutions across different boundary penalties
+with the baseline solution. All runs used a minimum patch size of **5×
+the median PU area**.
+
+``` r
+
+boundary_penalties <- c(bp3, bp4, bp5)
+boundary_results <- list(result3, result4, result5)
+
+plot_solution_grid(
+  results = boundary_results,
+  get_solution_fun = get_solution_with_solution1,
+  subtitle_values = boundary_penalties,
+  title_prefix = "Boundary penalty = ",
+  value_label_fun = function(x) format(x, scientific = FALSE, trim = TRUE),
+  include_baseline = TRUE,
+  baseline_solution = s_base,
+  baseline_title = "Baseline (prioritizr)",
+  ncol = 2
+)
+```
+
+![](minpatch-oceandatr-Seychelles_files/figure-html/minpatch-bp-1.png)
+
+### 9.2 Groups summary table (all runs)
+
+We summarise and compare all runs on the table below.
+
+``` r
+
+boundary_penalties <- c(bp3, bp4, bp5)
+minpatch_results_bp <- list(result3, result4, result5)
+
+out_bp <- make_minpatch_summary_table(
+  region_sf            = Seychelles_sf,
+  baseline_solution_sf  = s_base,
+  minpatch_results      = minpatch_results_bp,
+  mode                 = "boundary_penalty",
+  boundary_penalties   = boundary_penalties,
+  fixed_multiplier     = 5,                       # <- because you used 5× median PU area
+  baseline_compare_obj = minpatch_results_bp[[1]],
+  compare_solutions_fun = compare_solutions,       # pass explicitly to avoid namespace issues
+  baseline_elapsed     = as.numeric(t_base[["elapsed"]]),
+  minpatch_elapsed     = c(t3[["elapsed"]], t4[["elapsed"]], t5[["elapsed"]]),
+  projected_epsg       = 32740,
+  minpatch_solution_col = "minpatch",
+  cost_col             = "cost",
+  make_kable           = TRUE
+)
+out_bp$kable
+```
+
+| scenario | Boundary penalty | Minimum patch size (km²) | Selected PUs | Total area (km²) | Total perimeter (km) | \# patches | Valid patches (\>= min size) | Median patch size (km²) | Total PU cost | Boundary cost | Overall cost | Runtime (s) |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| Baseline | NA | 4501.06 | 453 | 407796.3 | 33767.14 | 146 | 22 | 1800.43 | 407796.3 | 0.0 | 407796.3 | 0.2 |
+| MinPatch (bp=0) | 0 | 4501.06 | 456 | 410496.9 | 17458.62 | 23 | 23 | 5401.28 | 410496.9 | 0.0 | 410496.9 | 65.9 |
+| MinPatch (bp=0.01) | 0.01 | 4501.06 | 680 | 612144.6 | 11338.61 | 12 | 12 | 7651.81 | 612144.6 | 95679.2 | 707823.8 | 58.1 |
+| MinPatch (bp=1) | 1 | 4501.06 | 703 | 632849.4 | 12717.51 | 12 | 12 | 8101.91 | 632849.4 | 10931927.1 | 11564776.6 | 58.4 |
+
+As the boundary penalty increases, the selected area grows a lot because
+more planning units are included, but the layout becomes cleaner: the
+total perimeter drops and the solution breaks into fewer, larger
+patches. The trade-off is that the solution becomes more expensive
+overall, and the runtime increases slightly.
+
+### 9.3 Change maps (Added / Removed / Retained / No change)
 
 Here, we visualise the MinPatch solutions for different boundary penalty
 values.
 
 ``` r
 
-patchwork::wrap_plots(plot_minpatch(result3, title = paste0("Boundary Penalty: ", bp3)),
-                      plot_minpatch(result4, title = paste0("Boundary Penalty: ", bp4)),
-                      plot_minpatch(result5, title = paste0("Boundary Penalty: ", bp5)),
-                      guides = "collect",
-                      ncol = 3) &
-  theme(legend.position = "bottom")
+# Plot change maps
+patchwork::wrap_plots(
+  plot_minpatch(result3, title = paste0("Boundary Penalty: ", bp3)),
+  plot_minpatch(result4, title = paste0("Boundary Penalty: ", bp4)),
+  plot_minpatch(result5, title = paste0("Boundary Penalty: ", bp5)),
+  guides = "collect",
+  ncol = 3
+) &
+  ggplot2::theme(legend.position = "bottom")
 ```
 
 ![](minpatch-oceandatr-Seychelles_files/figure-html/boundary-change-maps-1.png)
-
-The resulting plots are all identical.
-
-### 9.2 Selected planning units (baseline vs MinPatch runs)
-
-We then check the resulting spatial solutions, but only focusing on the
-selected planning units.
-
-``` r
-
-
-patchwork::wrap_plots(plot_prioritizr(result3$solution, col = "minpatch", title = paste0("Boundary Penalty: ", bp3)),
-                      plot_prioritizr(result4$solution, col = "minpatch", title = paste0("Boundary Penalty: ", bp4)),
-                      plot_prioritizr(result5$solution, col = "minpatch", title = paste0("Boundary Penalty: ", bp5)),
-                      guides = "collect",
-                      ncol = 3) &
-  theme(legend.position = "bottom")
-```
-
-![](minpatch-oceandatr-Seychelles_files/figure-html/boundary-plot-1.png)
-
-The resulting plots are again all identical.
-
-### 9.3 Group summary table (all runs)
-
-We summarise and compare all the runs using a table.
-
-``` r
-
-# helper to grab one metric from the compare_solutions()$overall table
-get_metric <- function(overall, column, metric) {
-  out <- overall[[column]][overall$Metric == metric]
-  if (length(out) == 0) NA_real_ else out  # safer: return NA if not found
-}
-
-# MinPatch results for different boundary penalties
-boundary_penalties <- c(bp3, bp4, bp5)
-
-minpatch_results_bp <- list(
-  result3,
-  result4,
-  result5
-)
-
-# runtimes taken from your system.time() calls
-minpatch_runtimes <- list(
-  t3[["elapsed"]],
-  t4[["elapsed"]],
-  t5[["elapsed"]]
-)
-
-# baseline metrics from the first comparison (same "Original" across runs)
-overall0 <- compare_solutions(minpatch_results_bp[[1]])$overall
-
-baseline_row <- tibble::tibble(
-  scenario            = "baseline",
-  boundary_penalty    = NA_real_,
-  selected_pu         = get_metric(overall0, "Original", "Selected Planning Units"),
-  total_area          = get_metric(overall0, "Original", "Total Area"),
-  n_patches           = get_metric(overall0, "Original", "Number of Patches"),
-  valid_patches       = get_metric(overall0, "Original", "Valid Patches (>= min size)"),
-  median_patch_size   = get_metric(overall0, "Original", "Median Patch Size"),
-  planning_unit_cost  = get_metric(overall0, "Original", "Planning Unit Cost"),
-  boundary_cost       = get_metric(overall0, "Original", "Boundary Cost"),
-  total_cost          = get_metric(overall0, "Original", "Total Cost"),
-  runtime_sec         = t_base[["elapsed"]]   # baseline runtime from your code
-)
-
-# metrics for each MinPatch run (different boundary penalties)
-minpatch_rows <- purrr::pmap_dfr(
-  list(
-    minpatch_results_bp,
-    as.list(boundary_penalties),
-    minpatch_runtimes
-  ),
-  function(res, bp, rt) {
-    overall <- compare_solutions(res)$overall
-    
-    tibble::tibble(
-      scenario            = paste0("minpatch_bp", bp),
-      boundary_penalty    = bp,
-      selected_pu         = get_metric(overall, "MinPatch", "Selected Planning Units"),
-      total_area          = get_metric(overall, "MinPatch", "Total Area"),
-      n_patches           = get_metric(overall, "MinPatch", "Number of Patches"),
-      valid_patches       = get_metric(overall, "MinPatch", "Valid Patches (>= min size)"),
-      median_patch_size   = get_metric(overall, "MinPatch", "Median Patch Size"),
-      planning_unit_cost  = get_metric(overall, "MinPatch", "Planning Unit Cost"),
-      boundary_cost       = get_metric(overall, "MinPatch", "Boundary Cost"),
-      total_cost          = get_metric(overall, "MinPatch", "Total Cost"),
-      runtime_sec         = rt   # runtime from t3/t4/t5
-    )
-  }
-)
-
-# combine baseline + all MinPatch runs in one table
-solution_summary <- dplyr::bind_rows(baseline_row, minpatch_rows)
-solution_summary
-#> # A tibble: 4 × 11
-#>   scenario       boundary_penalty selected_pu total_area n_patches valid_patches
-#>   <chr>                     <dbl>       <dbl>      <dbl>     <dbl>         <dbl>
-#> 1 baseline               NA               453    4.08e11       146            22
-#> 2 minpatch_bp0            0               454    4.09e11        26            25
-#> 3 minpatch_bp0.…          0.00001         454    4.09e11        26            25
-#> 4 minpatch_bp1            1               464    4.18e11        24            23
-#> # ℹ 5 more variables: median_patch_size <dbl>, planning_unit_cost <dbl>,
-#> #   boundary_cost <dbl>, total_cost <dbl>, runtime_sec <dbl>
-```
-
-The table shows that increasing the boundary penalty does not alter any
-of the reported metrics for this example.
 
 ### 9.4 Individual summaries (per run)
 
@@ -1772,205 +1704,490 @@ We show the individual summaries for every run in detail.
 
 ``` r
 
-library(knitr)
+# Run summaries
+boundary_penalties <- c(bp3, bp4, bp5)
+minpatch_results_bp <- list(result3, result4, result5)
+minpatch_runtimes <- c(t3[["elapsed"]], t4[["elapsed"]], t5[["elapsed"]])
 
-# MinPatch results for different boundary penalties
-boundary_penalties <- c(0, 1e-5, 1e-10)
-
-minpatch_results_bp <- list(
-  result3,
-  result4,
-  result5
-)
-
-# Runtimes taken from system.time() calls
-minpatch_runtimes <- c(
-  t3[["elapsed"]],
-  t4[["elapsed"]],
-  t5[["elapsed"]]
-)
-
-# Loop over all MinPatch results (different boundary penalties)
 for (i in seq_along(minpatch_results_bp)) {
 
   result      <- minpatch_results_bp[[i]]
   bp          <- boundary_penalties[i]
   runtime_sec <- minpatch_runtimes[i]
 
-  # ---- Scenario header ----
-  cat(
-    "\n\n## Scenario: MinPatch with boundary penalty = ",
-    format(bp, scientific = TRUE),
-    "\n\n",
-    sep = ""
-  )
+  cat("\n\n## Scenario: MinPatch with boundary penalty = ", format(bp, scientific = TRUE), "\n\n", sep = "")
 
-  # ---- Runtime ----
   if (!is.na(runtime_sec)) {
-    cat(
-      "**Runtime:** ",
-      sprintf("%.2f", runtime_sec),
-      " seconds\n\n",
-      sep = ""
-    )
+    cat("**Runtime:** ", sprintf("%.2f", runtime_sec), " seconds\n\n", sep = "")
   }
 
-  # ---- MinPatch processing summary ----
-  cat("### MinPatch processing summary\n\n")
+  cat("**MinPatch processing summary**\n\n")
   print_minpatch_summary(result)
 
-  # ---- Compare solutions ----
   comparison <- compare_solutions(result)
 
-  # ---- Overall comparison ----
-  cat("\n### Overall solution comparison\n\n")
-  knitr::kable(
-    comparison$overall,
-    caption = paste0(
-      "Comparison between the original and MinPatch-adjusted solutions (boundary penalty = ",
-      format(bp, scientific = TRUE),
-      ")"
-    )
-  )
+  cat("\n**Overall solution comparison**\n\n")
+  print(comparison$overall)
 
-  # ---- Feature-level comparison ----
-  cat("\n### Feature-level area comparison\n\n")
-  knitr::kable(
-    comparison$features,
-    caption = paste0(
-      "Feature-level area and proportional changes after MinPatch (boundary penalty = ",
-      format(bp, scientific = TRUE),
-      ")"
-    )
-  )
+  cat("\n**Feature-level area comparison**\n\n")
+  print(comparison$features)
 
-  # ---- Feature change summary ----
-  cat("\n### Feature change summary\n\n")
-  knitr::kable(
-    comparison$summary,
-    caption = paste0(
-      "Summary of improved, reduced, and unchanged features (boundary penalty = ",
-      format(bp, scientific = TRUE),
-      ")"
-    )
-  )
+  cat("\n**Feature change summary**\n\n")
+  print(comparison$summary)
 }
 #> 
 #> 
 #> ## Scenario: MinPatch with boundary penalty = 0e+00
 #> 
-#> **Runtime:** 35.25 seconds
+#> **Runtime:** 65.93 seconds
 #> 
-#> ### MinPatch processing summary
+#> **MinPatch processing summary**
 #> 
 #> === MinPatch Processing Summary ===
 #> 
 #> Patch Statistics:
 #>   Initial patches: 146 (valid: 22)
-#>   Final patches: 26 (valid: 25)
-#>   Area change: 900212583.64 (0.2%)
+#>   Final patches: 23 (valid: 23)
+#>   Area change: 2700637750.93 (0.7%)
 #> 
 #> Cost Breakdown:
-#>   Planning unit cost: 408696.51
+#>   Planning unit cost: 410496.94
 #>   Boundary cost: 0.00
-#>   Total cost: 408696.51
-#>   Selected units: 454
+#>   Total cost: 410496.94
+#>   Selected units: 456
 #> 
 #> Feature Representation:
 #>   Total features: 28
 #>   Targets met: 28
 #>   Targets unmet: 0
-#>   Mean proportion: 0.399
+#>   Mean proportion: 0.376
 #>   Total shortfall: 0.00
 #> 
 #> 
 #> === End Summary ===
 #> 
-#> ### Overall solution comparison
+#> **Overall solution comparison**
+#> 
+#>                        Metric       Original       MinPatch     Change
+#> 1     Selected Planning Units          453.0          456.0          3
+#> 2                  Total Area 407796300391.2 410496938142.2 2700637751
+#> 3           Number of Patches          146.0           23.0       -123
+#> 4 Valid Patches (>= min size)           22.0           23.0          1
+#> 5           Median Patch Size   1800425167.3   5401275501.9 3600850335
+#> 6          Planning Unit Cost       410496.9       410496.9          0
+#> 7               Boundary Cost            0.0            0.0          0
+#> 8                  Total Cost       410496.9       410496.9          0
+#>   Percent_Change
+#> 1      0.6622517
+#> 2      0.6622517
+#> 3    -84.2465753
+#> 4      4.5454545
+#> 5    200.0000000
+#> 6      0.0000000
+#> 7             NA
+#> 8      0.0000000
+#> 
+#> **Feature-level area comparison**
+#> 
+#>    Feature_ID Target Original_Area MinPatch_Area Area_Change Percent_Change
+#> 1           1   11.1            12            12           0      0.0000000
+#> 2           2    4.5             5             7           2     40.0000000
+#> 3           3  110.1           111           112           1      0.9009009
+#> 4           4  324.3           325           325           0      0.0000000
+#> 5           5   86.1            93            87          -6     -6.4516129
+#> 6           6   45.9            46            59          13     28.2608696
+#> 7           7  163.2           175           178           3      1.7142857
+#> 8           8  116.1           125           123          -2     -1.6000000
+#> 9           9    0.6             1             1           0      0.0000000
+#> 10         10    0.6             1             1           0      0.0000000
+#> 11         11   23.1            30            28          -2     -6.6666667
+#> 12         12    2.1             4             3          -1    -25.0000000
+#> 13         13    3.3             5             4          -1    -20.0000000
+#> 14         14  158.7           179           171          -8     -4.4692737
+#> 15         15   64.5            67            80          13     19.4029851
+#> 16         16   20.7            25            22          -3    -12.0000000
+#> 17         17    2.1             3             3           0      0.0000000
+#> 18         18   22.5            42            34          -8    -19.0476190
+#> 19         19    0.6             1             1           0      0.0000000
+#> 20         20   14.4            19            17          -2    -10.5263158
+#> 21         21    3.9             6             6           0      0.0000000
+#> 22         22   63.9            75            91          16     21.3333333
+#> 23         23    6.3             7             8           1     14.2857143
+#> 24         24   51.3            53            67          14     26.4150943
+#> 25         25  137.7           138           139           1      0.7246377
+#> 26         26  150.0           152           150          -2     -1.3157895
+#> 27         27   74.4            75            75           0      0.0000000
+#> 28         28   87.9            88            92           4      4.5454545
+#>    Original_Target_Met MinPatch_Target_Met Original_Proportion
+#> 1                 TRUE                TRUE            1.081081
+#> 2                 TRUE                TRUE            1.111111
+#> 3                 TRUE                TRUE            1.008174
+#> 4                 TRUE                TRUE            1.002158
+#> 5                 TRUE                TRUE            1.080139
+#> 6                 TRUE                TRUE            1.002179
+#> 7                 TRUE                TRUE            1.072304
+#> 8                 TRUE                TRUE            1.076658
+#> 9                 TRUE                TRUE            1.666667
+#> 10                TRUE                TRUE            1.666667
+#> 11                TRUE                TRUE            1.298701
+#> 12                TRUE                TRUE            1.904762
+#> 13                TRUE                TRUE            1.515152
+#> 14                TRUE                TRUE            1.127914
+#> 15                TRUE                TRUE            1.038760
+#> 16                TRUE                TRUE            1.207729
+#> 17                TRUE                TRUE            1.428571
+#> 18                TRUE                TRUE            1.866667
+#> 19                TRUE                TRUE            1.666667
+#> 20                TRUE                TRUE            1.319444
+#> 21                TRUE                TRUE            1.538462
+#> 22                TRUE                TRUE            1.173709
+#> 23                TRUE                TRUE            1.111111
+#> 24                TRUE                TRUE            1.033138
+#> 25                TRUE                TRUE            1.002179
+#> 26                TRUE                TRUE            1.013333
+#> 27                TRUE                TRUE            1.008065
+#> 28                TRUE                TRUE            1.001138
+#>    MinPatch_Proportion
+#> 1             1.081081
+#> 2             1.555556
+#> 3             1.017257
+#> 4             1.002158
+#> 5             1.010453
+#> 6             1.285403
+#> 7             1.090686
+#> 8             1.059432
+#> 9             1.666667
+#> 10            1.666667
+#> 11            1.212121
+#> 12            1.428571
+#> 13            1.212121
+#> 14            1.077505
+#> 15            1.240310
+#> 16            1.062802
+#> 17            1.428571
+#> 18            1.511111
+#> 19            1.666667
+#> 20            1.180556
+#> 21            1.538462
+#> 22            1.424100
+#> 23            1.269841
+#> 24            1.306043
+#> 25            1.009441
+#> 26            1.000000
+#> 27            1.008065
+#> 28            1.046644
+#> 
+#> **Feature change summary**
+#> 
+#>   features_improved features_reduced features_unchanged targets_gained
+#> 1                10               10                  8              0
+#>   targets_lost
+#> 1            0
 #> 
 #> 
-#> ### Feature-level area comparison
+#> ## Scenario: MinPatch with boundary penalty = 1e-02
 #> 
+#> **Runtime:** 58.13 seconds
 #> 
-#> ### Feature change summary
-#> 
-#> 
-#> 
-#> ## Scenario: MinPatch with boundary penalty = 1e-05
-#> 
-#> **Runtime:** 35.78 seconds
-#> 
-#> ### MinPatch processing summary
+#> **MinPatch processing summary**
 #> 
 #> === MinPatch Processing Summary ===
 #> 
 #> Patch Statistics:
 #>   Initial patches: 146 (valid: 22)
-#>   Final patches: 26 (valid: 25)
-#>   Area change: 900212583.64 (0.2%)
+#>   Final patches: 12 (valid: 12)
+#>   Area change: 204348256487.44 (50.1%)
 #> 
 #> Cost Breakdown:
-#>   Planning unit cost: 408696.51
-#>   Boundary cost: 173.17
-#>   Total cost: 408869.69
-#>   Selected units: 454
+#>   Planning unit cost: 612144.56
+#>   Boundary cost: 95679.20
+#>   Total cost: 707823.75
+#>   Selected units: 680
 #> 
 #> Feature Representation:
 #>   Total features: 28
 #>   Targets met: 28
 #>   Targets unmet: 0
-#>   Mean proportion: 0.399
+#>   Mean proportion: 0.452
 #>   Total shortfall: 0.00
 #> 
 #> 
 #> === End Summary ===
 #> 
-#> ### Overall solution comparison
+#> **Overall solution comparison**
+#> 
+#>                        Metric       Original       MinPatch       Change
+#> 1     Selected Planning Units          453.0          680.0          227
+#> 2                  Total Area 407796300391.2 612144556878.7 204348256487
+#> 3           Number of Patches          146.0           12.0         -134
+#> 4 Valid Patches (>= min size)           22.0           12.0          -10
+#> 5           Median Patch Size   1800425167.3   7651806961.0   5851381794
+#> 6          Planning Unit Cost       612144.6       612144.6            0
+#> 7               Boundary Cost        95679.2        95679.2            0
+#> 8                  Total Cost       707823.8       707823.8            0
+#>   Percent_Change
+#> 1       50.11038
+#> 2       50.11038
+#> 3      -91.78082
+#> 4      -45.45455
+#> 5      325.00000
+#> 6        0.00000
+#> 7        0.00000
+#> 8        0.00000
+#> 
+#> **Feature-level area comparison**
+#> 
+#>    Feature_ID Target Original_Area MinPatch_Area Area_Change Percent_Change
+#> 1           1   11.1            12            12           0       0.000000
+#> 2           2    4.5             5             8           3      60.000000
+#> 3           3  110.1           111           183          72      64.864865
+#> 4           4  324.3           325           477         152      46.769231
+#> 5           5   86.1            93           124          31      33.333333
+#> 6           6   45.9            46            72          26      56.521739
+#> 7           7  163.2           175           293         118      67.428571
+#> 8           8  116.1           125           160          35      28.000000
+#> 9           9    0.6             1             1           0       0.000000
+#> 10         10    0.6             1             1           0       0.000000
+#> 11         11   23.1            30            37           7      23.333333
+#> 12         12    2.1             4             3          -1     -25.000000
+#> 13         13    3.3             5             4          -1     -20.000000
+#> 14         14  158.7           179           287         108      60.335196
+#> 15         15   64.5            67            87          20      29.850746
+#> 16         16   20.7            25            24          -1      -4.000000
+#> 17         17    2.1             3             3           0       0.000000
+#> 18         18   22.5            42            35          -7     -16.666667
+#> 19         19    0.6             1             1           0       0.000000
+#> 20         20   14.4            19            16          -3     -15.789474
+#> 21         21    3.9             6             6           0       0.000000
+#> 22         22   63.9            75           109          34      45.333333
+#> 23         23    6.3             7             9           2      28.571429
+#> 24         24   51.3            53            84          31      58.490566
+#> 25         25  137.7           138           146           8       5.797101
+#> 26         26  150.0           152           270         118      77.631579
+#> 27         27   74.4            75           105          30      40.000000
+#> 28         28   87.9            88           159          71      80.681818
+#>    Original_Target_Met MinPatch_Target_Met Original_Proportion
+#> 1                 TRUE                TRUE            1.081081
+#> 2                 TRUE                TRUE            1.111111
+#> 3                 TRUE                TRUE            1.008174
+#> 4                 TRUE                TRUE            1.002158
+#> 5                 TRUE                TRUE            1.080139
+#> 6                 TRUE                TRUE            1.002179
+#> 7                 TRUE                TRUE            1.072304
+#> 8                 TRUE                TRUE            1.076658
+#> 9                 TRUE                TRUE            1.666667
+#> 10                TRUE                TRUE            1.666667
+#> 11                TRUE                TRUE            1.298701
+#> 12                TRUE                TRUE            1.904762
+#> 13                TRUE                TRUE            1.515152
+#> 14                TRUE                TRUE            1.127914
+#> 15                TRUE                TRUE            1.038760
+#> 16                TRUE                TRUE            1.207729
+#> 17                TRUE                TRUE            1.428571
+#> 18                TRUE                TRUE            1.866667
+#> 19                TRUE                TRUE            1.666667
+#> 20                TRUE                TRUE            1.319444
+#> 21                TRUE                TRUE            1.538462
+#> 22                TRUE                TRUE            1.173709
+#> 23                TRUE                TRUE            1.111111
+#> 24                TRUE                TRUE            1.033138
+#> 25                TRUE                TRUE            1.002179
+#> 26                TRUE                TRUE            1.013333
+#> 27                TRUE                TRUE            1.008065
+#> 28                TRUE                TRUE            1.001138
+#>    MinPatch_Proportion
+#> 1             1.081081
+#> 2             1.777778
+#> 3             1.662125
+#> 4             1.470860
+#> 5             1.440186
+#> 6             1.568627
+#> 7             1.795343
+#> 8             1.378122
+#> 9             1.666667
+#> 10            1.666667
+#> 11            1.601732
+#> 12            1.428571
+#> 13            1.212121
+#> 14            1.808444
+#> 15            1.348837
+#> 16            1.159420
+#> 17            1.428571
+#> 18            1.555556
+#> 19            1.666667
+#> 20            1.111111
+#> 21            1.538462
+#> 22            1.705790
+#> 23            1.428571
+#> 24            1.637427
+#> 25            1.060276
+#> 26            1.800000
+#> 27            1.411290
+#> 28            1.808874
+#> 
+#> **Feature change summary**
+#> 
+#>   features_improved features_reduced features_unchanged targets_gained
+#> 1                17                5                  6              0
+#>   targets_lost
+#> 1            0
 #> 
 #> 
-#> ### Feature-level area comparison
+#> ## Scenario: MinPatch with boundary penalty = 1e+00
 #> 
+#> **Runtime:** 58.37 seconds
 #> 
-#> ### Feature change summary
-#> 
-#> 
-#> 
-#> ## Scenario: MinPatch with boundary penalty = 1e-10
-#> 
-#> **Runtime:** 50.86 seconds
-#> 
-#> ### MinPatch processing summary
+#> **MinPatch processing summary**
 #> 
 #> === MinPatch Processing Summary ===
 #> 
 #> Patch Statistics:
 #>   Initial patches: 146 (valid: 22)
-#>   Final patches: 24 (valid: 23)
-#>   Area change: 9902338420.10 (2.4%)
+#>   Final patches: 12 (valid: 12)
+#>   Area change: 225053145911.28 (55.2%)
 #> 
 #> Cost Breakdown:
-#>   Planning unit cost: 417698.64
-#>   Boundary cost: 17197209.33
-#>   Total cost: 17614907.97
-#>   Selected units: 464
+#>   Planning unit cost: 632849.45
+#>   Boundary cost: 10931927.12
+#>   Total cost: 11564776.56
+#>   Selected units: 703
 #> 
 #> Feature Representation:
 #>   Total features: 28
 #>   Targets met: 28
 #>   Targets unmet: 0
-#>   Mean proportion: 0.416
+#>   Mean proportion: 0.468
 #>   Total shortfall: 0.00
 #> 
 #> 
 #> === End Summary ===
 #> 
-#> ### Overall solution comparison
+#> **Overall solution comparison**
 #> 
+#>                        Metric       Original       MinPatch       Change
+#> 1     Selected Planning Units          453.0          703.0          250
+#> 2                  Total Area 407796300391.2 632849446302.5 225053145911
+#> 3           Number of Patches          146.0           12.0         -134
+#> 4 Valid Patches (>= min size)           22.0           12.0          -10
+#> 5           Median Patch Size   1800425167.3   8101913252.8   6301488086
+#> 6          Planning Unit Cost       632849.4       632849.4            0
+#> 7               Boundary Cost     10931927.1     10931927.1            0
+#> 8                  Total Cost     11564776.6     11564776.6            0
+#>   Percent_Change
+#> 1       55.18764
+#> 2       55.18764
+#> 3      -91.78082
+#> 4      -45.45455
+#> 5      350.00000
+#> 6        0.00000
+#> 7        0.00000
+#> 8        0.00000
 #> 
-#> ### Feature-level area comparison
+#> **Feature-level area comparison**
 #> 
+#>    Feature_ID Target Original_Area MinPatch_Area Area_Change Percent_Change
+#> 1           1   11.1            12            13           1       8.333333
+#> 2           2    4.5             5             9           4      80.000000
+#> 3           3  110.1           111           183          72      64.864865
+#> 4           4  324.3           325           498         173      53.230769
+#> 5           5   86.1            93           127          34      36.559140
+#> 6           6   45.9            46            74          28      60.869565
+#> 7           7  163.2           175           302         127      72.571429
+#> 8           8  116.1           125           169          44      35.200000
+#> 9           9    0.6             1             1           0       0.000000
+#> 10         10    0.6             1             1           0       0.000000
+#> 11         11   23.1            30            37           7      23.333333
+#> 12         12    2.1             4             3          -1     -25.000000
+#> 13         13    3.3             5             4          -1     -20.000000
+#> 14         14  158.7           179           296         117      65.363128
+#> 15         15   64.5            67            90          23      34.328358
+#> 16         16   20.7            25            25           0       0.000000
+#> 17         17    2.1             3             3           0       0.000000
+#> 18         18   22.5            42            38          -4      -9.523810
+#> 19         19    0.6             1             1           0       0.000000
+#> 20         20   14.4            19            18          -1      -5.263158
+#> 21         21    3.9             6             6           0       0.000000
+#> 22         22   63.9            75           111          36      48.000000
+#> 23         23    6.3             7            10           3      42.857143
+#> 24         24   51.3            53            85          32      60.377358
+#> 25         25  137.7           138           154          16      11.594203
+#> 26         26  150.0           152           276         124      81.578947
+#> 27         27   74.4            75           110          35      46.666667
+#> 28         28   87.9            88           163          75      85.227273
+#>    Original_Target_Met MinPatch_Target_Met Original_Proportion
+#> 1                 TRUE                TRUE            1.081081
+#> 2                 TRUE                TRUE            1.111111
+#> 3                 TRUE                TRUE            1.008174
+#> 4                 TRUE                TRUE            1.002158
+#> 5                 TRUE                TRUE            1.080139
+#> 6                 TRUE                TRUE            1.002179
+#> 7                 TRUE                TRUE            1.072304
+#> 8                 TRUE                TRUE            1.076658
+#> 9                 TRUE                TRUE            1.666667
+#> 10                TRUE                TRUE            1.666667
+#> 11                TRUE                TRUE            1.298701
+#> 12                TRUE                TRUE            1.904762
+#> 13                TRUE                TRUE            1.515152
+#> 14                TRUE                TRUE            1.127914
+#> 15                TRUE                TRUE            1.038760
+#> 16                TRUE                TRUE            1.207729
+#> 17                TRUE                TRUE            1.428571
+#> 18                TRUE                TRUE            1.866667
+#> 19                TRUE                TRUE            1.666667
+#> 20                TRUE                TRUE            1.319444
+#> 21                TRUE                TRUE            1.538462
+#> 22                TRUE                TRUE            1.173709
+#> 23                TRUE                TRUE            1.111111
+#> 24                TRUE                TRUE            1.033138
+#> 25                TRUE                TRUE            1.002179
+#> 26                TRUE                TRUE            1.013333
+#> 27                TRUE                TRUE            1.008065
+#> 28                TRUE                TRUE            1.001138
+#>    MinPatch_Proportion
+#> 1             1.171171
+#> 2             2.000000
+#> 3             1.662125
+#> 4             1.535615
+#> 5             1.475029
+#> 6             1.612200
+#> 7             1.850490
+#> 8             1.455642
+#> 9             1.666667
+#> 10            1.666667
+#> 11            1.601732
+#> 12            1.428571
+#> 13            1.212121
+#> 14            1.865154
+#> 15            1.395349
+#> 16            1.207729
+#> 17            1.428571
+#> 18            1.688889
+#> 19            1.666667
+#> 20            1.250000
+#> 21            1.538462
+#> 22            1.737089
+#> 23            1.587302
+#> 24            1.656920
+#> 25            1.118373
+#> 26            1.840000
+#> 27            1.478495
+#> 28            1.854380
 #> 
-#> ### Feature change summary
+#> **Feature change summary**
+#> 
+#>   features_improved features_reduced features_unchanged targets_gained
+#> 1                18                4                  6              0
+#>   targets_lost
+#> 1            0
 ```
 
-Similarly, the values across the individual summaries are the same.
+## 10. Takeaway
+
+Overall, this vignette showed a simple workflow for using MinPatch on a
+marine region. In the Seychelles example, MinPatch quickly collapses a
+highly fragmented baseline into fewer, larger rook-connected patches,
+and increasing the minimum patch multiplier strengthens that
+consolidation. Adding a boundary penalty during whittling pushes
+solutions toward cleaner edges and fewer patch boundaries, but it can
+also drive up selected area and total cost, especially when the penalty
+is large relative to planning-unit cost.

@@ -12,7 +12,10 @@ make_minpatch_summary_table(
   region_sf,
   baseline_solution_sf,
   minpatch_results,
-  multipliers,
+  mode = c("multiplier", "boundary_penalty"),
+  multipliers = NULL,
+  boundary_penalties = NULL,
+  fixed_multiplier = NA_real_,
   compare_solutions_fun = NULL,
   baseline_compare_obj = NULL,
   baseline_elapsed = NA_real_,
@@ -41,9 +44,22 @@ make_minpatch_summary_table(
 
   List of MinPatch results; each must contain \`\$solution\` (sf).
 
+- mode:
+
+  One of "multiplier" or "boundary_penalty".
+
 - multipliers:
 
-  Numeric vector; same length/order as \`minpatch_results\`.
+  Numeric vector; required if mode="multiplier".
+
+- boundary_penalties:
+
+  Numeric vector; required if mode="boundary_penalty".
+
+- fixed_multiplier:
+
+  Numeric scalar used only if mode="boundary_penalty" (e.g., 5 for "5×
+  median PU area").
 
 - compare_solutions_fun:
 
@@ -61,7 +77,7 @@ make_minpatch_summary_table(
 
 - minpatch_elapsed:
 
-  MinPatch runtimes (seconds). Optional; must match \`multipliers\`.
+  MinPatch runtimes (seconds). Optional; must match number of runs.
 
 - projected_epsg:
 
@@ -90,3 +106,9 @@ make_minpatch_summary_table(
 ## Value
 
 list(data = tibble, kable = html or NULL)
+
+## Details
+
+Two modes: - mode = "multiplier": multiple min patch sizes (uses
+\`multipliers\`) - mode = "boundary_penalty": one min patch size,
+multiple boundary penalties (uses \`boundary_penalties\`)

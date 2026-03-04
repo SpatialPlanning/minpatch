@@ -1,9 +1,9 @@
 ---
-title: "Using oceandatr and minpatch to reduce fragmentation in a marine planning region (Seychelles)"
+title: "Using minpatch to reduce fragmentation in a marine planning region (Seychelles)"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteEncoding{UTF-8}
-  %\VignetteIndexEntry{Marine example: oceandatr + minpatch (Seychelles)}
+  %\VignetteIndexEntry{Using minpatch to reduce fragmentation in a marine planning region (Seychelles)}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
   markdown: 

@@ -1,4 +1,4 @@
-# MinPatch for R
+# minpatch for R ![](reference/figures/minpatch.png)
 
 **Note: This is still a work in progress and significant bugs may be
 present. Use with caution**
@@ -117,6 +117,40 @@ Removes unnecessary planning units through an iterative process:
     - Must not make patches too small
     - Must not increase total cost (if boundary penalty \> 0)
     - Must not split patches into non-viable pieces
+
+### User inputs (parameters that shape patch structure)
+
+MinPatch uses a small set of user-defined parameters that determine how
+patch structure is modified to reduce fragmentation. Together, these
+settings control minimum patch size, how candidate patches are
+constructed, and how strongly irregular boundaries are penalised.
+
+- **`min_patch_size`**: The minimum allowable patch size. Patches
+  smaller than this threshold are removed in Stage 1 (except where
+  locked-in units apply), and removals in Stage 3 are blocked if they
+  would cause any patch (or split fragment) to drop below this size.
+
+- **`patch_radius`**: Controls how candidate patches are constructed in
+  Stage 2 (BestPatch). Larger radii generally favour adding more compact
+  patches (fewer isolated units), but can also increase the total area
+  added.
+
+- **`boundary_penalty`** *(optional)*: Controls how strongly MinPatch
+  discourages irregular patch edges during Stage 3 (whittling).
+  Conceptually, `boundary_penalty` converts patch perimeter (boundary
+  length) into the same “currency” as planning-unit cost, so edge length
+  can be traded off against area/opportunity cost. When
+  `boundary_penalty > 0`, a candidate edge unit is only removed if doing
+  so does not increase the boundary-penalised objective:
+
+  ``` math
+   \Delta \text{Objective} = (\text{boundary_penalty} \times \Delta \text{perimeter}) - \text{unit_cost} 
+  ```
+
+  If $`\Delta \text{Objective} > 0`$, the removal is blocked because the
+  increase in boundary penalty outweighs the cost saved by removing the
+  unit (i.e., it would make the patch edge more “expensive”). Setting
+  `boundary_penalty = 0` turns off this check.
 
 ## Citation
 

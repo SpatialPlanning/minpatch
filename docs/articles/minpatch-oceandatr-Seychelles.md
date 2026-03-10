@@ -746,9 +746,9 @@ table to compare outcomes across different metrics.
 | scenario | Multiplier | Minimum patch size (km²) | Selected PUs | Total area (km²) | Total perimeter (km) | \# patches | Valid patches (\>= min size) | Median patch size (km²) | Total PU cost | Boundary cost | Overall cost | Runtime (s) |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | Baseline | NA | NA | 453 | 407796.3 | 33767.14 | 146 | 22 | 1800.43 | 407796.3 | 0 | 407796.3 | 0.2 |
-| MinPatch ×5 | 5 | 4501.06 | 456 | 410496.9 | 17458.62 | 23 | 23 | 5401.28 | 410496.9 | 0 | 410496.9 | 66.8 |
-| MinPatch ×10 | 10 | 9002.13 | 466 | 419499.1 | 14992.65 | 11 | 11 | 9902.34 | 419499.1 | 0 | 419499.1 | 72.0 |
-| MinPatch ×20 | 20 | 18004.25 | 491 | 442004.4 | 18895.37 | 11 | 11 | 22505.31 | 442004.4 | 0 | 442004.4 | 106.2 |
+| MinPatch ×5 | 5 | 4501.06 | 456 | 410496.9 | 17458.62 | 23 | 23 | 5401.28 | 410496.9 | 0 | 410496.9 | 77.6 |
+| MinPatch ×10 | 10 | 9002.13 | 466 | 419499.1 | 14992.65 | 11 | 11 | 9902.34 | 419499.1 | 0 | 419499.1 | 90.0 |
+| MinPatch ×20 | 20 | 18004.25 | 491 | 442004.4 | 18895.37 | 11 | 11 | 22505.31 | 442004.4 | 0 | 442004.4 | 128.4 |
 
 Once MinPatch is applied, the solution becomes less fragmented: as the
 multiplier increases, the number of patches decreases and the remaining
@@ -1416,7 +1416,7 @@ t3 <- system.time({
 #> Calculating final statistics...
 #> MinPatch processing complete!
 cat("result3 runtime (sec):", t3[["elapsed"]], "\n")
-#> result3 runtime (sec): 65.925
+#> result3 runtime (sec): 77.635
 
 bp4 = 0.01
 t4 <- system.time({
@@ -1511,7 +1511,7 @@ t4 <- system.time({
 #> Calculating final statistics...
 #> MinPatch processing complete!
 cat("result4 runtime (sec):", t4[["elapsed"]], "\n")
-#> result4 runtime (sec): 58.132
+#> result4 runtime (sec): 64.826
 
 bp5 = 1
 t5 <- system.time({
@@ -1606,7 +1606,7 @@ t5 <- system.time({
 #> Calculating final statistics...
 #> MinPatch processing complete!
 cat("result5 runtime (sec):", t5[["elapsed"]], "\n")
-#> result5 runtime (sec): 58.365
+#> result5 runtime (sec): 69.494
 ```
 
 ## 9. Interpreting MinPatch with boundary penalties outcomes
@@ -1668,9 +1668,9 @@ out_bp$kable
 | scenario | Boundary penalty | Minimum patch size (km²) | Selected PUs | Total area (km²) | Total perimeter (km) | \# patches | Valid patches (\>= min size) | Median patch size (km²) | Total PU cost | Boundary cost | Overall cost | Runtime (s) |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | Baseline | NA | 4501.06 | 453 | 407796.3 | 33767.14 | 146 | 22 | 1800.43 | 407796.3 | 0.0 | 407796.3 | 0.2 |
-| MinPatch (bp=0) | 0 | 4501.06 | 456 | 410496.9 | 17458.62 | 23 | 23 | 5401.28 | 410496.9 | 0.0 | 410496.9 | 65.9 |
-| MinPatch (bp=0.01) | 0.01 | 4501.06 | 680 | 612144.6 | 11338.61 | 12 | 12 | 7651.81 | 612144.6 | 95679.2 | 707823.8 | 58.1 |
-| MinPatch (bp=1) | 1 | 4501.06 | 703 | 632849.4 | 12717.51 | 12 | 12 | 8101.91 | 632849.4 | 10931927.1 | 11564776.6 | 58.4 |
+| MinPatch (bp=0) | 0 | 4501.06 | 456 | 410496.9 | 17458.62 | 23 | 23 | 5401.28 | 410496.9 | 0.0 | 410496.9 | 77.6 |
+| MinPatch (bp=0.01) | 0.01 | 4501.06 | 680 | 612144.6 | 11338.61 | 12 | 12 | 7651.81 | 612144.6 | 95679.2 | 707823.8 | 64.8 |
+| MinPatch (bp=1) | 1 | 4501.06 | 703 | 632849.4 | 12717.51 | 12 | 12 | 8101.91 | 632849.4 | 10931927.1 | 11564776.6 | 69.5 |
 
 As the boundary penalty increases, the selected area grows a lot because
 more planning units are included, but the layout becomes cleaner: the
@@ -1739,7 +1739,7 @@ for (i in seq_along(minpatch_results_bp)) {
 #> 
 #> ## Scenario: MinPatch with boundary penalty = 0e+00
 #> 
-#> **Runtime:** 65.93 seconds
+#> **Runtime:** 77.63 seconds
 #> 
 #> **MinPatch processing summary**
 #> 
@@ -1887,7 +1887,7 @@ for (i in seq_along(minpatch_results_bp)) {
 #> 
 #> ## Scenario: MinPatch with boundary penalty = 1e-02
 #> 
-#> **Runtime:** 58.13 seconds
+#> **Runtime:** 64.83 seconds
 #> 
 #> **MinPatch processing summary**
 #> 
@@ -2035,7 +2035,7 @@ for (i in seq_along(minpatch_results_bp)) {
 #> 
 #> ## Scenario: MinPatch with boundary penalty = 1e+00
 #> 
-#> **Runtime:** 58.37 seconds
+#> **Runtime:** 69.49 seconds
 #> 
 #> **MinPatch processing summary**
 #> 

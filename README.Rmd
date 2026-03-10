@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# MinPatch for R
+# minpatch for R <a href="https://SpatialPlanning.github.io/minpatch"><img src="man/figures/minpatch.png" align="right" height="139" alt="minpatch website"></a>
 
 <!-- badges: start -->
 

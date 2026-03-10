@@ -37,7 +37,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/boundary-penalty.html">Boundary penalty in MinPatch</a></li>
-    <li><a class="dropdown-item" href="articles/minpatch-oceandatr-Seychelles.html">Using minpatch to reduce fragmentation in a marine planning region (Seychelles)</a></li>
+    <li><a class="dropdown-item" href="articles/minpatch-oceandatr-Seychelles.html">Reducing protected area fragmentation in the Seychelles: A Case Study</a></li>
     <li><a class="dropdown-item" href="articles/minpatchTasmania.html">MinPatch in Tasmania</a></li>
   </ul>
 </li>
@@ -55,10 +55,11 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="minpatch-for-r">MinPatch for R<a class="anchor" aria-label="anchor" href="#minpatch-for-r"></a>
+<div class="page-header"><h1 id="minpatch-for-r-">minpatch for R <img src="reference/figures/minpatch.png" align="right" height="139"><a class="anchor" aria-label="anchor" href="#minpatch-for-r-"></a>
 </h1></div>
 <!-- badges: start -->
 
+<!-- badges: end -->
 <p><strong>Note: This is still a work in progress and significant bugs may be present. Use with caution</strong></p>
 <p>More information on the original implemention of MinPatch for Marxan and QGIS is available here: <a href="https://cluz-systematic-conservation-planning.github.io" class="external-link uri">https://cluz-systematic-conservation-planning.github.io</a></p>
 <div class="section level2">
@@ -163,6 +164,20 @@
 </ul>
 </li>
 </ol>
+</div>
+<div class="section level3">
+<h3 id="user-inputs-parameters-that-shape-patch-structure">User inputs (parameters that shape patch structure)<a class="anchor" aria-label="anchor" href="#user-inputs-parameters-that-shape-patch-structure"></a>
+</h3>
+<p>MinPatch uses a small set of user-defined parameters that determine how patch structure is modified to reduce fragmentation. Together, these settings control minimum patch size, how candidate patches are constructed, and how strongly irregular boundaries are penalised.</p>
+<ul>
+<li><p><strong><code>min_patch_size</code></strong>: The minimum allowable patch size. Patches smaller than this threshold are removed in Stage 1 (except where locked-in units apply), and removals in Stage 3 are blocked if they would cause any patch (or split fragment) to drop below this size.</p></li>
+<li><p><strong><code>patch_radius</code></strong>: Controls how candidate patches are constructed in Stage 2 (BestPatch). Larger radii generally favour adding more compact patches (fewer isolated units), but can also increase the total area added.</p></li>
+<li>
+<p><strong><code>boundary_penalty</code></strong> <em>(optional)</em>: Controls how strongly MinPatch discourages irregular patch edges during Stage 3 (whittling). Conceptually, <code>boundary_penalty</code> converts patch perimeter (boundary length) into the same “currency” as planning-unit cost, so edge length can be traded off against area/opportunity cost. When <code>boundary_penalty &gt; 0</code>, a candidate edge unit is only removed if doing so does not increase the boundary-penalised objective:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">Objective</mtext><mo>=</mo><mo stretchy="false" form="prefix">(</mo><mtext mathvariant="normal">boundary_penalty</mtext><mo>×</mo><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">perimeter</mtext><mo stretchy="false" form="postfix">)</mo><mo>−</mo><mtext mathvariant="normal">unit_cost</mtext></mrow><annotation encoding="application/x-tex"> \Delta \text{Objective} = (\text{boundary_penalty} \times \Delta \text{perimeter}) - \text{unit_cost} </annotation></semantics></math></p>
+<p>If <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">Objective</mtext><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\Delta \text{Objective} &gt; 0</annotation></semantics></math>, the removal is blocked because the increase in boundary penalty outweighs the cost saved by removing the unit (i.e., it would make the patch edge more “expensive”). Setting <code>boundary_penalty = 0</code> turns off this check.</p>
+</li>
+</ul>
 </div>
 </div>
 <div class="section level2">

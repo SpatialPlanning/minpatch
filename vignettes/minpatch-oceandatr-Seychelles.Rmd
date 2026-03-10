@@ -1,9 +1,9 @@
 ---
-title: "Using minpatch to reduce fragmentation in a marine planning region (Seychelles)"
+title: "Reducing protected area fragmentation in the Seychelles: A Case Study"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteEncoding{UTF-8}
-  %\VignetteIndexEntry{Using minpatch to reduce fragmentation in a marine planning region (Seychelles)}
+  %\VignetteIndexEntry{Reducing protected area fragmentation in the Seychelles: A Case Study}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
   markdown: 
@@ -12,13 +12,13 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-	fig.align = "center",
-	fig.height = 5,
-	fig.width = 7,
-	message = TRUE,
-	warning = TRUE,
-	collapse = TRUE,
-	comment = "#>"
+  fig.align = "center",
+  fig.height = 5,
+  fig.width = 7,
+  message = TRUE,
+  warning = TRUE,
+  collapse = TRUE,
+  comment = "#>"
 )
 options(scipen = 999)   
 ```
@@ -36,21 +36,21 @@ Two R packages are especially helpful for tackling these issues in a
 marine context.
 
 -   The `oceandatr` package offers a practical way to build realistic,
-    analysis-ready marine planning datasets. It helps users obtain
-    planning boundaries (e.g., exclusive economic zones or high-seas
-    regions), generate planning-unit grids, and access global ocean
-    datasets—including bathymetry, geomorphology, seamounts, and
-    environmental conditions—aligned to those grids. Together, these
-    tools make it easier to assemble consistent inputs for marine
-    spatial planning analyses.
+analysis-ready marine planning datasets. It helps users obtain
+planning boundaries (e.g., exclusive economic zones or high-seas
+regions), generate planning-unit grids, and access global ocean
+datasets—including bathymetry, geomorphology, seamounts, and
+environmental conditions—aligned to those grids. Together, these
+tools make it easier to assemble consistent inputs for marine
+spatial planning analyses.
 
 -   The `minpatch` package is a post-processing tool that modifies
-    conservation planning solutions produced by `prioritizr` to reduce
-    fragmentation. It enforces a user-defined minimum patch size by
-    removing patches that are too small and adding new areas to maintain
-    conservation targets. It then simplifies the solution by removing
-    unnecessary planning units, while tracking how these changes affect
-    patch structure and total cost.
+conservation planning solutions produced by `prioritizr` to reduce
+fragmentation. It enforces a user-defined minimum patch size by
+removing patches that are too small and adding new areas to maintain
+conservation targets. It then simplifies the solution by removing
+unnecessary planning units, while tracking how these changes affect
+patch structure and total cost.
 
 In this vignette, we demonstrate the use of `oceandatr` and `minpatch`
 using a simple marine example from the Seychelles Exclusive Economic
@@ -65,24 +65,20 @@ solutions.
 ## 2.1 Load packages
 
 ```{r load-packages, echo=TRUE, message=FALSE, warning=FALSE}
+library(minpatch)
 library(oceandatr)
 library(terra)
 library(sf)
 library(dplyr)
 library(ggplot2)
+library(purrr)
+library(stringr)
+library(tibble)
 library(patchwork)
 library(prioritizr)
-#library(minpatch)
-devtools::load_all()
-library(purrr)
-library(tibble)
 library(kableExtra)
 library(tmap)
-library(stringr)
 set.seed(123)
-# Note: oceandatr requires an up-to-date version of curl for data downloads
-# install.packages("curl") 
-# packageVersion("curl")
 ```
 
 ## 2.2 Seychelles EEZ as the planning region
@@ -173,15 +169,10 @@ Seychelles_pu <- Seychelles_grid %>%
 We will use a set of features available on `oceandatr`:
 
 -   bathymetric depth zones
-
 -   geomorphology - seafloor features (banks, ridges, etc.)
-
 -   knolls
-
 -   seamounts
-
 -   coral habitat
-
 -   environmental zones - clusters of environmental conditions
 
 ## 3.1 Prepare feature stack
@@ -194,7 +185,7 @@ set.seed(500)
 
 feature_set <- get_features(spatial_grid = Seychelles_grid) %>%
   remove_empty_layers()
-  
+
 # tidy up feature data names for nicer mapping
 names(feature_set) <-  gsub("_", " ", names(feature_set)) %>% stringr::str_to_sentence()
 ```
@@ -274,12 +265,10 @@ equal-weight features and a uniform target of 30% for each feature.
 
 ```{r build-problem}
 # build the problem using sf planning units + feature columns
-p_base <-
-  prioritizr::problem(
-    x              = Seychelles_sf,
-    features       = feature_set,
-    cost_column    = "cost"
-  ) %>%
+p_base <- prioritizr::problem(
+  x              = Seychelles_sf,
+  features       = feature_set,
+  cost_column    = "cost") %>%
   add_min_set_objective() %>%
   add_relative_targets(0.30) %>% # 30% of each feature
   add_binary_decisions() %>%
@@ -377,28 +366,28 @@ minpatch_times <- numeric(length(patch_sizes_m2))
 
 for (i in seq_along(patch_sizes_m2)) {
   
-cat("\n============================================\n")
-cat("Running MinPatch with min patch area ~",
-    round(patch_sizes_km2[i], 2), "km^2 (",
-    multipliers[i], "x median PU)\n")
-cat("============================================\n")
+  cat("\n============================================\n")
+  cat("Running MinPatch with min patch area ~",
+      round(patch_sizes_km2[i], 2), "km^2 (",
+      multipliers[i], "x median PU)\n")
+  cat("============================================\n")
   
   # time the MinPatch run
   t_mp <- system.time({
-     minpatch_results[[i]] <- run_minpatch(
-    prioritizr_problem   = p_base,
-    prioritizr_solution  = s_base,
-    min_patch_size       = patch_sizes_m2[i],
-    patch_radius         = patch_radius,
-    boundary_penalty     = 0,
-    remove_small_patches = TRUE,
-    add_patches          = TRUE,
-    whittle_patches      = TRUE,
-    verbose              = TRUE
-  )
+    minpatch_results[[i]] <- run_minpatch(
+      prioritizr_problem   = p_base,
+      prioritizr_solution  = s_base,
+      min_patch_size       = patch_sizes_m2[i],
+      patch_radius         = patch_radius,
+      boundary_penalty     = 0,
+      remove_small_patches = TRUE,
+      add_patches          = TRUE,
+      whittle_patches      = TRUE,
+      verbose              = TRUE
+    )
     
   })
- 
+  
   # store elapsed time (seconds)
   minpatch_times[i] <- t_mp[["elapsed"]]
 }
@@ -420,17 +409,17 @@ We start by showing the selected planning units for the baseline and
 each MinPatch run.
 
 ```{r minpatch-2x2, echo=TRUE, fig.height=8, fig.width=10, out.width="100%"}
- plot_solution_grid(
-   results = minpatch_results,
-   get_solution_fun = get_solution_with_solution1,
-   subtitle_values = multipliers,
-   title_prefix = "MinPatch: ",
-   value_label_fun = function(x) paste0(x, "× median PU area"),
-   include_baseline = TRUE,
-   baseline_solution = s_base,
-   baseline_title = "Baseline (prioritizr)",
-   ncol = 2
- )
+plot_solution_grid(
+  results = minpatch_results,
+  get_solution_fun = get_solution_with_solution1,
+  subtitle_values = multipliers,
+  title_prefix = "MinPatch: ",
+  value_label_fun = function(x) paste0(x, "× median PU area"),
+  include_baseline = TRUE,
+  baseline_solution = s_base,
+  baseline_title = "Baseline (prioritizr)",
+  ncol = 2
+)
 ```
 
 On the plot, we can see that the baseline solution is highly fragmented,
@@ -479,9 +468,9 @@ plot_list <- purrr::map2(
   minpatch_results,
   multipliers,
   ~ plot_minpatch(
-      .x,
-      title = paste0("Patch size x", .y)
-    )
+    .x,
+    title = paste0("Patch size x", .y)
+  )
 )
 patchwork::wrap_plots(
   plotlist = plot_list,
@@ -528,27 +517,27 @@ summaries.
 
 ```{r minpatch-all-runs, echo=TRUE}
 for (i in seq_along(minpatch_results)) {
-
+  
   result <- minpatch_results[[i]]
   factor_val <- multipliers[i]
-
+  
   cat("\n\n## Scenario: MinPatch with min patch size = ",
       factor_val, " × median PU area\n\n", sep = "")
-
+  
   # MinPatch summary (if it prints text)
   cat("**MinPatch processing summary**\n\n")
   print_minpatch_summary(result)
-
+  
   comparison <- compare_solutions(result)
-
+  
   cat("\n**Overall solution comparison**\n\n")
-print(comparison$overall)
-
+  print(comparison$overall)
+  
   cat("\n**Feature-level area comparison**\n\n")
-print(comparison$features)
-
+  print(comparison$features)
+  
   cat("\n**Feature change summary**\n\n")
-print(comparison$summary)
+  print(comparison$summary)
 }
 ```
 
@@ -579,49 +568,49 @@ patch_radius
 
 bp3 = 0
 t3 <- system.time({
- result3 <- run_minpatch(
-  prioritizr_problem = p_base,
-  prioritizr_solution = s_base,
-  min_patch_size = min_patch_size,
-  patch_radius = patch_radius,
-  boundary_penalty = bp3,
-  remove_small_patches = TRUE,
-  add_patches = TRUE,
-  whittle_patches = TRUE,
-  verbose = TRUE
-) 
+  result3 <- run_minpatch(
+    prioritizr_problem = p_base,
+    prioritizr_solution = s_base,
+    min_patch_size = min_patch_size,
+    patch_radius = patch_radius,
+    boundary_penalty = bp3,
+    remove_small_patches = TRUE,
+    add_patches = TRUE,
+    whittle_patches = TRUE,
+    verbose = TRUE
+  ) 
 })
 cat("result3 runtime (sec):", t3[["elapsed"]], "\n")
 
 bp4 = 0.01
 t4 <- system.time({
   result4 <- run_minpatch(
-  prioritizr_problem = p_base,
-  prioritizr_solution = s_base,
-  min_patch_size = min_patch_size,
-  patch_radius = patch_radius,
-  boundary_penalty = bp4,
-  remove_small_patches = TRUE,
-  add_patches = TRUE,
-  whittle_patches = TRUE,
-  verbose = TRUE
-)
+    prioritizr_problem = p_base,
+    prioritizr_solution = s_base,
+    min_patch_size = min_patch_size,
+    patch_radius = patch_radius,
+    boundary_penalty = bp4,
+    remove_small_patches = TRUE,
+    add_patches = TRUE,
+    whittle_patches = TRUE,
+    verbose = TRUE
+  )
 })
 cat("result4 runtime (sec):", t4[["elapsed"]], "\n")
 
 bp5 = 1
 t5 <- system.time({
   result5 <- run_minpatch(
-  prioritizr_problem = p_base,
-  prioritizr_solution = s_base,
-  min_patch_size = min_patch_size,
-  patch_radius = patch_radius,
-  boundary_penalty = bp5, 
-  remove_small_patches = TRUE,
-  add_patches = TRUE,
-  whittle_patches = TRUE,
-  verbose = TRUE
-)
+    prioritizr_problem = p_base,
+    prioritizr_solution = s_base,
+    min_patch_size = min_patch_size,
+    patch_radius = patch_radius,
+    boundary_penalty = bp5, 
+    remove_small_patches = TRUE,
+    add_patches = TRUE,
+    whittle_patches = TRUE,
+    verbose = TRUE
+  )
 })
 cat("result5 runtime (sec):", t5[["elapsed"]], "\n")
 ```
@@ -712,28 +701,28 @@ minpatch_results_bp <- list(result3, result4, result5)
 minpatch_runtimes <- c(t3[["elapsed"]], t4[["elapsed"]], t5[["elapsed"]])
 
 for (i in seq_along(minpatch_results_bp)) {
-
+  
   result      <- minpatch_results_bp[[i]]
   bp          <- boundary_penalties[i]
   runtime_sec <- minpatch_runtimes[i]
-
+  
   cat("\n\n## Scenario: MinPatch with boundary penalty = ", format(bp, scientific = TRUE), "\n\n", sep = "")
-
+  
   if (!is.na(runtime_sec)) {
     cat("**Runtime:** ", sprintf("%.2f", runtime_sec), " seconds\n\n", sep = "")
   }
-
+  
   cat("**MinPatch processing summary**\n\n")
   print_minpatch_summary(result)
-
+  
   comparison <- compare_solutions(result)
-
+  
   cat("\n**Overall solution comparison**\n\n")
   print(comparison$overall)
-
+  
   cat("\n**Feature-level area comparison**\n\n")
   print(comparison$features)
-
+  
   cat("\n**Feature change summary**\n\n")
   print(comparison$summary)
 }

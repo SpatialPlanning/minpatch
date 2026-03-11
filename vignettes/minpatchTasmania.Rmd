@@ -244,7 +244,7 @@ patchwork::wrap_plots(plot_prioritizr(result2$solution, col = "minpatch", title 
 
 ```
 
-## Visualise the differences in the minpatch solution  
+## Visualise the differences in the minpatch solution
 
 ```{r}
 patchwork::wrap_plots(plot_minpatch(result2, title = "Boundary Penalty: 0"),
@@ -253,6 +253,4 @@ patchwork::wrap_plots(plot_minpatch(result2, title = "Boundary Penalty: 0"),
                       guides = "collect",
                       ncol = 3) &
   theme(legend.position = "bottom")
-
-
 ```

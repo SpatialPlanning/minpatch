@@ -36,21 +36,21 @@ Two R packages are especially helpful for tackling these issues in a
 marine context.
 
 -   The `oceandatr` package offers a practical way to build realistic,
-analysis-ready marine planning datasets. It helps users obtain
-planning boundaries (e.g., exclusive economic zones or high-seas
-regions), generate planning-unit grids, and access global ocean
-datasets—including bathymetry, geomorphology, seamounts, and
-environmental conditions—aligned to those grids. Together, these
-tools make it easier to assemble consistent inputs for marine
-spatial planning analyses.
+    analysis-ready marine planning datasets. It helps users obtain
+    planning boundaries (e.g., exclusive economic zones or high-seas
+    regions), generate planning-unit grids, and access global ocean
+    datasets—including bathymetry, geomorphology, seamounts, and
+    environmental conditions—aligned to those grids. Together, these
+    tools make it easier to assemble consistent inputs for marine
+    spatial planning analyses.
 
 -   The `minpatch` package is a post-processing tool that modifies
-conservation planning solutions produced by `prioritizr` to reduce
-fragmentation. It enforces a user-defined minimum patch size by
-removing patches that are too small and adding new areas to maintain
-conservation targets. It then simplifies the solution by removing
-unnecessary planning units, while tracking how these changes affect
-patch structure and total cost.
+    conservation planning solutions produced by `prioritizr` to reduce
+    fragmentation. It enforces a user-defined minimum patch size by
+    removing patches that are too small and adding new areas to maintain
+    conservation targets. It then simplifies the solution by removing
+    unnecessary planning units, while tracking how these changes affect
+    patch structure and total cost.
 
 In this vignette, we demonstrate the use of `oceandatr` and `minpatch`
 using a simple marine example from the Seychelles Exclusive Economic
@@ -79,6 +79,9 @@ library(prioritizr)
 library(kableExtra)
 library(tmap)
 set.seed(123)
+
+build_dir <- file.path(getwd(), "_build")
+dir.create(build_dir, showWarnings = FALSE, recursive = TRUE)
 ```
 
 ## 2.2 Seychelles EEZ as the planning region
@@ -185,6 +188,8 @@ set.seed(500)
 
 feature_set <- get_features(spatial_grid = Seychelles_grid) %>%
   remove_empty_layers()
+
+saveRDS(feature_set, file = file.path(build_dir, "feature_set.rds"))
 
 # tidy up feature data names for nicer mapping
 names(feature_set) <-  gsub("_", " ", names(feature_set)) %>% stringr::str_to_sentence()
@@ -395,6 +400,9 @@ for (i in seq_along(patch_sizes_m2)) {
 # name the outputs
 names(minpatch_results) <- paste0("minpatch_", multipliers, "x")
 names(minpatch_times)   <- paste0("minpatch_", multipliers, "x")
+
+saveRDS(minpatch_results, file = file.path(build_dir, "minpatch_results.rds"))
+saveRDS(minpatch_times, file = file.path(build_dir, "minpatch_times.rds"))
 ```
 
 # 7. Interpreting MinPatch outcomes
@@ -409,17 +417,18 @@ We start by showing the selected planning units for the baseline and
 each MinPatch run.
 
 ```{r minpatch-2x2, echo=TRUE, fig.height=8, fig.width=10, out.width="100%"}
-plot_solution_grid(
-  results = minpatch_results,
-  get_solution_fun = get_solution_with_solution1,
-  subtitle_values = multipliers,
-  title_prefix = "MinPatch: ",
-  value_label_fun = function(x) paste0(x, "× median PU area"),
-  include_baseline = TRUE,
-  baseline_solution = s_base,
-  baseline_title = "Baseline (prioritizr)",
+patchwork::wrap_plots(
+  plot_prioritizr(s_base, col = "solution_1", title = "Baseline (prioritizr)"),
+  plot_prioritizr(minpatch_results[[1]]$solution, col = "minpatch",
+                  title = paste0("MinPatch: ", multipliers[1], "× median PU area")),
+  plot_prioritizr(minpatch_results[[2]]$solution, col = "minpatch",
+                  title = paste0("MinPatch: ", multipliers[2], "× median PU area")),
+  plot_prioritizr(minpatch_results[[3]]$solution, col = "minpatch",
+                  title = paste0("MinPatch: ", multipliers[3], "× median PU area")),
+  guides = "collect",
   ncol = 2
-)
+) &
+  theme(legend.position = "bottom")
 ```
 
 On the plot, we can see that the baseline solution is highly fragmented,
@@ -623,21 +632,19 @@ We compare the spatial solutions across different boundary penalties
 with the baseline solution. All runs used a minimum patch size of **5×
 the median PU area**.
 
-```{r minpatch-bp, fig.height=5, fig.width=8, out.width="100%"}
-boundary_penalties <- c(bp3, bp4, bp5)
-boundary_results <- list(result3, result4, result5)
-
-plot_solution_grid(
-  results = boundary_results,
-  get_solution_fun = get_solution_with_solution1,
-  subtitle_values = boundary_penalties,
-  title_prefix = "Boundary penalty = ",
-  value_label_fun = function(x) format(x, scientific = FALSE, trim = TRUE),
-  include_baseline = TRUE,
-  baseline_solution = s_base,
-  baseline_title = "Baseline (prioritizr)",
+```{r minpatch-bp, echo=TRUE, fig.height=8, fig.width=10, out.width="100%"}
+patchwork::wrap_plots(
+  plot_prioritizr(s_base, col = "solution_1", title = "Baseline (prioritizr)"),
+  plot_prioritizr(result3$solution, col = "minpatch",
+                  title = paste0("Boundary penalty: ", bp3)),
+  plot_prioritizr(result4$solution, col = "minpatch",
+                  title = paste0("Boundary penalty: ", bp4)),
+  plot_prioritizr(result5$solution, col = "minpatch",
+                  title = paste0("Boundary penalty: ", bp5)),
+  guides = "collect",
   ncol = 2
-)
+) &
+  theme(legend.position = "bottom")
 ```
 
 ## 9.2 Groups summary table (all runs)

@@ -1,6 +1,8 @@
 # Create patch radius dictionary
 
-For each planning unit, find all units within the specified patch radius
+For each planning unit, find all units within the specified patch
+radius. Optimized version computes full distance matrix once instead of
+n times.
 
 ## Usage
 

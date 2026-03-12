@@ -60,26 +60,26 @@ generate_minpatch_report(result)
 #> # A tibble: 5 × 9
 #>   feature   met   total_amount absolute_target absolute_held absolute_shortfall
 #>   <chr>     <lgl>        <dbl>           <dbl>         <dbl>              <dbl>
-#> 1 feature_1 TRUE          74.5           12.7          18.6                   0
-#> 2 feature_2 TRUE          28.1            4.77          6.09                  0
-#> 3 feature_3 TRUE          64.9           11.0          15.1                   0
-#> 4 feature_4 TRUE          38.2            6.49          8.68                  0
-#> 5 feature_5 TRUE          50.7            8.61         12.9                   0
+#> 1 feature_1 TRUE          74.5           12.7          16.0                   0
+#> 2 feature_2 TRUE          28.1            4.77          5.18                  0
+#> 3 feature_3 TRUE          64.9           11.0          13.0                   0
+#> 4 feature_4 TRUE          38.2            6.49          7.17                  0
+#> 5 feature_5 TRUE          50.7            8.61         11.1                   0
 #> # ℹ 3 more variables: relative_target <dbl>, relative_held <dbl>,
 #> #   relative_shortfall <dbl>
 #> 
 #> $patch_stats
 #>      time all_patch_count all_patch_area median_all_patch valid_patch_count
 #> 1 initial               7           0.16            0.010                 1
-#> 2   final               4           0.21            0.055                 2
+#> 2   final               4           0.18            0.045                 2
 #>   valid_patch_area median_valid_patch
-#> 1             0.05              0.050
-#> 2             0.15              0.075
+#> 1             0.05               0.05
+#> 2             0.12               0.06
 #> 
 #> $cost
 #> # A tibble: 1 × 6
 #>   summary  cost     n boundary_length boundary_cost total_cost
 #>   <chr>   <dbl> <dbl>           <dbl>         <dbl>      <dbl>
-#> 1 overall 4138.    21               0             0      4138.
+#> 1 overall 3535.    18               0             0      3535.
 #> 
 ```

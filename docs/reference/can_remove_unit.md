@@ -8,7 +8,7 @@ into non-viable pieces
 ## Usage
 
 ``` r
-can_remove_unit(unit_id, minpatch_data)
+can_remove_unit(unit_id, minpatch_data, feature_amounts = NULL)
 ```
 
 ## Arguments

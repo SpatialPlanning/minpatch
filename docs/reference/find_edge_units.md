@@ -1,7 +1,7 @@
 # Find edge planning units
 
 Identifies planning units that are on the edge of selected areas (have
-at least one unselected neighbor)
+at least one unselected neighbor). Optimized with vector pre-allocation.
 
 ## Usage
 

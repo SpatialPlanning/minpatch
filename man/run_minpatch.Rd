@@ -14,7 +14,9 @@ run_minpatch(
   add_patches = TRUE,
   whittle_patches = TRUE,
   solution_column = "solution_1",
-  verbose = TRUE
+  verbose = TRUE,
+  debug_boundary = FALSE,
+  debug_boundary_every = 50
 )
 }
 \arguments{
@@ -37,6 +39,10 @@ run_minpatch(
 \item{solution_column}{Name of solution column (default = "solution_1")}
 
 \item{verbose}{Logical, whether to print progress (default = TRUE)}
+
+\item{debug_boundary}{Logical, whether to print boundary cost debug info (default = FALSE)}
+
+\item{debug_boundary_every}{Integer, print debug info every N iterations (default = 50)}
 }
 \value{
 MinPatch result object with enhanced reporting using prioritizr functions

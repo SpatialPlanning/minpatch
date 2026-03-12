@@ -8,20 +8,23 @@ with prioritizr to show a complete workflow from problem formulation
 through MinPatch post-processing.
 
 ``` r
-
 library(minpatch)
 library(prioritizr)
+#> Warning: package 'prioritizr' was built under R version 4.5.2
 library(sf)
+#> Warning: package 'sf' was built under R version 4.5.2
 library(terra)
+#> Warning: package 'terra' was built under R version 4.5.2
 library(dplyr)
 library(ggplot2)
+#> Warning: package 'ggplot2' was built under R version 4.5.2
 library(patchwork)
+#> Warning: package 'patchwork' was built under R version 4.5.2
 ```
 
 ### Step 1: Load and Examine the Data
 
 ``` r
-
 dat <- c(get_sim_pu_raster(), get_sim_features()) %>% 
   as.polygons(dissolve = FALSE, values = TRUE) %>%
   sf::st_as_sf() %>% 
@@ -39,7 +42,6 @@ We’ll create a simple minimum set problem with 17% targets for all
 features:
 
 ``` r
-
 # Create prioritizr problem
 p <- problem(dat, features, cost_column = "cost") %>%
   add_min_set_objective() %>%
@@ -52,7 +54,6 @@ s <- solve(p)
 ```
 
 ``` r
-
 # plot map of prioritization
 plot_prioritizr(s)
 ```
@@ -66,7 +67,6 @@ Now we can apply MinPatch directly to the prioritizr objects. The
 extracts all necessary data from the prioritizr solution object:
 
 ``` r
-
 # Calculate reasonable parameters based on planning unit characteristics
 median_area <- median(st_area(dat))
 
@@ -90,7 +90,6 @@ cat("- This means patches must be at least", round(min_patch_size/median_area, 3
 Run MinPatch with automatic data extraction from prioritizr objects
 
 ``` r
-
 result <- run_minpatch(
   prioritizr_problem = p,
   prioritizr_solution = s,
@@ -121,36 +120,34 @@ result <- run_minpatch(
 #>     Added patch centered on unit 86 
 #>   All conservation targets are now met!
 #> Stage 3: Removing unnecessary planning units...
-#>     Edge units found: 27 
+#>     Edge units found: 7 
 #>     Keystone units: 0 
 #>     New keystone units: 0 
-#>     Scoreable units: 27 
-#>     Unit 90 cannot be removed - adding to keystone set
-#>     Edge units found: 26 
+#>     Scoreable units: 7 
+#>     Unit 68 cannot be removed - adding to keystone set
+#>     Edge units found: 6 
 #>     Keystone units: 1 
 #>     New keystone units: 0 
-#>     Scoreable units: 26 
-#>     Unit 89 cannot be removed - adding to keystone set
-#>     Edge units found: 25 
+#>     Scoreable units: 6 
+#>     Removed unit 61 at iteration 2 
+#>     Edge units found: 6 
+#>     Keystone units: 1 
+#>     New keystone units: 0 
+#>     Scoreable units: 6 
+#>     Unit 69 cannot be removed - adding to keystone set
+#>     Edge units found: 5 
 #>     Keystone units: 2 
 #>     New keystone units: 0 
-#>     Scoreable units: 25 
-#>     Unit 81 cannot be removed - adding to keystone set
-#>     Edge units found: 24 
+#>     Scoreable units: 5 
+#>     Unit 63 cannot be removed - adding to keystone set
+#>     Edge units found: 4 
 #>     Keystone units: 3 
 #>     New keystone units: 0 
-#>     Scoreable units: 24 
-#>     Unit 80 cannot be removed - adding to keystone set
-#>     Edge units found: 23 
-#>     Keystone units: 4 
-#>     New keystone units: 0 
-#>     Scoreable units: 23 
-#>     Unit 88 cannot be removed - adding to keystone set
-#>     Unit 79 cannot be removed - adding to keystone set
-#>     Unit 75 cannot be removed - adding to keystone set
-#>     Unit 83 cannot be removed - adding to keystone set
-#>     Unit 73 cannot be removed - adding to keystone set
-#>     Unit 87 cannot be removed - adding to keystone set
+#>     Scoreable units: 4 
+#>     Unit 62 cannot be removed - adding to keystone set
+#>     Unit 66 cannot be removed - adding to keystone set
+#>     Unit 65 cannot be removed - adding to keystone set
+#>     Unit 54 cannot be removed - adding to keystone set
 #>   No more edge units to consider - terminating
 #> Calculating final statistics...
 #> MinPatch processing complete!
@@ -161,7 +158,6 @@ result <- run_minpatch(
 Let’s examine what MinPatch accomplished:
 
 ``` r
-
 # Print comprehensive summary
 print_minpatch_summary(result)
 #> === MinPatch Processing Summary ===
@@ -169,19 +165,19 @@ print_minpatch_summary(result)
 #> Patch Statistics:
 #>   Initial patches: 7 (valid: 0)
 #>   Final patches: 6 (valid: 2)
-#>   Area change: 0.11 (68.7%)
+#>   Area change: 0.10 (62.5%)
 #> 
 #> Cost Breakdown:
-#>   Planning unit cost: 5353.26
+#>   Planning unit cost: 5147.47
 #>   Boundary cost: 0.00
-#>   Total cost: 5353.26
-#>   Selected units: 27
+#>   Total cost: 5147.47
+#>   Selected units: 26
 #> 
 #> Feature Representation:
 #>   Total features: 5
 #>   Targets met: 5
 #>   Targets unmet: 0
-#>   Mean proportion: 0.304
+#>   Mean proportion: 0.292
 #>   Total shortfall: 0.00
 #> 
 #> 
@@ -195,14 +191,14 @@ cat("=== Overall Solution Comparison ===\n")
 #> === Overall Solution Comparison ===
 print(comparison$overall)
 #>                        Metric   Original   MinPatch Change Percent_Change
-#> 1     Selected Planning Units   16.00000   27.00000  11.00       68.75000
-#> 2                  Total Area    0.16000    0.27000   0.11       68.75000
+#> 1     Selected Planning Units   16.00000   26.00000  10.00       62.50000
+#> 2                  Total Area    0.16000    0.26000   0.10       62.50000
 #> 3           Number of Patches    7.00000    6.00000  -1.00      -14.28571
 #> 4 Valid Patches (>= min size)    0.00000    2.00000   2.00             NA
 #> 5           Median Patch Size    0.01000    0.04000   0.03      300.00000
-#> 6          Planning Unit Cost 5353.25938 5353.25938   0.00        0.00000
-#> 7               Boundary Cost    0.00395    0.00395   0.00        0.00000
-#> 8                  Total Cost 5353.26333 5353.26333   0.00        0.00000
+#> 6          Planning Unit Cost 5147.46681 5147.46681   0.00        0.00000
+#> 7               Boundary Cost    0.00385    0.00385   0.00        0.00000
+#> 8                  Total Cost 5147.47066 5147.47066   0.00        0.00000
 
 # Print feature-level comparison
 cat("\n=== Feature-Level Area Comparison ===\n")
@@ -210,11 +206,11 @@ cat("\n=== Feature-Level Area Comparison ===\n")
 #> === Feature-Level Area Comparison ===
 print(comparison$features)
 #>   Feature_ID    Target Original_Area MinPatch_Area Area_Change Percent_Change
-#> 1          1 12.670220     14.083429     24.037947    9.954517       70.68248
-#> 2          2  4.774965      5.124808      7.812367    2.687559       52.44214
-#> 3          3 11.029225     11.707674     19.594225    7.886551       67.36224
-#> 4          4  6.489033      6.863962     10.995588    4.131626       60.19302
-#> 5          5  8.613574      9.482534     16.665588    7.183054       75.75037
+#> 1          1 12.670220     14.083429     23.139966    9.056537       64.30634
+#> 2          2  4.774965      5.124808      7.492192    2.367384       46.19458
+#> 3          3 11.029225     11.707674     18.779672    7.071998       60.40480
+#> 4          4  6.489033      6.863962     10.607930    3.743968       54.54530
+#> 5          5  8.613574      9.482534     16.097477    6.614944       69.75924
 #>   Original_Target_Met MinPatch_Target_Met Original_Proportion
 #> 1                TRUE                TRUE            1.111538
 #> 2                TRUE                TRUE            1.073266
@@ -222,11 +218,11 @@ print(comparison$features)
 #> 4                TRUE                TRUE            1.057779
 #> 5                TRUE                TRUE            1.100883
 #>   MinPatch_Proportion
-#> 1            1.897200
-#> 2            1.636110
-#> 3            1.776573
-#> 4            1.694488
-#> 5            1.934805
+#> 1            1.826327
+#> 2            1.569057
+#> 3            1.702719
+#> 4            1.634747
+#> 5            1.868850
 
 # Print summary statistics
 cat("\n=== Feature Change Summary ===\n")
@@ -248,7 +244,6 @@ print(comparison$summary)
 #### Feature Representation Analysis
 
 ``` r
-
 # Create solution data for prioritizr analysis
 minpatch_solution_data <- result$solution[c("minpatch")]
 
@@ -265,7 +260,7 @@ cat("Conservation Performance:\n")
 cat("- Targets met:", targets_met, "out of", nrow(feature_rep), "features\n")
 #> - Targets met: 5 out of 5 features
 cat("- Mean target achievement:", round(mean_achievement * 100, 1), "%\n")
-#> - Mean target achievement: 30.4 %
+#> - Mean target achievement: 29.2 %
 
 # Show features with lowest achievement
 combined_results <- data.frame(
@@ -281,17 +276,16 @@ cat("\nFeatures with lowest target achievement:\n")
 #> Features with lowest target achievement:
 print(worst_features)
 #>   feature_id proportion_met target_met
-#> 2          2      0.2781387       TRUE
-#> 4          4      0.2880629       TRUE
-#> 3          3      0.3020174       TRUE
-#> 1          1      0.3225241       TRUE
-#> 5          5      0.3289169       TRUE
+#> 2          2      0.2667397       TRUE
+#> 4          4      0.2779071       TRUE
+#> 3          3      0.2894622       TRUE
+#> 1          1      0.3104756       TRUE
+#> 5          5      0.3177045       TRUE
 ```
 
 #### Spatial Configuration Improvements
 
 ``` r
-
 initial_stats <- result$patch_stats$initial
 final_stats <- result$patch_stats$final
 
@@ -317,7 +311,6 @@ cat("- Median patch size increase:",
 Let’s create maps to visualize the changes MinPatch made:
 
 ``` r
-
 plot_minpatch(result, title = "MinPatch Results")
 ```
 
@@ -336,7 +329,6 @@ Let’s designate some existing planning units as locked-in (must be
 conserved):
 
 ``` r
-
 # Select some units as existing protected areas (locked-in)
 locked_in_units <- c(10, 11, 20, 21, 30, 31)
 
@@ -366,10 +358,10 @@ cat("Locked-in units in final solution:\n")
 cat("Units:", locked_in_units, "\n")
 #> Units: 10 11 20 21 30 31
 cat("Status in solution:", result_locked_in$solution$minpatch[locked_in_units], "\n")
-#> Status in solution: 0 0 0 0 0 0
+#> Status in solution: 1 1 1 1 1 1
 cat("All locked-in units preserved:",
     all(result_locked_in$solution$minpatch[locked_in_units] == 1), "\n")
-#> All locked-in units preserved: FALSE
+#> All locked-in units preserved: TRUE
 ```
 
 #### Example: Adding Locked-Out Constraints
@@ -378,7 +370,6 @@ Now let’s exclude certain areas from selection (e.g., areas with
 conflicting land uses):
 
 ``` r
-
 # Select some units to exclude (locked-out)
 locked_out_units <- c(50, 51, 60, 61, 70, 71)
 
@@ -408,10 +399,10 @@ cat("Locked-out units in final solution:\n")
 cat("Units:", locked_out_units, "\n")
 #> Units: 50 51 60 61 70 71
 cat("Status in solution:", result_locked_out$solution$minpatch[locked_out_units], "\n")
-#> Status in solution: 0 0 0 1 1 1
+#> Status in solution: 0 0 0 0 0 0
 cat("All locked-out units excluded:",
     all(result_locked_out$solution$minpatch[locked_out_units] == 0), "\n")
-#> All locked-out units excluded: FALSE
+#> All locked-out units excluded: TRUE
 ```
 
 #### Example: Combining Both Constraint Types
@@ -419,7 +410,6 @@ cat("All locked-out units excluded:",
 You can use both locked-in and locked-out constraints together:
 
 ``` r
-
 # Create problem with both constraint types
 p_locked_both <- problem(dat, features, cost_column = "cost") %>%
   add_min_set_objective() %>%
@@ -445,7 +435,7 @@ cat("Constraint Summary:\n")
 #> Constraint Summary:
 cat("- Locked-in units preserved:",
     all(result_locked_both$solution$minpatch[locked_in_units] == 1), "\n")
-#> - Locked-in units preserved: FALSE
+#> - Locked-in units preserved: TRUE
 cat("- Locked-out units excluded:",
     all(result_locked_both$solution$minpatch[locked_out_units] == 0), "\n")
 #> - Locked-out units excluded: TRUE
@@ -474,7 +464,6 @@ cat("- Locked-out units excluded:",
 #### Lets check the process
 
 ``` r
-
 # First remove small patches
 result_remove <- run_minpatch(
   prioritizr_problem = p,
@@ -519,7 +508,6 @@ result_whittle <- run_minpatch(
 Plot the comparison
 
 ``` r
-
 patchwork::wrap_plots(
   plot_minpatch(result_remove, title = "Remove Small Patches"),
   plot_minpatch(result_add, title = "Add Patches"),
@@ -600,7 +588,6 @@ Always validate your results by:
 You can run MinPatch with different parameters to explore trade-offs:
 
 ``` r
-
 # Conservative scenario (larger patches)
 result_conservative <- run_minpatch(
   prioritizr_problem = p,
@@ -670,50 +657,52 @@ practically implementable conservation strategies.
 ### Session Information
 
 ``` r
-
 sessionInfo()
-#> R version 4.5.0 (2025-04-11)
-#> Platform: aarch64-apple-darwin20
-#> Running under: macOS 26.1
+#> R version 4.5.0 (2025-04-11 ucrt)
+#> Platform: x86_64-w64-mingw32/x64
+#> Running under: Windows 11 x64 (build 26200)
 #> 
 #> Matrix products: default
-#> BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 
-#> LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+#>   LAPACK version 3.12.1
 #> 
 #> locale:
-#> [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+#> [1] LC_COLLATE=English_United States.utf8 
+#> [2] LC_CTYPE=English_United States.utf8   
+#> [3] LC_MONETARY=English_United States.utf8
+#> [4] LC_NUMERIC=C                          
+#> [5] LC_TIME=English_United States.utf8    
 #> 
-#> time zone: Australia/Sydney
+#> time zone: Asia/Manila
 #> tzcode source: internal
 #> 
 #> attached base packages:
 #> [1] stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] patchwork_1.3.2  ggplot2_4.0.0    dplyr_1.1.4      terra_1.8-80    
-#> [5] sf_1.0-22        prioritizr_8.1.0 minpatch_0.1.0  
+#> [1] patchwork_1.3.2  ggplot2_4.0.1    dplyr_1.1.4      terra_1.8-93    
+#> [5] sf_1.0-24        prioritizr_8.1.0 minpatch_0.1.0  
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] gtable_0.3.6         xfun_0.54            bslib_0.9.0         
-#>  [4] raster_3.6-32        htmlwidgets_1.6.4    lattice_0.22-7      
-#>  [7] vctrs_0.6.5          tools_4.5.0          generics_0.1.4      
-#> [10] parallel_4.5.0       tibble_3.3.0         proxy_0.4-27        
-#> [13] pkgconfig_2.0.3      Matrix_1.7-4         KernSmooth_2.23-26  
-#> [16] RColorBrewer_1.1-3   S7_0.2.0             desc_1.4.3          
-#> [19] assertthat_0.2.1     lifecycle_1.0.4      compiler_4.5.0      
+#>  [1] gtable_0.3.6         xfun_0.56            bslib_0.10.0        
+#>  [4] raster_3.6-32        htmlwidgets_1.6.4    lattice_0.22-6      
+#>  [7] vctrs_0.7.1          tools_4.5.0          generics_0.1.4      
+#> [10] parallel_4.5.0       tibble_3.3.1         proxy_0.4-29        
+#> [13] pkgconfig_2.0.3      Matrix_1.7-3         KernSmooth_2.23-26  
+#> [16] RColorBrewer_1.1-3   S7_0.2.1             desc_1.4.3          
+#> [19] assertthat_0.2.1     lifecycle_1.0.5      compiler_4.5.0      
 #> [22] farver_2.1.2         stringr_1.6.0        textshaping_1.0.4   
-#> [25] codetools_0.2-20     htmltools_0.5.8.1    class_7.3-23        
-#> [28] sass_0.4.10          yaml_2.3.10          pillar_1.11.1       
-#> [31] pkgdown_2.2.0        exactextractr_0.10.0 jquerylib_0.1.4     
+#> [25] codetools_0.2-20     htmltools_0.5.9      class_7.3-23        
+#> [28] sass_0.4.10          yaml_2.3.12          pillar_1.11.1       
+#> [31] pkgdown_2.2.0        exactextractr_0.10.1 jquerylib_0.1.4     
 #> [34] rcbc_0.1.0.9003      classInt_0.4-11      cachem_1.1.0        
-#> [37] nlme_3.1-168         parallelly_1.45.1    tidyselect_1.2.1    
-#> [40] digest_0.6.38        stringi_1.8.7        fastmap_1.2.0       
-#> [43] grid_4.5.0           cli_3.6.5            magrittr_2.0.4      
-#> [46] dichromat_2.0-0.1    e1071_1.7-16         ape_5.8-1           
-#> [49] withr_3.0.2          scales_1.4.0         sp_2.2-0            
-#> [52] rmarkdown_2.30       igraph_2.2.1         ragg_1.5.0          
-#> [55] evaluate_1.0.5       knitr_1.50           rlang_1.1.6         
-#> [58] Rcpp_1.1.0           glue_1.8.0           DBI_1.2.3           
-#> [61] rstudioapi_0.17.1    jsonlite_2.0.0       R6_2.6.1            
-#> [64] systemfonts_1.3.1    fs_1.6.6             units_1.0-0
+#> [37] nlme_3.1-168         tidyselect_1.2.1     digest_0.6.39       
+#> [40] stringi_1.8.7        fastmap_1.2.0        grid_4.5.0          
+#> [43] cli_3.6.5            magrittr_2.0.4       e1071_1.7-17        
+#> [46] ape_5.8-1            withr_3.0.2          scales_1.4.0        
+#> [49] sp_2.2-1             rmarkdown_2.30       igraph_2.2.1        
+#> [52] otel_0.2.0           ragg_1.5.0           evaluate_1.0.5      
+#> [55] knitr_1.51           rlang_1.1.7          Rcpp_1.1.1          
+#> [58] glue_1.8.0           DBI_1.2.3            rstudioapi_0.18.0   
+#> [61] jsonlite_2.0.0       R6_2.6.1             systemfonts_1.3.1   
+#> [64] fs_1.6.6             units_1.0-0
 ```

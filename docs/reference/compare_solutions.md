@@ -30,10 +30,13 @@ List containing:
 
 ``` r
 library(prioritizr)
+#> Warning: package 'prioritizr' was built under R version 4.5.2
 library(sf)
-#> Linking to GEOS 3.13.0, GDAL 3.8.5, PROJ 9.5.1; sf_use_s2() is TRUE
+#> Warning: package 'sf' was built under R version 4.5.2
+#> Linking to GEOS 3.13.1, GDAL 3.11.4, PROJ 9.7.0; sf_use_s2() is TRUE
 library(terra)
-#> terra 1.8.80
+#> Warning: package 'terra' was built under R version 4.5.2
+#> terra 1.8.93
 
 # Get example data from prioritizr
 dat <- c(get_sim_pu_raster(), get_sim_features()) %>%
@@ -71,23 +74,23 @@ comparison <- compare_solutions(result)
 # Print overall comparison
 print(comparison$overall)
 #>                        Metric Original MinPatch Change Percent_Change
-#> 1     Selected Planning Units   16.000   21.000  5.000       31.25000
-#> 2                  Total Area    0.160    0.210  0.050       31.25000
+#> 1     Selected Planning Units   16.000   18.000  2.000       12.50000
+#> 2                  Total Area    0.160    0.180  0.020       12.50000
 #> 3           Number of Patches    7.000    4.000 -3.000      -42.85714
 #> 4 Valid Patches (>= min size)    1.000    2.000  1.000      100.00000
-#> 5           Median Patch Size    0.010    0.055  0.045      450.00000
-#> 6          Planning Unit Cost 4137.804 4137.804  0.000        0.00000
+#> 5           Median Patch Size    0.010    0.045  0.035      350.00000
+#> 6          Planning Unit Cost 3535.082 3535.082  0.000        0.00000
 #> 7               Boundary Cost    0.000    0.000  0.000             NA
-#> 8                  Total Cost 4137.804 4137.804  0.000        0.00000
+#> 8                  Total Cost 3535.082 3535.082  0.000        0.00000
 
 # Print feature-level comparison
 print(comparison$features)
 #>   Feature_ID    Target Original_Area MinPatch_Area Area_Change Percent_Change
-#> 1          1 12.670220     14.083429     18.554865   4.4714362       31.74963
-#> 2          2  4.774965      5.124808      6.090809   0.9660007       18.84950
-#> 3          3 11.029225     11.707674     15.121749   3.4140748       29.16100
-#> 4          4  6.489033      6.863962      8.676751   1.8127892       26.41025
-#> 5          5  8.613574      9.482534     12.907049   3.4245152       36.11393
+#> 1          1 12.670220     14.083429     15.953974  1.87054533       13.28189
+#> 2          2  4.774965      5.124808      5.178169  0.05336054        1.04122
+#> 3          3 11.029225     11.707674     12.981443  1.27376851       10.87977
+#> 4          4  6.489033      6.863962      7.167961  0.30399939        4.42892
+#> 5          5  8.613574      9.482534     11.118871  1.63633770       17.25633
 #>   Original_Target_Met MinPatch_Target_Met Original_Proportion
 #> 1                TRUE                TRUE            1.111538
 #> 2                TRUE                TRUE            1.073266
@@ -95,11 +98,11 @@ print(comparison$features)
 #> 4                TRUE                TRUE            1.057779
 #> 5                TRUE                TRUE            1.100883
 #>   MinPatch_Proportion
-#> 1            1.464447
-#> 2            1.275571
-#> 3            1.371062
-#> 4            1.337141
-#> 5            1.498455
+#> 1            1.259171
+#> 2            1.084441
+#> 3            1.177004
+#> 4            1.104627
+#> 5            1.290855
 
 # Print summary statistics
 cat("Features improved:", comparison$summary$features_improved, "\n")

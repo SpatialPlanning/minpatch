@@ -17,8 +17,6 @@
   patches
 - [`plot_prioritizr()`](plot_prioritizr.md) : Visualize prioritizr
   solutions
-- [`plot_solution_grid()`](plot_solution_grid.md) : Plot solution grid
-  across multiple results
 - [`print_minpatch_summary()`](print_minpatch_summary.md) : Print
   MinPatch results summary
 - [`run_minpatch()`](run_minpatch.md) : Run MinPatch algorithm on

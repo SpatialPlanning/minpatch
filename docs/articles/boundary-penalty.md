@@ -36,20 +36,16 @@ rather than solving a new optimisation problem.
 
 Conceptually, Stage 3 evaluates an objective of the form:
 
-``` math
-\text{Objective} = \sum(\text{PU cost}) + \text{boundary_penalty} \times (\text{total perimeter})
-```
+$$\text{Objective} = \sum\left( \text{PU cost} \right) + \text{boundary\_penalty} \times \left( \text{total perimeter} \right)$$
 
 When testing removal of a single planning unit, the code computes a
 local change:
 
-``` math
- \Delta \text{Objective} = (\text{boundary_penalty} \times \Delta \text{perimeter}) - \text{unit_cost} 
-```
+$$\Delta\text{Objective} = \left( \text{boundary\_penalty} \times \Delta\text{perimeter} \right) - \text{unit\_cost}$$
 
-\- If $`\Delta \text{Objective} > 0`$ → objective increased → **block**
-removal\
-- If $`\Delta \text{Objective} \le 0`$ → objective stayed the same or
+\- If $\Delta\text{Objective} > 0$ → objective increased → **block**
+removal  
+- If $\Delta\text{Objective} \leq 0$ → objective stayed the same or
 decreased → **allow** removal (assuming constraints pass)
 
 ### Why this looks like “total_cost_change” in the code
@@ -58,7 +54,7 @@ In the code, you’ll often see a value like:
 
 `total_cost_change = boundary_cost_change - unit_cost`
 
-That is exactly $`\Delta \text{Objective}`$ written in code form:
+That is exactly $\Delta\text{Objective}$ written in code form:
 
 - `boundary_cost_change` corresponds to `boundary_penalty × Δperimeter`
 
@@ -79,20 +75,18 @@ The objective combines two different things:
 To add these together, `boundary_penalty` acts like a **conversion
 rate**: it converts boundary length into “cost units”.
 
-``` math
-\text{Objective} = \sum(\text{PU cost}) + \text{boundary_penalty} \times (\text{total perimeter})
-```
+$$\text{Objective} = \sum\left( \text{PU cost} \right) + \text{boundary\_penalty} \times \left( \text{total perimeter} \right)$$
 
 ### If your PU cost is in dollars
 
-- PU cost might be: $`\$ / \text{PU}`$ or $`\$ / \text{km}^2`$
+- PU cost might be: $\$/\text{PU}$ or $\$/\text{km}^{2}$
 
 - perimeter is in km
 
 - so `boundary_penalty` behaves like **dollars per km of edge**:
-  $`\$ / \text{km}`$
+  $\$/\text{km}$
 
-**Interpretation:**\
+**Interpretation:**  
 `boundary_penalty` is the *price you are willing to pay* to avoid 1 km
 of extra boundary.
 
@@ -112,7 +106,7 @@ Then:
 
 You can think of this as “equivalent area cost per km of edge”.
 
-**Interpretation:**\
+**Interpretation:**  
 `boundary_penalty` tells you how much extra *area cost* you are willing
 to accept to avoid 1 km of extra boundary.
 
@@ -128,9 +122,7 @@ like adding 0.5 km² of cost.
 
 And Stage 3 only removes a PU when:
 
-``` math
- \Delta \text{Objective} = (\text{boundary_penalty} \times \Delta \text{perimeter}) - \text{unit_cost} \le 0 
-```
+$$\Delta\text{Objective} = \left( \text{boundary\_penalty} \times \Delta\text{perimeter} \right) - \text{unit\_cost} \leq 0$$
 
 So you can read it as:
 
@@ -147,14 +139,12 @@ Assumptions for both examples:
 
 A very useful identity (grid perimeter change):
 
-If a removed PU has $`k`$**selected neighbours** (0–4), then removing it
+If a removed PU has $k$**selected neighbours** (0–4), then removing it
 changes perimeter by:
 
-``` math
-\Delta \text{perimeter} = -4 + 2k
-```
+$$\Delta\text{perimeter} = -4 + 2k$$
 
-So perimeter **increases** only when $`k \ge 3`$ (i.e., the PU was
+So perimeter **increases** only when $k \geq 3$ (i.e., the PU was
 “shielding” three selected neighbours).
 
 ------------------------------------------------------------------------
@@ -174,12 +164,12 @@ because it touches `.` above, below, and right.
 
 Compute the **total perimeter**:
 
-- Two adjacent cells have perimeter =6 km\
+- Two adjacent cells have perimeter =6 km  
   (Each cell has 4 edges → 8 total, minus 2 for the shared edge → 6)
 
 So:
 
-- $`P{\text{before}}`$= 6 km
+- $P\text{before}$= 6 km
 
 **After removing U**
 
@@ -193,9 +183,9 @@ So:
 
 So:
 
-- $`P{\text{after}}`$ = 4 km
+- $P\text{after}$ = 4 km
 
-- $`\Delta \text{perimeter}`$ = 4 - 6 =−2 km
+- $\Delta\text{perimeter}$ = 4 - 6 =−2 km
 
 Now apply the Stage 3 boundary check:
 
@@ -205,13 +195,11 @@ Assume:
 
 - `unit_cost = 5`
 
-``` math
-\Delta \text{Objective} = (\text{boundary_penalty} \times \Delta \text{perimeter}) - \text{unit_cost}\ \text{= 10}\ \times \ (-2) - 5 = -2  
-```
+$$\Delta\text{Objective} = \left( \text{boundary\_penalty} \times \Delta\text{perimeter} \right) - \text{unit\_cost}\ \text{= 10}\  \times \ (-2) - 5 = -2$$
 
 Decision:
 
-- $`\Delta \text{Objective} \le 0`$ → objective decreased → **allow
+- $\Delta\text{Objective} \leq 0$ → objective decreased → **allow
   removal** (if other constraints pass).
 
 ------------------------------------------------------------------------
@@ -219,7 +207,7 @@ Decision:
 ### Example B — removing an edge PU increases total perimeter (blocked), but patch stays connected
 
 Here we use a 3×2 rectangle. Let `U` be the **middle PU on the bottom
-row**.\
+row**.  
 `U` is an **edge unit** because it touches `.` below (outside the
 rectangle).
 
@@ -234,7 +222,7 @@ Compute the **total perimeter**:
 
 A 3×2 rectangle has perimeter:
 
-- $`P{\text{before}}`$= 2(3+2)=10 km
+- $P\text{before}$= 2(3+2)=10 km
 
 **After removing U**
 
@@ -250,19 +238,17 @@ Now compute the **total perimeter after**.
 
 We can use the neighbour rule:
 
-- `U` had $`k=3`$ selected neighbours (left, right, and above are
+- `U` had $k = 3$ selected neighbours (left, right, and above are
   selected; below is not).
 
 - Therefore:
 
-``` math
-\Delta \text{perimeter} = -4 + 2k = -4 + 2(3) = +2
-```
+$$\Delta\text{perimeter} = -4 + 2k = -4 + 2(3) = +2$$
 
 So:
 
-- $`P_{\text{after}} = 10 + 2 = 12`$ km\
-- $`\Delta \text{perimeter} = +2`$ km
+- $P_{\text{after}} = 10 + 2 = 12$ km  
+- $\Delta\text{perimeter} = +2$ km
 
 Now apply the boundary check:
 
@@ -272,16 +258,13 @@ Assume:
 
 - `unit_cost = 5`
 
-``` math
-\Delta \text{Objective} = 10 \times (+2) - 5 = +15
-```
+$$\Delta\text{Objective} = 10 \times (+2) - 5 = +15$$
 
 Decision:
 
-- $`\Delta \text{Objective} > 0`$ → objective increased → **block
-  removal**
+- $\Delta\text{Objective} > 0$ → objective increased → **block removal**
 
-**Interpretation:**\
+**Interpretation:**  
 Removing `U` saves cost, but it *exposes new edge* on its three
 neighbours, increasing total perimeter enough that the
 boundary-penalised objective gets worse.
@@ -292,15 +275,15 @@ There isn’t one universal “correct” value because it depends on the
 scale and units of your costs and boundary lengths. A practical
 workflow:
 
-1.  **Start with `boundary_penalty = 0`**\
+1.  **Start with `boundary_penalty = 0`**  
     This turns off boundary blocking. Whittling then only uses targets +
     patch-size + split viability rules.
 
-2.  **Increase gradually** and observe how solutions change\
+2.  **Increase gradually** and observe how solutions change  
     As you increase it, removals that create extra edge become more
     likely to be blocked, producing smoother patches.
 
-3.  **Do a small sensitivity check**\
+3.  **Do a small sensitivity check**  
     Try a few values spanning a small range (e.g., 0, low, medium, high)
     and compare: \`\`\`
 
@@ -318,22 +301,22 @@ boundary term too much.
 
 ## FAQ
 
-**Does Stage 3 re-run the optimiser (prioritizr)?**\
+**Does Stage 3 re-run the optimiser (prioritizr)?**  
 No. Stage 3 does local, one-unit-at-a-time removal tests. It never
 resolves a new optimisation problem.
 
-**Are we comparing costs to the Stage 2 solution?**\
+**Are we comparing costs to the Stage 2 solution?**  
 Not directly. Stage 3 compares the objective **before vs after removing
-one candidate unit**. It uses $`Δ objective`$ (local change), not a full
-re-optimisation.
+one candidate unit**. It uses $\Delta objective$ (local change), not a
+full re-optimisation.
 
-**Is it “per patch” or “whole solution”?**\
+**Is it “per patch” or “whole solution”?**  
 Conceptually the objective is for the whole solution (sum of PU costs +
 boundary penalty term). In code, the change is computed locally using
 the candidate’s neighbour relationships, because only local boundary
 edges change when you remove one unit.
 
-**What if my costs are not area?**\
+**What if my costs are not area?**  
 That’s fine—`boundary_penalty` still converts perimeter into the same
 units as your chosen cost layer. The interpretation becomes: “how much
 cost am I willing to pay to avoid 1 km of extra edge?”

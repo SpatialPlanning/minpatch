@@ -3,7 +3,6 @@
 ## Load packages
 
 ``` r
-
 library(minpatch)
 library(prioritizr)
 library(prioritizrdata)
@@ -16,7 +15,6 @@ library(dplyr)
 ## Load data
 
 ``` r
-
 # load data
 tas_pu <- get_tas_pu() %>% 
   mutate(cost = cost*10000)
@@ -45,7 +43,6 @@ tas <- tas %>%
 ## Run prioritizr analysis
 
 ``` r
-
 p <- problem(tas, features = features, cost_column = "cost") %>%
   add_min_set_objective() %>%
   add_relative_targets(0.30) %>%  # 30% of each feature
@@ -58,7 +55,6 @@ s <- solve(p)
 ### Plot prioritizr solution
 
 ``` r
-
 plot_prioritizr(s)
 ```
 
@@ -69,7 +65,6 @@ plot_prioritizr(s)
 ### Choose a patch size
 
 ``` r
-
 # Calculate reasonable parameters based on planning unit characteristics
 median_area <- median(st_area(tas))
 
@@ -93,7 +88,6 @@ cat("- This means patches must be at least", round(min_patch_size/median_area, 3
 ### Run minpatch
 
 ``` r
-
 result <- run_minpatch(
   prioritizr_problem = p,
   prioritizr_solution = s,
@@ -106,9 +100,7 @@ result <- run_minpatch(
 )
 #> Validating inputs...
 #> Initializing data structures...
-#> Calculating boundary matrix using 14 cores...
-#> Processing chunks in parallel...
-#> Combining results...
+#> Calculating boundary matrix (optimized version)...
 #> Creating patch radius dictionary (optimized)...
 #> Processed 100 of 1128 planning units
 #> Processed 200 of 1128 planning units
@@ -188,7 +180,6 @@ result <- run_minpatch(
 ### Visualise the minpatch solution
 
 ``` r
-
 plot_minpatch(result, title = "MinPatch Results")
 ```
 
@@ -197,7 +188,6 @@ plot_minpatch(result, title = "MinPatch Results")
 ### Analyse the final results
 
 ``` r
-
 print_minpatch_summary(result)
 #> === MinPatch Processing Summary ===
 #> 
@@ -383,7 +373,6 @@ connected landscapes or for features that don’t require large contiguous
 areas.
 
 ``` r
-
 # Calculate reasonable parameters based on planning unit characteristics
 median_area <- median(st_area(tas))
 min_patch_size <- median_area * 10
@@ -420,7 +409,6 @@ result3 <- run_minpatch(
 ### Visualise the minpatch solution
 
 ``` r
-
 patchwork::wrap_plots(plot_minpatch(result, title = "Patch Size x5"),
                       plot_minpatch(result2, title = "Patch Size x10"),
                       plot_minpatch(result3, title = "Patch Size x20"),
@@ -452,7 +440,6 @@ different penalty values. Very small penalties (e.g., 1e-10) may be
 needed to see meaningful differences in such cases.
 
 ``` r
-
 # Calculate reasonable parameters based on planning unit characteristics
 median_area <- median(st_area(tas))
 min_patch_size <- median_area * 5
@@ -488,7 +475,6 @@ result5 <- run_minpatch(
 
 ``` r
 
-
 patchwork::wrap_plots(plot_prioritizr(result2$solution, col = "minpatch", title = "Boundary Penalty: 0"),
                       plot_prioritizr(result4$solution, col = "minpatch", title = "Boundary Penalty: 1"),
                       plot_prioritizr(result5$solution, col = "minpatch", title = "Boundary Penalty: 10"),
@@ -502,7 +488,6 @@ patchwork::wrap_plots(plot_prioritizr(result2$solution, col = "minpatch", title 
 ### Visualise the differences in the minpatch solution
 
 ``` r
-
 patchwork::wrap_plots(plot_minpatch(result2, title = "Boundary Penalty: 0"),
                       plot_minpatch(result4, title = "Boundary Penalty: 1"),
                       plot_minpatch(result5, title = "Boundary Penalty: 10"),

@@ -59,45 +59,43 @@ result <- run_minpatch(
 #>   Initial unmet targets: 5 
 #>   Unmet feature IDs: 1, 2, 3, 4, 5 
 #>   Iteration 1 - Unmet targets: 5 
-#>     Found 90 potential patches with scores
-#>     Best score: 0.001699533 for unit 78 
-#>     Added patch centered on unit 78 
-#>   Iteration 2 - Unmet targets: 5 
+#>     Found 85 potential patches with scores
+#>     Best score: 0.002500108 for unit 90 
+#>     Added patch centered on unit 90 
+#>   Iteration 2 - Unmet targets: 4 
 #>     Found 76 potential patches with scores
-#>     Best score: 0.001651032 for unit 66 
-#>     Added patch centered on unit 66 
+#>     Best score: 0.002060928 for unit 78 
+#>     Added patch centered on unit 78 
 #>   All conservation targets are now met!
 #> Stage 3: Removing unnecessary planning units...
-#>     Edge units found: 8 
+#>     Edge units found: 7 
 #>     Keystone units: 0 
 #>     New keystone units: 0 
-#>     Scoreable units: 8 
-#>     Unit 88 cannot be removed - adding to keystone set
-#>     Edge units found: 7 
-#>     Keystone units: 1 
-#>     New keystone units: 0 
 #>     Scoreable units: 7 
-#>     Removed unit 64 at iteration 2 
-#>     Edge units found: 7 
+#>     Unit 73 cannot be removed - adding to keystone set
+#>     Edge units found: 6 
 #>     Keystone units: 1 
 #>     New keystone units: 0 
-#>     Scoreable units: 7 
-#>     Removed unit 65 at iteration 3 
-#>     Edge units found: 9 
-#>     Keystone units: 1 
+#>     Scoreable units: 6 
+#>     Unit 72 cannot be removed - adding to keystone set
+#>     Edge units found: 5 
+#>     Keystone units: 2 
 #>     New keystone units: 0 
-#>     Scoreable units: 9 
-#>     Removed unit 66 at iteration 4 
-#>     Edge units found: 8 
-#>     Keystone units: 1 
+#>     Scoreable units: 5 
+#>     Removed unit 64 at iteration 3 
+#>     Edge units found: 4 
+#>     Keystone units: 2 
 #>     New keystone units: 0 
-#>     Scoreable units: 8 
-#>     Removed unit 57 at iteration 5 
-#>     Unit 56 cannot be removed - adding to keystone set
-#>     Removed unit 47 at iteration 7 
-#>     Unit 55 cannot be removed - adding to keystone set
-#>     Unit 63 cannot be removed - adding to keystone set
-#>     Unit 46 cannot be removed - adding to keystone set
+#>     Scoreable units: 4 
+#>     Removed unit 63 at iteration 4 
+#>     Edge units found: 4 
+#>     Keystone units: 2 
+#>     New keystone units: 0 
+#>     Scoreable units: 4 
+#>     Removed unit 54 at iteration 5 
+#>     Unit 71 cannot be removed - adding to keystone set
+#>     Unit 61 cannot be removed - adding to keystone set
+#>     Unit 62 cannot be removed - adding to keystone set
 #>   No more edge units to consider - terminating
 #> Calculating final statistics...
 #> MinPatch processing complete!
@@ -106,21 +104,21 @@ print_minpatch_summary(result)
 #> === MinPatch Processing Summary ===
 #> 
 #> Patch Statistics:
-#>   Initial patches: 9 (valid: 0)
-#>   Final patches: 6 (valid: 3)
-#>   Area change: 0.04 (25.0%)
+#>   Initial patches: 7 (valid: 1)
+#>   Final patches: 4 (valid: 2)
+#>   Area change: 0.02 (12.5%)
 #> 
 #> Cost Breakdown:
-#>   Planning unit cost: 3964.91
+#>   Planning unit cost: 3535.08
 #>   Boundary cost: 0.00
-#>   Total cost: 3964.91
-#>   Selected units: 20
+#>   Total cost: 3535.08
+#>   Selected units: 18
 #> 
 #> Feature Representation:
 #>   Total features: 5
 #>   Targets met: 5
 #>   Targets unmet: 0
-#>   Mean proportion: 0.227
+#>   Mean proportion: 0.201
 #>   Total shortfall: 0.00
 #> 
 #> 

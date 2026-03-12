@@ -104,17 +104,17 @@ in objective) rather than solving a new optimisation problem.</p>
 <h2 id="decision-rule-the-thing-to-remember">Decision rule (the thing to remember)<a class="anchor" aria-label="anchor" href="#decision-rule-the-thing-to-remember"></a>
 </h2>
 <p>Conceptually, Stage 3 evaluates an objective of the form:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Objective</mtext><mo>=</mo><mo>∑</mo><mo stretchy="false" form="prefix">(</mo><mtext mathvariant="normal">PU cost</mtext><mo stretchy="false" form="postfix">)</mo><mo>+</mo><mtext mathvariant="normal">boundary_penalty</mtext><mo>×</mo><mo stretchy="false" form="prefix">(</mo><mtext mathvariant="normal">total perimeter</mtext><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Objective</mtext><mo>=</mo><mo>∑</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">PU cost</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mtext mathvariant="normal">boundary_penalty</mtext><mo>×</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">total perimeter</mtext><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
 \text{Objective} = \sum(\text{PU cost}) + \text{boundary_penalty} \times (\text{total perimeter})
 </annotation></semantics></math></p>
 <p>When testing removal of a single planning unit, the code computes a
 local change:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">Objective</mtext><mo>=</mo><mo stretchy="false" form="prefix">(</mo><mtext mathvariant="normal">boundary_penalty</mtext><mo>×</mo><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">perimeter</mtext><mo stretchy="false" form="postfix">)</mo><mo>−</mo><mtext mathvariant="normal">unit_cost</mtext></mrow><annotation encoding="application/x-tex"> \Delta \text{Objective} = (\text{boundary_penalty} \times \Delta \text{perimeter}) - \text{unit_cost} </annotation></semantics></math></p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mtext mathvariant="normal">Objective</mtext><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">boundary_penalty</mtext><mo>×</mo><mi>Δ</mi><mtext mathvariant="normal">perimeter</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mtext mathvariant="normal">unit_cost</mtext></mrow><annotation encoding="application/x-tex"> \Delta \text{Objective} = (\text{boundary_penalty} \times \Delta \text{perimeter}) - \text{unit_cost} </annotation></semantics></math></p>
 <p>- If
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">Objective</mtext><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\Delta \text{Objective} &gt; 0</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mtext mathvariant="normal">Objective</mtext><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\Delta \text{Objective} &gt; 0</annotation></semantics></math>
 → objective increased → <strong>block</strong> removal<br>
 - If
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">Objective</mtext><mo>≤</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\Delta \text{Objective} \le 0</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mtext mathvariant="normal">Objective</mtext><mo>≤</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\Delta \text{Objective} \le 0</annotation></semantics></math>
 → objective stayed the same or decreased → <strong>allow</strong>
 removal (assuming constraints pass)</p>
 <div class="section level3">
@@ -123,7 +123,7 @@ removal (assuming constraints pass)</p>
 <p>In the code, you’ll often see a value like:</p>
 <p><code>total_cost_change = boundary_cost_change - unit_cost</code></p>
 <p>That is exactly
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">Objective</mtext></mrow><annotation encoding="application/x-tex">\Delta \text{Objective}</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mtext mathvariant="normal">Objective</mtext></mrow><annotation encoding="application/x-tex">\Delta \text{Objective}</annotation></semantics></math>
 written in code form:</p>
 <ul>
 <li><p><code>boundary_cost_change</code> corresponds to
@@ -148,7 +148,7 @@ count” depending on your data)</p></li>
 <p>To add these together, <code>boundary_penalty</code> acts like a
 <strong>conversion rate</strong>: it converts boundary length into “cost
 units”.</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Objective</mtext><mo>=</mo><mo>∑</mo><mo stretchy="false" form="prefix">(</mo><mtext mathvariant="normal">PU cost</mtext><mo stretchy="false" form="postfix">)</mo><mo>+</mo><mtext mathvariant="normal">boundary_penalty</mtext><mo>×</mo><mo stretchy="false" form="prefix">(</mo><mtext mathvariant="normal">total perimeter</mtext><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\text{Objective} = \sum(\text{PU cost}) + \text{boundary_penalty} \times (\text{total perimeter})</annotation></semantics></math></p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Objective</mtext><mo>=</mo><mo>∑</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">PU cost</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mtext mathvariant="normal">boundary_penalty</mtext><mo>×</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">total perimeter</mtext><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\text{Objective} = \sum(\text{PU cost}) + \text{boundary_penalty} \times (\text{total perimeter})</annotation></semantics></math></p>
 <div class="section level3">
 <h3 id="if-your-pu-cost-is-in-dollars">If your PU cost is in dollars<a class="anchor" aria-label="anchor" href="#if-your-pu-cost-is-in-dollars"></a>
 </h3>
@@ -194,7 +194,7 @@ PU</p></li>
 you pay (or save) when boundary changes</p></li>
 </ul>
 <p>And Stage 3 only removes a PU when:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">Objective</mtext><mo>=</mo><mo stretchy="false" form="prefix">(</mo><mtext mathvariant="normal">boundary_penalty</mtext><mo>×</mo><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">perimeter</mtext><mo stretchy="false" form="postfix">)</mo><mo>−</mo><mtext mathvariant="normal">unit_cost</mtext><mo>≤</mo><mn>0</mn></mrow><annotation encoding="application/x-tex"> \Delta \text{Objective} = (\text{boundary_penalty} \times \Delta \text{perimeter}) - \text{unit_cost} \le 0 </annotation></semantics></math></p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mtext mathvariant="normal">Objective</mtext><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">boundary_penalty</mtext><mo>×</mo><mi>Δ</mi><mtext mathvariant="normal">perimeter</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mtext mathvariant="normal">unit_cost</mtext><mo>≤</mo><mn>0</mn></mrow><annotation encoding="application/x-tex"> \Delta \text{Objective} = (\text{boundary_penalty} \times \Delta \text{perimeter}) - \text{unit_cost} \le 0 </annotation></semantics></math></p>
 <p>So you can read it as:</p>
 <blockquote>
 <p>Only remove the PU if the edge bill doesn’t outweigh the cost
@@ -218,7 +218,7 @@ selected patch</strong> (in km)</li>
 <p>If a removed PU has
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math><strong>selected neighbours</strong> (0–4), then removing it changes
 perimeter by:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">perimeter</mtext><mo>=</mo><mi>−</mi><mn>4</mn><mo>+</mo><mn>2</mn><mi>k</mi></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mtext mathvariant="normal">perimeter</mtext><mo>=</mo><mi>−</mi><mn>4</mn><mo>+</mo><mn>2</mn><mi>k</mi></mrow><annotation encoding="application/x-tex">
 \Delta \text{perimeter} = -4 + 2k
 </annotation></semantics></math></p>
 <p>So perimeter <strong>increases</strong> only when
@@ -258,7 +258,7 @@ below, and right.</p>
 <ul>
 <li><p><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mtext mathvariant="normal">after</mtext></mrow><annotation encoding="application/x-tex">P{\text{after}}</annotation></semantics></math>
 = 4 km</p></li>
-<li><p><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">perimeter</mtext></mrow><annotation encoding="application/x-tex">\Delta \text{perimeter}</annotation></semantics></math>
+<li><p><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mtext mathvariant="normal">perimeter</mtext></mrow><annotation encoding="application/x-tex">\Delta \text{perimeter}</annotation></semantics></math>
 = 4 - 6 =−2 km</p></li>
 </ul>
 <p>Now apply the Stage 3 boundary check:</p>
@@ -267,11 +267,11 @@ below, and right.</p>
 <li><p><code>boundary_penalty = 10</code></p></li>
 <li><p><code>unit_cost = 5</code></p></li>
 </ul>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">Objective</mtext><mo>=</mo><mo stretchy="false" form="prefix">(</mo><mtext mathvariant="normal">boundary_penalty</mtext><mo>×</mo><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">perimeter</mtext><mo stretchy="false" form="postfix">)</mo><mo>−</mo><mtext mathvariant="normal">unit_cost</mtext><mspace width="0.222em"></mspace><mtext mathvariant="normal">= 10</mtext><mspace width="0.222em"></mspace><mo>×</mo><mspace width="0.222em"></mspace><mo stretchy="false" form="prefix">(</mo><mi>−</mi><mn>2</mn><mo stretchy="false" form="postfix">)</mo><mo>−</mo><mn>5</mn><mo>=</mo><mi>−</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">\Delta \text{Objective} = (\text{boundary_penalty} \times \Delta \text{perimeter}) - \text{unit_cost}\ \text{= 10}\ \times \ (-2) - 5 = -2  </annotation></semantics></math></p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mtext mathvariant="normal">Objective</mtext><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtext mathvariant="normal">boundary_penalty</mtext><mo>×</mo><mi>Δ</mi><mtext mathvariant="normal">perimeter</mtext><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mtext mathvariant="normal">unit_cost</mtext><mspace width="0.222em"></mspace><mtext mathvariant="normal">= 10</mtext><mspace width="0.222em"></mspace><mo>×</mo><mspace width="0.222em"></mspace><mrow><mo stretchy="true" form="prefix">(</mo><mi>−</mi><mn>2</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mn>5</mn><mo>=</mo><mi>−</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">\Delta \text{Objective} = (\text{boundary_penalty} \times \Delta \text{perimeter}) - \text{unit_cost}\ \text{= 10}\ \times \ (-2) - 5 = -2  </annotation></semantics></math></p>
 <p>Decision:</p>
 <ul>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">Objective</mtext><mo>≤</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\Delta \text{Objective} \le 0</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mtext mathvariant="normal">Objective</mtext><mo>≤</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\Delta \text{Objective} \le 0</annotation></semantics></math>
 → objective decreased → <strong>allow removal</strong> (if other
 constraints pass).</li>
 </ul>
@@ -309,7 +309,7 @@ selected neighbours (left, right, and above are selected; below is
 not).</p></li>
 <li><p>Therefore:</p></li>
 </ul>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">perimeter</mtext><mo>=</mo><mi>−</mi><mn>4</mn><mo>+</mo><mn>2</mn><mi>k</mi><mo>=</mo><mi>−</mi><mn>4</mn><mo>+</mo><mn>2</mn><mo stretchy="false" form="prefix">(</mo><mn>3</mn><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>+</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mtext mathvariant="normal">perimeter</mtext><mo>=</mo><mi>−</mi><mn>4</mn><mo>+</mo><mn>2</mn><mi>k</mi><mo>=</mo><mi>−</mi><mn>4</mn><mo>+</mo><mn>2</mn><mrow><mo stretchy="true" form="prefix">(</mo><mn>3</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>+</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">
 \Delta \text{perimeter} = -4 + 2k = -4 + 2(3) = +2
 </annotation></semantics></math></p>
 <p>So:</p>
@@ -319,7 +319,7 @@ not).</p></li>
 km<br>
 </li>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">perimeter</mtext><mo>=</mo><mi>+</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">\Delta \text{perimeter} = +2</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mtext mathvariant="normal">perimeter</mtext><mo>=</mo><mi>+</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">\Delta \text{perimeter} = +2</annotation></semantics></math>
 km</li>
 </ul>
 <p>Now apply the boundary check:</p>
@@ -328,12 +328,12 @@ km</li>
 <li><p><code>boundary_penalty = 10</code></p></li>
 <li><p><code>unit_cost = 5</code></p></li>
 </ul>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">Objective</mtext><mo>=</mo><mn>10</mn><mo>×</mo><mo stretchy="false" form="prefix">(</mo><mi>+</mi><mn>2</mn><mo stretchy="false" form="postfix">)</mo><mo>−</mo><mn>5</mn><mo>=</mo><mi>+</mi><mn>15</mn></mrow><annotation encoding="application/x-tex">\Delta \text{Objective} = 10 \times (+2) - 5 = +15
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mtext mathvariant="normal">Objective</mtext><mo>=</mo><mn>10</mn><mo>×</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>+</mi><mn>2</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mn>5</mn><mo>=</mo><mi>+</mi><mn>15</mn></mrow><annotation encoding="application/x-tex">\Delta \text{Objective} = 10 \times (+2) - 5 = +15
 </annotation></semantics></math></p>
 <p>Decision:</p>
 <ul>
 <li>
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">Objective</mtext><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\Delta \text{Objective} &gt; 0</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mtext mathvariant="normal">Objective</mtext><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\Delta \text{Objective} &gt; 0</annotation></semantics></math>
 → objective increased → <strong>block removal</strong>
 </li>
 </ul>
@@ -383,7 +383,7 @@ resolves a new optimisation problem.</p>
 solution?</strong><br>
 Not directly. Stage 3 compares the objective <strong>before vs after
 removing one candidate unit</strong>. It uses
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mi>o</mi><mi>b</mi><mi>j</mi><mi>e</mi><mi>c</mi><mi>t</mi><mi>i</mi><mi>v</mi><mi>e</mi></mrow><annotation encoding="application/x-tex">Δ objective</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><mi>o</mi><mi>b</mi><mi>j</mi><mi>e</mi><mi>c</mi><mi>t</mi><mi>i</mi><mi>v</mi><mi>e</mi></mrow><annotation encoding="application/x-tex">Δ objective</annotation></semantics></math>
 (local change), not a full re-optimisation.</p>
 <p><strong>Is it “per patch” or “whole solution”?</strong><br>
 Conceptually the objective is for the whole solution (sum of PU costs +

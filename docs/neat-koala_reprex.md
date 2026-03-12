@@ -1,7 +1,6 @@
 # NA
 
 ``` r
-
 library(terra)
 #> terra 1.8.60
 library(tidyverse)

@@ -8,7 +8,7 @@
 - **Anthony J. Richardson**. Author.
   [](https://orcid.org/0000-0002-9289-7366)
 
-- **Robert J. Smith**. Author.\
+- **Robert J. Smith**. Author.  
   Original MinPatch algorithm author
 
 ## Citation

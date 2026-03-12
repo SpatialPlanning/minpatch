@@ -1,4 +1,4 @@
-# minpatch for R ![](reference/figures/minpatch.png)
+# minpatch for R [![minpatch website](reference/figures/minpatch.png)](https://SpatialPlanning.github.io/minpatch)
 
 **Note: This is still a work in progress and significant bugs may be
 present. Use with caution**
@@ -46,7 +46,6 @@ through three stages:
 ## Installation
 
 ``` r
-
 # Install from GitHub
 pak::pak("SpatialPlanning/minpatch")
 ```
@@ -143,11 +142,9 @@ constructed, and how strongly irregular boundaries are penalised.
   `boundary_penalty > 0`, a candidate edge unit is only removed if doing
   so does not increase the boundary-penalised objective:
 
-  ``` math
-   \Delta \text{Objective} = (\text{boundary_penalty} \times \Delta \text{perimeter}) - \text{unit_cost} 
-  ```
+  $$\Delta\text{Objective} = \left( \text{boundary\_penalty} \times \Delta\text{perimeter} \right) - \text{unit\_cost}$$
 
-  If $`\Delta \text{Objective} > 0`$, the removal is blocked because the
+  If $\Delta\text{Objective} > 0$, the removal is blocked because the
   increase in boundary penalty outweighs the cost saved by removing the
   unit (i.e., it would make the patch edge more “expensive”). Setting
   `boundary_penalty = 0` turns off this check.

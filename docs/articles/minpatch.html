@@ -35,7 +35,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/boundary-penalty.html">Boundary penalty in MinPatch</a></li>
-    <li><a class="dropdown-item" href="../articles/minpatch-oceandatr-Seychelles.html">Using minpatch to reduce fragmentation in a marine planning region (Seychelles)</a></li>
+    <li><a class="dropdown-item" href="../articles/minpatch-oceandatr-Seychelles.html">Reducing protected area fragmentation in the Seychelles: A Case Study</a></li>
     <li><a class="dropdown-item" href="../articles/minpatchTasmania.html">MinPatch in Tasmania</a></li>
   </ul>
 </li>
@@ -77,11 +77,16 @@ through MinPatch post-processing.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/SpatialPlanning/minpatch" class="external-link">minpatch</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://prioritizr.net" class="external-link">prioritizr</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: package 'prioritizr' was built under R version 4.5.2</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: package 'sf' was built under R version 4.5.2</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rspatial.org/" class="external-link">terra</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: package 'terra' was built under R version 4.5.2</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span></span></code></pre></div>
+<span><span class="co">#&gt; Warning: package 'ggplot2' was built under R version 4.5.2</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: package 'patchwork' was built under R version 4.5.2</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="step-1-load-and-examine-the-data">Step 1: Load and Examine the Data<a class="anchor" aria-label="anchor" href="#step-1-load-and-examine-the-data"></a>
 </h3>
@@ -165,40 +170,43 @@ objects</p>
 <span><span class="co">#&gt;   Initial unmet targets: 5 </span></span>
 <span><span class="co">#&gt;   Unmet feature IDs: 1, 2, 3, 4, 5 </span></span>
 <span><span class="co">#&gt;   Iteration 1 - Unmet targets: 5 </span></span>
-<span><span class="co">#&gt;     Found 90 potential patches with scores</span></span>
-<span><span class="co">#&gt;     Best score: 0.001650111 for unit 89 </span></span>
-<span><span class="co">#&gt;     Added patch centered on unit 89 </span></span>
-<span><span class="co">#&gt;   Iteration 2 - Unmet targets: 5 </span></span>
-<span><span class="co">#&gt;     Found 78 potential patches with scores</span></span>
-<span><span class="co">#&gt;     Best score: 0.001677852 for unit 86 </span></span>
+<span><span class="co">#&gt;     Found 85 potential patches with scores</span></span>
+<span><span class="co">#&gt;     Best score: 0.002280652 for unit 90 </span></span>
+<span><span class="co">#&gt;     Added patch centered on unit 90 </span></span>
+<span><span class="co">#&gt;   Iteration 2 - Unmet targets: 2 </span></span>
+<span><span class="co">#&gt;     Found 74 potential patches with scores</span></span>
+<span><span class="co">#&gt;     Best score: 0.0009039778 for unit 86 </span></span>
 <span><span class="co">#&gt;     Added patch centered on unit 86 </span></span>
 <span><span class="co">#&gt;   All conservation targets are now met!</span></span>
 <span><span class="co">#&gt; Stage 3: Removing unnecessary planning units...</span></span>
-<span><span class="co">#&gt;     Edge units found: 5 </span></span>
+<span><span class="co">#&gt;     Edge units found: 7 </span></span>
 <span><span class="co">#&gt;     Keystone units: 0 </span></span>
 <span><span class="co">#&gt;     New keystone units: 0 </span></span>
-<span><span class="co">#&gt;     Scoreable units: 5 </span></span>
-<span><span class="co">#&gt;     Unit 61 cannot be removed - adding to keystone set</span></span>
-<span><span class="co">#&gt;     Edge units found: 4 </span></span>
+<span><span class="co">#&gt;     Scoreable units: 7 </span></span>
+<span><span class="co">#&gt;     Unit 68 cannot be removed - adding to keystone set</span></span>
+<span><span class="co">#&gt;     Edge units found: 6 </span></span>
 <span><span class="co">#&gt;     Keystone units: 1 </span></span>
+<span><span class="co">#&gt;     New keystone units: 0 </span></span>
+<span><span class="co">#&gt;     Scoreable units: 6 </span></span>
+<span><span class="co">#&gt;     Removed unit 61 at iteration 2 </span></span>
+<span><span class="co">#&gt;     Edge units found: 6 </span></span>
+<span><span class="co">#&gt;     Keystone units: 1 </span></span>
+<span><span class="co">#&gt;     New keystone units: 0 </span></span>
+<span><span class="co">#&gt;     Scoreable units: 6 </span></span>
+<span><span class="co">#&gt;     Unit 69 cannot be removed - adding to keystone set</span></span>
+<span><span class="co">#&gt;     Edge units found: 5 </span></span>
+<span><span class="co">#&gt;     Keystone units: 2 </span></span>
+<span><span class="co">#&gt;     New keystone units: 0 </span></span>
+<span><span class="co">#&gt;     Scoreable units: 5 </span></span>
+<span><span class="co">#&gt;     Unit 63 cannot be removed - adding to keystone set</span></span>
+<span><span class="co">#&gt;     Edge units found: 4 </span></span>
+<span><span class="co">#&gt;     Keystone units: 3 </span></span>
 <span><span class="co">#&gt;     New keystone units: 0 </span></span>
 <span><span class="co">#&gt;     Scoreable units: 4 </span></span>
 <span><span class="co">#&gt;     Unit 62 cannot be removed - adding to keystone set</span></span>
-<span><span class="co">#&gt;     Edge units found: 3 </span></span>
-<span><span class="co">#&gt;     Keystone units: 2 </span></span>
-<span><span class="co">#&gt;     New keystone units: 0 </span></span>
-<span><span class="co">#&gt;     Scoreable units: 3 </span></span>
 <span><span class="co">#&gt;     Unit 66 cannot be removed - adding to keystone set</span></span>
-<span><span class="co">#&gt;     Edge units found: 2 </span></span>
-<span><span class="co">#&gt;     Keystone units: 3 </span></span>
-<span><span class="co">#&gt;     New keystone units: 0 </span></span>
-<span><span class="co">#&gt;     Scoreable units: 2 </span></span>
-<span><span class="co">#&gt;     Unit 64 cannot be removed - adding to keystone set</span></span>
-<span><span class="co">#&gt;     Edge units found: 1 </span></span>
-<span><span class="co">#&gt;     Keystone units: 4 </span></span>
-<span><span class="co">#&gt;     New keystone units: 0 </span></span>
-<span><span class="co">#&gt;     Scoreable units: 1 </span></span>
 <span><span class="co">#&gt;     Unit 65 cannot be removed - adding to keystone set</span></span>
+<span><span class="co">#&gt;     Unit 54 cannot be removed - adding to keystone set</span></span>
 <span><span class="co">#&gt;   No more edge units to consider - terminating</span></span>
 <span><span class="co">#&gt; Calculating final statistics...</span></span>
 <span><span class="co">#&gt; MinPatch processing complete!</span></span></code></pre></div>
@@ -213,14 +221,14 @@ objects</p>
 <span><span class="co">#&gt; === MinPatch Processing Summary ===</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Patch Statistics:</span></span>
-<span><span class="co">#&gt;   Initial patches: 9 (valid: 0)</span></span>
-<span><span class="co">#&gt;   Final patches: 9 (valid: 0)</span></span>
+<span><span class="co">#&gt;   Initial patches: 7 (valid: 0)</span></span>
+<span><span class="co">#&gt;   Final patches: 6 (valid: 2)</span></span>
 <span><span class="co">#&gt;   Area change: 0.10 (62.5%)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Cost Breakdown:</span></span>
-<span><span class="co">#&gt;   Planning unit cost: 5150.73</span></span>
+<span><span class="co">#&gt;   Planning unit cost: 5147.47</span></span>
 <span><span class="co">#&gt;   Boundary cost: 0.00</span></span>
-<span><span class="co">#&gt;   Total cost: 5150.74</span></span>
+<span><span class="co">#&gt;   Total cost: 5147.47</span></span>
 <span><span class="co">#&gt;   Selected units: 26</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Feature Representation:</span></span>
@@ -241,14 +249,14 @@ objects</p>
 <span><span class="co">#&gt; === Overall Solution Comparison ===</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">comparison</span><span class="op">$</span><span class="va">overall</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                        Metric   Original   MinPatch Change Percent_Change</span></span>
-<span><span class="co">#&gt; 1     Selected Planning Units   16.00000   26.00000  10.00           62.5</span></span>
-<span><span class="co">#&gt; 2                  Total Area    0.16000    0.26000   0.10           62.5</span></span>
-<span><span class="co">#&gt; 3           Number of Patches    9.00000    9.00000   0.00            0.0</span></span>
-<span><span class="co">#&gt; 4 Valid Patches (&gt;= min size)    0.00000    0.00000   0.00             NA</span></span>
-<span><span class="co">#&gt; 5           Median Patch Size    0.01000    0.03000   0.02          200.0</span></span>
-<span><span class="co">#&gt; 6          Planning Unit Cost 5150.73485 5150.73485   0.00            0.0</span></span>
-<span><span class="co">#&gt; 7               Boundary Cost    0.00365    0.00365   0.00            0.0</span></span>
-<span><span class="co">#&gt; 8                  Total Cost 5150.73850 5150.73850   0.00            0.0</span></span>
+<span><span class="co">#&gt; 1     Selected Planning Units   16.00000   26.00000  10.00       62.50000</span></span>
+<span><span class="co">#&gt; 2                  Total Area    0.16000    0.26000   0.10       62.50000</span></span>
+<span><span class="co">#&gt; 3           Number of Patches    7.00000    6.00000  -1.00      -14.28571</span></span>
+<span><span class="co">#&gt; 4 Valid Patches (&gt;= min size)    0.00000    2.00000   2.00             NA</span></span>
+<span><span class="co">#&gt; 5           Median Patch Size    0.01000    0.04000   0.03      300.00000</span></span>
+<span><span class="co">#&gt; 6          Planning Unit Cost 5147.46681 5147.46681   0.00        0.00000</span></span>
+<span><span class="co">#&gt; 7               Boundary Cost    0.00385    0.00385   0.00        0.00000</span></span>
+<span><span class="co">#&gt; 8                  Total Cost 5147.47066 5147.47066   0.00        0.00000</span></span>
 <span></span>
 <span><span class="co"># Print feature-level comparison</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\n=== Feature-Level Area Comparison ===\n"</span><span class="op">)</span></span>
@@ -256,11 +264,11 @@ objects</p>
 <span><span class="co">#&gt; === Feature-Level Area Comparison ===</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">comparison</span><span class="op">$</span><span class="va">features</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   Feature_ID    Target Original_Area MinPatch_Area Area_Change Percent_Change</span></span>
-<span><span class="co">#&gt; 1          1 12.670220     14.083429     23.172903    9.089474       64.54020</span></span>
-<span><span class="co">#&gt; 2          2  4.774965      5.124808      7.472416    2.347608       45.80870</span></span>
-<span><span class="co">#&gt; 3          3 11.029225     11.707674     18.831232    7.123557       60.84520</span></span>
-<span><span class="co">#&gt; 4          4  6.489033      6.863962     10.491540    3.627578       52.84963</span></span>
-<span><span class="co">#&gt; 5          5  8.613574      9.482534     16.114067    6.631533       69.93419</span></span>
+<span><span class="co">#&gt; 1          1 12.670220     14.083429     23.139966    9.056537       64.30634</span></span>
+<span><span class="co">#&gt; 2          2  4.774965      5.124808      7.492192    2.367384       46.19458</span></span>
+<span><span class="co">#&gt; 3          3 11.029225     11.707674     18.779672    7.071998       60.40480</span></span>
+<span><span class="co">#&gt; 4          4  6.489033      6.863962     10.607930    3.743968       54.54530</span></span>
+<span><span class="co">#&gt; 5          5  8.613574      9.482534     16.097477    6.614944       69.75924</span></span>
 <span><span class="co">#&gt;   Original_Target_Met MinPatch_Target_Met Original_Proportion</span></span>
 <span><span class="co">#&gt; 1                TRUE                TRUE            1.111538</span></span>
 <span><span class="co">#&gt; 2                TRUE                TRUE            1.073266</span></span>
@@ -268,11 +276,11 @@ objects</p>
 <span><span class="co">#&gt; 4                TRUE                TRUE            1.057779</span></span>
 <span><span class="co">#&gt; 5                TRUE                TRUE            1.100883</span></span>
 <span><span class="co">#&gt;   MinPatch_Proportion</span></span>
-<span><span class="co">#&gt; 1            1.828927</span></span>
-<span><span class="co">#&gt; 2            1.564915</span></span>
-<span><span class="co">#&gt; 3            1.707394</span></span>
-<span><span class="co">#&gt; 4            1.616811</span></span>
-<span><span class="co">#&gt; 5            1.870776</span></span>
+<span><span class="co">#&gt; 1            1.826327</span></span>
+<span><span class="co">#&gt; 2            1.569057</span></span>
+<span><span class="co">#&gt; 3            1.702719</span></span>
+<span><span class="co">#&gt; 4            1.634747</span></span>
+<span><span class="co">#&gt; 5            1.868850</span></span>
 <span></span>
 <span><span class="co"># Print summary statistics</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\n=== Feature Change Summary ===\n"</span><span class="op">)</span></span>
@@ -325,11 +333,11 @@ objects</p>
 <span><span class="co">#&gt; Features with lowest target achievement:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">worst_features</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   feature_id proportion_met target_met</span></span>
-<span><span class="co">#&gt; 2          2      0.2660356       TRUE</span></span>
-<span><span class="co">#&gt; 4          4      0.2748579       TRUE</span></span>
-<span><span class="co">#&gt; 3          3      0.2902570       TRUE</span></span>
-<span><span class="co">#&gt; 1          1      0.3109175       TRUE</span></span>
-<span><span class="co">#&gt; 5          5      0.3180319       TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; 2          2      0.2667397       TRUE</span></span>
+<span><span class="co">#&gt; 4          4      0.2779071       TRUE</span></span>
+<span><span class="co">#&gt; 3          3      0.2894622       TRUE</span></span>
+<span><span class="co">#&gt; 1          1      0.3104756       TRUE</span></span>
+<span><span class="co">#&gt; 5          5      0.3177045       TRUE</span></span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="spatial-configuration-improvements">Spatial Configuration Improvements<a class="anchor" aria-label="anchor" href="#spatial-configuration-improvements"></a>
@@ -342,17 +350,17 @@ objects</p>
 <span><span class="co">#&gt; Spatial Configuration Changes:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"- Initial patches:"</span>, <span class="va">initial_stats</span><span class="op">$</span><span class="va">all_patch_count</span>, </span>
 <span>    <span class="st">"("</span>, <span class="va">initial_stats</span><span class="op">$</span><span class="va">valid_patch_count</span>, <span class="st">"valid)\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; - Initial patches: 9 ( 0 valid)</span></span>
+<span><span class="co">#&gt; - Initial patches: 7 ( 0 valid)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"- Final patches:"</span>, <span class="va">final_stats</span><span class="op">$</span><span class="va">all_patch_count</span>, </span>
 <span>    <span class="st">"("</span>, <span class="va">final_stats</span><span class="op">$</span><span class="va">valid_patch_count</span>, <span class="st">"valid)\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; - Final patches: 9 ( 0 valid)</span></span>
+<span><span class="co">#&gt; - Final patches: 6 ( 2 valid)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"- Patch consolidation:"</span>, </span>
 <span>    <span class="fu"><a href="https://rspatial.github.io/terra/reference/math-generics.html" class="external-link">round</a></span><span class="op">(</span><span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">final_stats</span><span class="op">$</span><span class="va">all_patch_count</span><span class="op">/</span><span class="va">initial_stats</span><span class="op">$</span><span class="va">all_patch_count</span><span class="op">)</span> <span class="op">*</span> <span class="fl">100</span>, <span class="fl">1</span><span class="op">)</span>, </span>
 <span>    <span class="st">"% reduction\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; - Patch consolidation: 0 % reduction</span></span>
+<span><span class="co">#&gt; - Patch consolidation: 14.3 % reduction</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"- Median patch size increase:"</span>, </span>
 <span>    <span class="fu"><a href="https://rspatial.github.io/terra/reference/math-generics.html" class="external-link">round</a></span><span class="op">(</span><span class="va">final_stats</span><span class="op">$</span><span class="va">median_all_patch</span> <span class="op">/</span> <span class="va">initial_stats</span><span class="op">$</span><span class="va">median_all_patch</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"x\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; - Median patch size increase: 3 x</span></span></code></pre></div>
+<span><span class="co">#&gt; - Median patch size increase: 4 x</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level3">
@@ -673,15 +681,15 @@ trade-offs:</p>
 <span><span class="co"># Compare scenarios</span></span>
 <span><span class="fu"><a href="../reference/compare_solutions.html">compare_solutions</a></span><span class="op">(</span><span class="va">result_conservative</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $overall</span></span>
-<span><span class="co">#&gt;                        Metric  Original  MinPatch Change Percent_Change</span></span>
-<span><span class="co">#&gt; 1     Selected Planning Units   16.0000   18.0000  2.000       12.50000</span></span>
-<span><span class="co">#&gt; 2                  Total Area    0.1600    0.1800  0.020       12.50000</span></span>
-<span><span class="co">#&gt; 3           Number of Patches    9.0000    4.0000 -5.000      -55.55556</span></span>
-<span><span class="co">#&gt; 4 Valid Patches (&gt;= min size)    0.0000    0.0000  0.000             NA</span></span>
-<span><span class="co">#&gt; 5           Median Patch Size    0.0100    0.0450  0.035      350.00000</span></span>
-<span><span class="co">#&gt; 6          Planning Unit Cost 3535.2989 3535.2989  0.000        0.00000</span></span>
-<span><span class="co">#&gt; 7               Boundary Cost    0.0225    0.0225  0.000        0.00000</span></span>
-<span><span class="co">#&gt; 8                  Total Cost 3535.3214 3535.3214  0.000        0.00000</span></span>
+<span><span class="co">#&gt;                        Metric Original MinPatch Change Percent_Change</span></span>
+<span><span class="co">#&gt; 1     Selected Planning Units   16.000   18.000   2.00       12.50000</span></span>
+<span><span class="co">#&gt; 2                  Total Area    0.160    0.180   0.02       12.50000</span></span>
+<span><span class="co">#&gt; 3           Number of Patches    7.000    3.000  -4.00      -57.14286</span></span>
+<span><span class="co">#&gt; 4 Valid Patches (&gt;= min size)    0.000    0.000   0.00             NA</span></span>
+<span><span class="co">#&gt; 5           Median Patch Size    0.010    0.070   0.06      600.00000</span></span>
+<span><span class="co">#&gt; 6          Planning Unit Cost 3535.299 3535.299   0.00        0.00000</span></span>
+<span><span class="co">#&gt; 7               Boundary Cost    0.023    0.023   0.00        0.00000</span></span>
+<span><span class="co">#&gt; 8                  Total Cost 3535.322 3535.322   0.00        0.00000</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $features</span></span>
 <span><span class="co">#&gt;   Feature_ID    Target Original_Area MinPatch_Area Area_Change Percent_Change</span></span>
@@ -733,50 +741,53 @@ practically implementable conservation strategies.</p>
 </h3>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
-<span><span class="co">#&gt; Platform: aarch64-apple-darwin20</span></span>
-<span><span class="co">#&gt; Running under: macOS Tahoe 26.3.1</span></span>
+<span><span class="co">#&gt; R version 4.5.0 (2025-04-11 ucrt)</span></span>
+<span><span class="co">#&gt; Platform: x86_64-w64-mingw32/x64</span></span>
+<span><span class="co">#&gt; Running under: Windows 11 x64 (build 26200)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Matrix products: default</span></span>
-<span><span class="co">#&gt; BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib </span></span>
-<span><span class="co">#&gt; LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1</span></span>
+<span><span class="co">#&gt;   LAPACK version 3.12.1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; locale:</span></span>
-<span><span class="co">#&gt; [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8</span></span>
+<span><span class="co">#&gt; [1] LC_COLLATE=English_United States.utf8 </span></span>
+<span><span class="co">#&gt; [2] LC_CTYPE=English_United States.utf8   </span></span>
+<span><span class="co">#&gt; [3] LC_MONETARY=English_United States.utf8</span></span>
+<span><span class="co">#&gt; [4] LC_NUMERIC=C                          </span></span>
+<span><span class="co">#&gt; [5] LC_TIME=English_United States.utf8    </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; time zone: Australia/Sydney</span></span>
+<span><span class="co">#&gt; time zone: Asia/Manila</span></span>
 <span><span class="co">#&gt; tzcode source: internal</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; attached base packages:</span></span>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] patchwork_1.3.2  ggplot2_4.0.2    dplyr_1.2.0      terra_1.8-93    </span></span>
+<span><span class="co">#&gt; [1] patchwork_1.3.2  ggplot2_4.0.1    dplyr_1.1.4      terra_1.8-93    </span></span>
 <span><span class="co">#&gt; [5] sf_1.0-24        prioritizr_8.1.0 minpatch_0.1.0  </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;  [1] gtable_0.3.6         xfun_0.56            bslib_0.10.0        </span></span>
-<span><span class="co">#&gt;  [4] raster_3.6-32        htmlwidgets_1.6.4    lattice_0.22-9      </span></span>
-<span><span class="co">#&gt;  [7] vctrs_0.7.1          tools_4.5.2          generics_0.1.4      </span></span>
-<span><span class="co">#&gt; [10] parallel_4.5.2       tibble_3.3.1         proxy_0.4-29        </span></span>
-<span><span class="co">#&gt; [13] pkgconfig_2.0.3      Matrix_1.7-4         KernSmooth_2.23-26  </span></span>
+<span><span class="co">#&gt;  [4] raster_3.6-32        htmlwidgets_1.6.4    lattice_0.22-6      </span></span>
+<span><span class="co">#&gt;  [7] vctrs_0.7.1          tools_4.5.0          generics_0.1.4      </span></span>
+<span><span class="co">#&gt; [10] parallel_4.5.0       tibble_3.3.1         proxy_0.4-29        </span></span>
+<span><span class="co">#&gt; [13] pkgconfig_2.0.3      Matrix_1.7-3         KernSmooth_2.23-26  </span></span>
 <span><span class="co">#&gt; [16] RColorBrewer_1.1-3   S7_0.2.1             desc_1.4.3          </span></span>
-<span><span class="co">#&gt; [19] assertthat_0.2.1     lifecycle_1.0.5      compiler_4.5.2      </span></span>
+<span><span class="co">#&gt; [19] assertthat_0.2.1     lifecycle_1.0.5      compiler_4.5.0      </span></span>
 <span><span class="co">#&gt; [22] farver_2.1.2         stringr_1.6.0        textshaping_1.0.4   </span></span>
 <span><span class="co">#&gt; [25] codetools_0.2-20     htmltools_0.5.9      class_7.3-23        </span></span>
 <span><span class="co">#&gt; [28] sass_0.4.10          yaml_2.3.12          pillar_1.11.1       </span></span>
 <span><span class="co">#&gt; [31] pkgdown_2.2.0        exactextractr_0.10.1 jquerylib_0.1.4     </span></span>
 <span><span class="co">#&gt; [34] rcbc_0.1.0.9003      classInt_0.4-11      cachem_1.1.0        </span></span>
-<span><span class="co">#&gt; [37] nlme_3.1-168         parallelly_1.46.1    tidyselect_1.2.1    </span></span>
-<span><span class="co">#&gt; [40] digest_0.6.39        stringi_1.8.7        fastmap_1.2.0       </span></span>
-<span><span class="co">#&gt; [43] grid_4.5.2           cli_3.6.5            magrittr_2.0.4      </span></span>
-<span><span class="co">#&gt; [46] e1071_1.7-17         ape_5.8-1            withr_3.0.2         </span></span>
-<span><span class="co">#&gt; [49] scales_1.4.0         sp_2.2-1             rmarkdown_2.30      </span></span>
-<span><span class="co">#&gt; [52] igraph_2.2.2         otel_0.2.0           ragg_1.5.0          </span></span>
-<span><span class="co">#&gt; [55] evaluate_1.0.5       knitr_1.51           rlang_1.1.7         </span></span>
-<span><span class="co">#&gt; [58] Rcpp_1.1.1           glue_1.8.0           DBI_1.2.3           </span></span>
-<span><span class="co">#&gt; [61] rstudioapi_0.18.0    jsonlite_2.0.0       R6_2.6.1            </span></span>
-<span><span class="co">#&gt; [64] systemfonts_1.3.1    fs_1.6.6             units_1.0-0</span></span></code></pre></div>
+<span><span class="co">#&gt; [37] nlme_3.1-168         tidyselect_1.2.1     digest_0.6.39       </span></span>
+<span><span class="co">#&gt; [40] stringi_1.8.7        fastmap_1.2.0        grid_4.5.0          </span></span>
+<span><span class="co">#&gt; [43] cli_3.6.5            magrittr_2.0.4       e1071_1.7-17        </span></span>
+<span><span class="co">#&gt; [46] ape_5.8-1            withr_3.0.2          scales_1.4.0        </span></span>
+<span><span class="co">#&gt; [49] sp_2.2-1             rmarkdown_2.30       igraph_2.2.1        </span></span>
+<span><span class="co">#&gt; [52] otel_0.2.0           ragg_1.5.0           evaluate_1.0.5      </span></span>
+<span><span class="co">#&gt; [55] knitr_1.51           rlang_1.1.7          Rcpp_1.1.1          </span></span>
+<span><span class="co">#&gt; [58] glue_1.8.0           DBI_1.2.3            rstudioapi_0.18.0   </span></span>
+<span><span class="co">#&gt; [61] jsonlite_2.0.0       R6_2.6.1             systemfonts_1.3.1   </span></span>
+<span><span class="co">#&gt; [64] fs_1.6.6             units_1.0-0</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
